@@ -618,14 +618,11 @@
                 updateUI();
                 syncVideo();
                 
-                // Update display screen
                 if (currentMode === 'display' && currentTrack) {
                     const displayTitle = document.getElementById('display-title');
                     const displayArtist = document.getElementById('display-artist');
                     if (displayTitle) displayTitle.innerText = currentTrack.title;
                     if (displayArtist) displayArtist.innerText = currentTrack.artist;
-                    console.log('📺 Display updated:', currentTrack.title);
-                    // Force sync if player exists
                     if (player) syncVideo();
                 } else if (currentMode === 'display' && !currentTrack) {
                     const displayTitle = document.getElementById('display-title');
@@ -738,25 +735,19 @@
         function syncVideo() {
             if (!player || !currentTrack) return;
             try {
-                console.log('▶️ syncVideo - VideoID:', currentTrack.videoId, 'Command:', currentTrack.lastCommand);
                 if (player.loadVideoById && currentTrack.videoId) {
                     const currentVideoId = player.getVideoData?.()?.video_id;
-                    console.log('🎬 Current video:', currentVideoId, 'New video:', currentTrack.videoId);
                     if (currentVideoId !== currentTrack.videoId) {
                         player.loadVideoById(currentTrack.videoId);
-                        console.log('✅ Video loaded:', currentTrack.videoId);
                     }
                 }
                 
-                // Wait a bit for video to load before playing
                 setTimeout(() => {
                     if (!player || !currentTrack) return;
-                    console.log('⏯️ Setting playback state:', currentTrack.lastCommand);
                     if (currentTrack.lastCommand === 'pause') {
                         player.pauseVideo?.();
                     } else if (currentTrack.lastCommand === 'play') {
                         player.playVideo?.();
-                        console.log('▶️ Playing video');
                     }
                 }, 500);
                 
@@ -765,13 +756,12 @@
                     sendCommand('play');
                 }
             } catch(e) {
-                console.error('❌ syncVideo error:', e);
+                console.error('syncVideo error:', e);
             }
         }
 
         function initYouTube(divId) { if (window.YT && window.YT.Player) createPlayer(divId); else { const tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(tag); window.onYouTubeIframeAPIReady = () => createPlayer(divId); } }
         function createPlayer(divId) { 
-            console.log('🎬 Creating player in', divId, 'Mode:', currentMode, 'Current track:', currentTrack?.title);
             player = new window.YT.Player(divId, { 
                 height: '100%', 
                 width: '100%', 
@@ -787,33 +777,20 @@
                 }, 
                 events: { 
                     onReady: (e) => { 
-                        console.log('✅ Player ready');
                         if (currentMode === 'admin' && isAdminMuted) e.target.mute();
-                        // In display mode, wait a bit for realtime data to come in
                         if (currentMode === 'display') {
-                            console.log('📺 Display mode - waiting for sync data');
                             setTimeout(() => {
-                                if (currentTrack) {
-                                    console.log('📺 Now syncing with:', currentTrack.title);
-                                    syncVideo();
-                                }
+                                if (currentTrack) syncVideo();
                             }, 500);
                         } else if (currentTrack) {
-                            console.log('🎵 Current track on ready:', currentTrack.title);
                             syncVideo();
-                        } else {
-                            console.log('⚠️ No current track on ready');
                         }
                     }, 
                     onStateChange: (e) => { 
-                        console.log('📊 Player state:', e.data);
-                        if (e.data === window.YT.PlayerState.ENDED) {
-                            console.log('⏭️ Video ended, skipping');
-                            skipSong(); 
-                        }
+                        if (e.data === window.YT.PlayerState.ENDED) skipSong(); 
                     },
                     onError: (e) => {
-                        console.error('❌ Player error:', e.data);
+                        console.error('Player error:', e.data);
                     }
                 } 
             }); 
@@ -1127,38 +1104,29 @@
         async function loadAnalyticsData() {
             try {
                 const { dateFrom, dateTo } = getDateRange();
-                console.log('📊 Analytics loading - Period:', analyticsPeriod, 'From:', new Date(dateFrom * 1000), 'To:', new Date(dateTo * 1000));
-                
                 const tsFrom = firebase.firestore.Timestamp.fromSeconds(dateFrom);
                 const tsTo = firebase.firestore.Timestamp.fromSeconds(dateTo);
                 
-                // Cargar datos de waiter_calls
                 const waiterSnap = await db.collection(`artifacts/${appId}/public/data/waiter_calls`)
                     .where('createdAt', '>=', tsFrom)
                     .where('createdAt', '<', tsTo)
                     .get();
                 
                 const waiterCalls = waiterSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                console.log('📞 Waiter calls found:', waiterCalls.length);
                 
-                // Cargar datos de rocola_queue
                 const queueSnap = await db.collection(`artifacts/${appId}/public/data/rocola_queue`)
                     .where('createdAt', '>=', tsFrom)
                     .where('createdAt', '<', tsTo)
                     .get();
                 
                 const queueItems = queueSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                console.log('🎵 Queue items found:', queueItems.length);
-                
                 calculateMetrics(waiterCalls, queueItems, dateFrom, dateTo);
             } catch(err) {
-                console.error('❌ Error loading analytics:', err);
-                // Fallback: load all data without date filter
+                console.error('Error loading analytics:', err);
                 const waiterSnap = await db.collection(`artifacts/${appId}/public/data/waiter_calls`).get();
                 const waiterCalls = waiterSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 const queueSnap = await db.collection(`artifacts/${appId}/public/data/rocola_queue`).get();
                 const queueItems = queueSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                console.log('📊 Fallback - Waiter:', waiterCalls.length, 'Queue:', queueItems.length);
                 calculateMetrics(waiterCalls, queueItems, 0, Math.floor(Date.now() / 1000));
             }
         }
