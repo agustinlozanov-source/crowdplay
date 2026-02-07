@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rocola Pro - Gestión Bar & Karaoke</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #020617; color: white; overflow-x: hidden; }
+        .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 2.5rem; background: black; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .btn-action { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .btn-action:active { transform: scale(0.95); }
+        .active-glow { box-shadow: 0 0 30px rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); }
+        
+        /* Animaciones */
+        @keyframes pulse-white {
+            0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 8px #fff; }
+            50% { opacity: 0.4; transform: scale(1.2); box-shadow: 0 0 12px #fff; }
+        }
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.4); }
+        }
+        .status-dot-active { animation: pulse-white 1.5s infinite; }
+        .pulse-alert-red { animation: pulse-red 0.8s infinite; }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .stat-card { background: linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.8)); }
+        
+        .satisfaction-btn { transition: all 0.2s; filter: grayscale(1); opacity: 0.4; }
+        .satisfaction-btn.active { filter: grayscale(0); opacity: 1; transform: scale(1.3); }
+        .stat-number { font-style: normal !important; font-weight: 900; }
+        .logo-img { max-height: 50px; width: auto; object-fit: contain; }
+        .logo-img-large { max-height: 140px; width: auto; object-fit: contain; }
+
+        /* Estilos Metálicos */
+        .bg-gold-metallic {
+            background: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+            background-size: 200% 200%;
+        }
+        .bg-spotify { background-color: #1DB954; }
+        
+        /* Tipografía compacta -20 (letter-spacing) */
+        .tracking-tight-20 { letter-spacing: -0.05em; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <div id="app-container">
+        <!-- Pantalla de Carga -->
+        <div id="loading-screen" class="h-screen flex flex-col items-center justify-center gap-4">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-red-600"></div>
+            <p id="sync-text" class="text-slate-500 font-bold uppercase tracking-widest text-xs italic">Sincronizando sistema...</p>
+        </div>
+
+        <!-- Registro de Usuario -->
+        <div id="registration-screen" class="hidden h-screen flex flex-col items-center justify-center p-6 bg-slate-950">
+            <div class="glass p-10 rounded-[3rem] w-full max-w-lg space-y-8 shadow-2xl border-white/5 text-center">
+                <div id="reg-logo-container" class="flex justify-center"></div>
+                <h2 id="reg-title-text" class="text-4xl font-black italic text-white uppercase tracking-tighter">Acceso Cliente</h2>
+                <div class="space-y-4">
+                    <input id="reg-name" type="text" placeholder="Nombre" class="w-full bg-slate-900 border border-white/10 rounded-2xl p-5 outline-none focus:border-red-600 font-black text-white text-lg italic">
+                    <input id="reg-surname" type="text" placeholder="Apellido" class="w-full bg-slate-900 border border-white/10 rounded-2xl p-5 outline-none focus:border-red-600 font-black text-white text-lg italic">
+                    <input id="reg-whatsapp" type="tel" placeholder="WhatsApp" class="w-full bg-slate-900 border border-white/10 rounded-2xl p-5 outline-none focus:border-red-600 font-black text-white text-lg italic">
+                    <button onclick="saveUserRegistration()" class="w-full bg-red-600 py-5 rounded-[2.5rem] font-black text-white hover:bg-red-500 transition-all shadow-2xl uppercase tracking-widest text-xl italic">INGRESAR</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menú Principal -->
+        <div id="menu-screen" class="hidden h-screen flex flex-col items-center justify-center p-8 text-center space-y-16 bg-[#020617]">
+            <div id="menu-logo-container" class="flex justify-center w-full">
+                <h1 class="text-9xl font-black italic tracking-tighter uppercase leading-none">Rocola<span class="text-red-600">Pro</span></h1>
+            </div>
+            <div class="grid gap-6 w-full max-w-md">
+                <button onclick="checkClientRegistration()" class="glass p-8 rounded-[3rem] flex items-center gap-8 hover:bg-slate-800 transition-all text-left group border-white/5 shadow-2xl">
+                    <div class="bg-red-600/20 p-5 rounded-[1.5rem] text-red-500 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                    </div>
+                    <div><h3 class="font-black text-2xl text-white italic uppercase tracking-tighter italic">Cliente</h3><p class="text-sm text-slate-500 font-bold uppercase tracking-widest">Música y Servicios</p></div>
+                </button>
+                <button onclick="setMode('waiter')" class="glass p-8 rounded-[3rem] flex items-center gap-8 hover:bg-slate-800 transition-all text-left border-emerald-500/20 group shadow-2xl">
+                    <div class="bg-emerald-600/20 p-5 rounded-[1.5rem] text-emerald-500 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/></svg>
+                    </div>
+                    <div><h3 class="font-black text-2xl text-white italic uppercase tracking-tighter italic">Mesero</h3><p class="text-sm text-slate-500 font-bold uppercase tracking-widest">Atención en mesa</p></div>
+                </button>
+                <button onclick="setMode('admin')" class="glass p-8 rounded-[3rem] flex items-center gap-8 hover:bg-slate-800 transition-all text-left border-indigo-500/20 group shadow-2xl">
+                    <div class="bg-indigo-600/20 p-5 rounded-[1.5rem] text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h7"/></svg>
+                    </div>
+                    <div><h3 class="font-black text-2xl text-white italic uppercase tracking-tighter italic">Modo DJ</h3><p class="text-sm text-slate-500 font-bold uppercase tracking-widest">Gestión de Ambiente</p></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Vista App Principal -->
+        <div id="main-screen" class="hidden min-h-screen flex flex-col">
+            <header class="p-6 border-b border-white/5 flex justify-between items-center bg-slate-950/80 backdrop-blur-2xl sticky top-0 z-50">
+                <div id="header-logo-container" class="cursor-pointer" onclick="location.href=window.location.origin + window.location.pathname">
+                     <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white leading-none">Rocola <span class="text-red-600">Pro</span></h2>
+                </div>
+                <div class="flex flex-col items-end gap-1">
+                    <div class="flex items-center gap-3">
+                        <div id="header-user-display" class="hidden px-4 py-1.5 bg-white/5 border border-white/10 rounded-full">
+                            <span id="user-display-name" class="text-[9px] font-black uppercase text-slate-400 tracking-widest italic leading-none">Usuario</span>
+                        </div>
+                        <span id="role-badge" class="bg-indigo-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest text-white shadow-xl italic">ROL</span>
+                    </div>
+                    <!-- Indicador Sincronización (Debajo del Header Info) -->
+                    <div id="connection-badge" class="flex items-center gap-2 px-3 py-1 rounded-full border border-white/5 bg-black/40 hidden">
+                        <div id="status-dot" class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                        <span id="status-text" class="text-[7px] font-black uppercase text-slate-500 tracking-widest italic leading-none">Desconectado</span>
+                    </div>
+                </div>
+            </header>
+
+            <main class="max-w-6xl mx-auto w-full p-6 space-y-12 pb-80">
+                
+                <!-- SECCIÓN MODO DJ -->
+                <div id="admin-view" class="hidden space-y-12">
+                    <div id="admin-dashboard" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="stat-card p-10 rounded-[3rem] border border-white/5 shadow-2xl text-left">
+                            <p class="text-[16px] font-black text-red-500 uppercase tracking-widest mb-2 leading-none">Favorita</p>
+                            <h4 id="stat-top-song" class="text-3xl font-black text-white truncate italic tracking-tighter">Esperando...</h4>
+                        </div>
+                        <div class="stat-card p-10 rounded-[3rem] border border-white/5 shadow-2xl text-center">
+                            <p class="text-[16px] font-black text-indigo-500 uppercase tracking-widest mb-2 leading-none text-center">Ritmo</p>
+                            <h4 id="stat-songs-hour" class="text-9xl font-black text-white stat-number leading-none tracking-tighter">0</h4>
+                            <p class="text-[12px] text-slate-500 font-black uppercase mt-3 tracking-widest italic">Rolas/Hora</p>
+                        </div>
+                        <div class="stat-card p-10 rounded-[3rem] border border-white/5 shadow-2xl text-right">
+                            <p class="text-[16px] font-black text-emerald-500 uppercase tracking-widest mb-2 leading-none">Total</p>
+                            <h4 id="stat-total-today" class="text-9xl font-black text-white stat-number leading-none tracking-tighter">0</h4>
+                            <p class="text-[12px] text-slate-500 font-black uppercase mt-3 tracking-widest italic">Peticiones hoy</p>
+                        </div>
+                    </div>
+
+                    <!-- Botón Lanzar TV -->
+                    <div class="glass p-12 rounded-[4.5rem] border-red-500/30 bg-red-500/5 flex flex-col lg:flex-row items-center justify-between gap-10 shadow-2xl">
+                        <div class="space-y-3 text-center lg:text-left text-white">
+                            <h3 class="text-6xl font-black italic uppercase tracking-tighter leading-none">Maestro TV</h3>
+                            <p class="text-xl text-slate-500 font-bold uppercase tracking-[0.3em]">Emisión remota sincronizada</p>
+                        </div>
+                        <button onclick="openTVTab()" class="bg-red-600 hover:bg-red-500 text-white px-20 py-12 rounded-[3.5rem] font-black flex items-center gap-4 shadow-2xl active:scale-95 text-4xl uppercase italic tracking-[-0.02em]">
+                            Abrir Visor TV
+                        </button>
+                    </div>
+
+                    <!-- Monitor DJ Local -->
+                    <div class="glass p-4 rounded-[4rem] overflow-hidden active-glow border-white/5 relative group">
+                        <div class="video-container">
+                            <div id="yt-player"></div>
+                        </div>
+                        <button id="admin-mute-btn" onclick="toggleAdminMute()" class="absolute top-12 right-12 z-10 bg-black/80 p-6 rounded-full hover:bg-red-600 transition-all border border-white/20">
+                            <svg id="mute-icon" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- PAD EFECTOS DJ -->
+                    <div class="bg-slate-900/50 p-12 rounded-[4rem] border border-white/5 space-y-8 shadow-inner">
+                        <p class="text-[14px] font-black text-slate-500 uppercase tracking-widest italic">DJ Sound Effects</p>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            <button class="bg-slate-800 hover:bg-red-600 py-10 rounded-[3rem] text-2xl font-black uppercase transition-all shadow-xl active:scale-95 italic tracking-tighter">👏 Aplausos</button>
+                            <button class="bg-slate-800 hover:bg-red-600 py-10 rounded-[3rem] text-2xl font-black uppercase transition-all shadow-xl active:scale-95 italic tracking-tighter">🥳 Ovación</button>
+                            <button class="bg-slate-800 hover:bg-red-600 py-10 rounded-[3rem] text-2xl font-black uppercase transition-all shadow-xl active:scale-95 italic tracking-tighter">😂 Risas</button>
+                            <button class="bg-slate-800 hover:bg-red-600 py-10 rounded-[3rem] text-2xl font-black uppercase transition-all shadow-xl active:scale-95 italic tracking-tighter">🎺 Corneta</button>
+                        </div>
+                    </div>
+
+                    <!-- CONTROLES MAESTROS -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-slate-900/50 p-10 rounded-[4rem] border border-white/5 flex flex-col gap-8 shadow-2xl">
+                             <h3 id="admin-current-title" class="text-3xl font-black truncate italic text-white leading-tight tracking-tighter">Standby...</h3>
+                             <div class="flex items-center gap-4">
+                                <button onclick="sendCommand('seek', { offset: -10 })" class="p-8 bg-slate-800 rounded-[2rem] hover:bg-slate-700 text-white transition-all active:scale-90 shadow-lg"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></button>
+                                <button onclick="handleDJToggle()" class="flex-1 py-8 bg-white text-black rounded-[2rem] font-black uppercase text-2xl italic tracking-tighter shadow-2xl active:scale-95">Play / Pausa</button>
+                                <button onclick="sendCommand('seek', { offset: 10 })" class="p-8 bg-slate-800 rounded-[2rem] hover:bg-slate-700 text-white transition-all active:scale-90 shadow-lg"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg></button>
+                             </div>
+                        </div>
+                        <div class="bg-slate-900/50 p-10 rounded-[4rem] border border-white/5 flex flex-col gap-5 justify-center">
+                             <button onclick="skipSong()" class="w-full py-8 bg-red-600 hover:bg-red-500 rounded-[2.5rem] font-black text-white transition-all uppercase text-xl italic tracking-tighter shadow-xl">SALTAR SIGUIENTE</button>
+                             <button id="toggle-dedication-btn" onclick="toggleDedication()" class="w-full py-8 bg-indigo-600 hover:bg-indigo-500 rounded-[2.5rem] font-black text-white transition-all uppercase text-xl italic tracking-tighter shadow-xl">MOSTRAR DEDICATORIA</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN MESERO -->
+                <div id="waiter-view" class="hidden space-y-12">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center font-black text-white">
+                        <div class="stat-card p-8 rounded-[3rem] border border-emerald-500/10 shadow-xl">
+                            <p class="text-[12px] text-emerald-500 uppercase tracking-widest mb-1 leading-none">Pendientes</p>
+                            <h4 id="waiter-stat-open" class="text-6xl stat-number tracking-tighter">0</h4>
+                        </div>
+                        <div class="stat-card p-8 rounded-[3rem] border border-white/5 shadow-xl">
+                            <p class="text-[12px] text-slate-500 uppercase tracking-widest mb-1 leading-none">Cerradas</p>
+                            <h4 id="waiter-stat-closed" class="text-6xl stat-number tracking-tighter">0</h4>
+                        </div>
+                    </div>
+                    <div id="waiter-calls-list" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                </div>
+
+                <!-- SECCIÓN CLIENTE -->
+                <div id="client-wait-info" class="hidden glass p-10 rounded-[3.5rem] bg-indigo-600/5 border-indigo-500/20 text-center animate-in fade-in duration-500 shadow-2xl">
+                    <div class="space-y-2 text-center text-white">
+                        <h4 id="user-next-song-name" class="text-2xl font-black italic truncate tracking-tighter italic leading-none">Cargando cola...</h4>
+                        <div class="inline-flex items-center gap-3 bg-indigo-600 text-white px-8 py-3 rounded-full text-xs font-black uppercase mt-4 shadow-xl italic tracking-widest">
+                             ⏳ Espera est: <span id="wait-minutes">0</span> min
+                        </div>
+                    </div>
+                </div>
+
+                <section id="queue-section" class="space-y-6">
+                    <div id="queue-list" class="space-y-4"></div>
+                </section>
+            </main>
+
+            <!-- FOOTER CLIENTE -->
+            <div id="client-footer" class="hidden fixed bottom-6 left-0 right-0 px-6 flex flex-col items-center gap-3 z-[100] pointer-events-none">
+                
+                <!-- Barra de Estatus Externa -->
+                <div class="w-full max-w-md flex justify-between px-10 pointer-events-none mb-[-6px]">
+                    <div id="dot-waiter-container" class="invisible flex flex-col items-center gap-1">
+                        <div class="w-3 h-3 rounded-full bg-white status-dot-active shadow-[0_0_8px_#fff]"></div>
+                        <span class="text-[7px] font-black uppercase text-emerald-400 tracking-widest italic leading-none">Atención</span>
+                    </div>
+                    <div id="dot-bill-container" class="invisible flex flex-col items-center gap-1">
+                        <div class="w-3 h-3 rounded-full bg-white status-dot-active shadow-[0_0_8px_#fff]"></div>
+                        <span class="text-[7px] font-black uppercase text-amber-400 tracking-widest italic leading-none">Pago</span>
+                    </div>
+                </div>
+
+                <!-- Botones de Servicio Compactos -->
+                <div class="flex gap-3 w-full max-w-md pointer-events-auto">
+                    <button id="call-waiter-btn" onclick="handleCallWaiter()" class="flex-1 py-2.5 rounded-[2.2rem] bg-spotify border border-white/10 text-white shadow-2xl transition-all active:scale-95 group">
+                        <span class="text-[12px] font-black uppercase tracking-tight-20 italic leading-none">Llamar mesero</span>
+                    </button>
+                    <button id="request-bill-btn" onclick="handleRequestBill()" class="flex-1 py-2.5 rounded-[2.2rem] bg-gold-metallic border border-white/10 text-black shadow-2xl transition-all active:scale-95">
+                        <span class="text-[12px] font-black uppercase tracking-tight-20 italic leading-none">Pedir la cuenta</span>
+                    </button>
+                </div>
+
+                <!-- Botón Principal Petición -->
+                <button id="main-request-song-btn" onclick="openSearch()" class="pointer-events-auto bg-red-600 hover:bg-red-500 text-white w-full max-w-md py-5 rounded-[2.5rem] font-black text-xl shadow-[0_25px_60px_rgba(220,38,38,0.5)] flex items-center justify-center gap-2 btn-action italic tracking-tighter transition-all">
+                    <span class="text-3xl italic translate-y-[-2px]">+</span>
+                    PEDIR CANCIÓN
+                </button>
+            </div>
+        </div>
+
+        <!-- Pantalla TV (DISPLAY) -->
+        <div id="display-screen" class="hidden fixed inset-0 bg-black z-[200] flex flex-col items-center justify-center p-12 overflow-hidden text-center">
+            <div class="absolute inset-0 opacity-40 blur-[120px] scale-125 bg-red-900/30"></div>
+            <div id="tv-dedication-widget" class="hidden absolute top-12 left-1/2 -translate-x-1/2 glass p-10 rounded-[4rem] border-indigo-500/30 max-w-3xl shadow-2xl animate-in slide-in-from-top-12 duration-1000">
+                <p id="tv-dedication-text" class="text-4xl font-black text-white italic leading-tight drop-shadow-lg"></p>
+                <p id="tv-dedication-from" class="text-lg font-bold text-slate-400 mt-6 uppercase tracking-widest opacity-80"></p>
+            </div>
+            <div class="relative z-10 w-full max-w-7xl space-y-16">
+                <div class="video-container shadow-[0_40px_100px_rgba(0,0,0,0.8)] border-[12px] border-white/5 rounded-[4rem] overflow-hidden scale-105">
+                    <div id="display-yt-player"></div>
+                </div>
+                <div class="space-y-4">
+                    <h1 id="display-title" class="text-7xl font-black text-white leading-tight italic truncate drop-shadow-2xl tracking-tighter"></h1>
+                    <p id="display-artist" class="text-4xl text-slate-400 font-bold uppercase tracking-[0.4em] opacity-80"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL LA CUENTA (CORREGIDO) -->
+        <div id="bill-modal" class="hidden fixed inset-0 z-[500] bg-black/98 backdrop-blur-xl flex items-center justify-center p-4 text-center">
+            <div class="glass p-12 rounded-[4rem] w-full max-w-lg space-y-10 shadow-2xl border-yellow-500/20">
+                <div class="space-y-3">
+                    <h2 class="text-4xl font-black italic text-white uppercase leading-none tracking-tighter">Pedir la Cuenta</h2>
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">¿Cómo deseas pagar?</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4 italic font-black">
+                    <button onclick="selectPayment('efectivo')" id="pay-efectivo" class="py-6 rounded-3xl bg-slate-800 border-2 border-transparent text-white uppercase text-xs transition-all tracking-widest italic">💵 Efectivo</button>
+                    <button onclick="selectPayment('tarjeta')" id="pay-tarjeta" class="py-6 rounded-3xl bg-slate-800 border-2 border-transparent text-white uppercase text-xs transition-all tracking-widest italic">💳 Tarjeta</button>
+                </div>
+                <div class="space-y-6">
+                    <label class="text-xs font-black text-slate-500 uppercase tracking-widest italic">Califica nuestro servicio</label>
+                    <div class="flex justify-between items-center px-4">
+                        <button onclick="selectSatisfaction(1)" class="satisfaction-btn text-5xl">😫</button>
+                        <button onclick="selectSatisfaction(2)" class="satisfaction-btn text-5xl">☹️</button>
+                        <button onclick="selectSatisfaction(3)" class="satisfaction-btn text-5xl">😐</button>
+                        <button onclick="selectSatisfaction(4)" class="satisfaction-btn text-5xl">🙂</button>
+                        <button onclick="selectSatisfaction(5)" class="satisfaction-btn text-5xl">🤩</button>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="closeBillModal()" class="flex-1 py-5 text-slate-500 font-black uppercase text-xs italic tracking-widest leading-none">Cancelar</button>
+                    <button id="confirm-bill-btn" onclick="sendBillRequest()" disabled class="flex-1 py-5 rounded-[2rem] bg-yellow-600 font-black text-white shadow-lg opacity-50 uppercase text-xs italic tracking-widest leading-none">Enviar Solicitud</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Petición (FLUJO CORREGIDO) -->
+        <div id="search-modal" class="hidden fixed inset-0 z-[300] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4">
+            <div class="bg-slate-900 w-full max-w-2xl rounded-[3rem] border border-white/10 overflow-hidden flex flex-col max-h-[90vh] shadow-2xl">
+                <div class="p-6 border-b border-white/5 flex justify-between items-center bg-slate-900 sticky top-0 z-10">
+                    <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">Nueva Petición</h2>
+                    <button onclick="closeSearch()" class="p-2 hover:bg-white/10 rounded-full text-slate-500 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+                </div>
+                
+                <div class="p-6 space-y-6 overflow-y-auto">
+                    <!-- Selector -->
+                    <div class="flex p-1 bg-slate-800 rounded-2xl">
+                        <button onclick="setSearchType('music')" id="btn-type-music" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all bg-red-600 text-white italic">🎵 Música</button>
+                        <button onclick="setSearchType('karaoke')" id="btn-type-karaoke" class="flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all text-slate-400 italic">🎤 Karaoke</button>
+                    </div>
+
+                    <!-- Input Búsqueda -->
+                    <input id="search-input" oninput="debounceSearch()" type="text" placeholder="Escribe canción o artista..." class="w-full bg-slate-800 rounded-2xl p-5 text-white outline-none focus:ring-2 focus:ring-red-600 font-black text-xl italic tracking-tighter text-center">
+
+                    <!-- Resultados Inmediatos -->
+                    <div id="search-results" class="space-y-2 border-b border-white/5 pb-4">
+                        <p class="text-center text-slate-600 text-[10px] font-black uppercase py-4 opacity-50 italic">Busca una rola...</p>
+                    </div>
+
+                    <!-- Paso Final (Aparece tras seleccionar) -->
+                    <div id="final-step-container" class="hidden space-y-6 animate-in slide-in-from-top-4 duration-300">
+                        <div class="p-5 bg-red-600/10 border border-red-500/20 rounded-2xl text-white">
+                             <p class="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1 leading-none">Has seleccionado:</p>
+                             <h4 id="selected-song-preview" class="text-lg font-black italic truncate tracking-tight leading-none">Cargando...</h4>
+                        </div>
+                        <div class="space-y-4">
+                            <input id="song-dedication" type="text" placeholder="Dedicatoria (Opcional)" class="w-full bg-slate-800 border-none rounded-2xl p-5 text-white font-black italic outline-none focus:ring-1 focus:ring-red-600 text-center">
+                            <label class="flex items-center gap-3 cursor-pointer p-5 bg-slate-800/50 rounded-2xl border border-white/5 justify-center">
+                                <input id="song-show-name" type="checkbox" checked class="w-6 h-6 accent-red-600">
+                                <span class="text-xs font-black text-slate-300 uppercase tracking-widest italic">Mostrar mi nombre</span>
+                            </label>
+                        </div>
+                        <button id="final-confirm-order-btn" onclick="confirmOrder()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-[2rem] font-black text-xl shadow-2xl uppercase italic tracking-widest transition-all active:scale-95 leading-none">
+                             🚀 ENVIAR A LA COLA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Mesa -->
+        <div id="table-modal" class="hidden fixed inset-0 z-[600] bg-black/95 backdrop-blur-md flex items-center justify-center p-4">
+            <div class="glass p-12 rounded-[4rem] w-full max-w-sm space-y-8 shadow-2xl border-emerald-500/20 text-center">
+                <h2 class="text-3xl font-black italic text-white uppercase tracking-tighter leading-none">Tu Mesa</h2>
+                <input id="table-number-input" type="number" placeholder="Mesa #" class="w-full bg-slate-900 border border-white/10 rounded-[1.5rem] p-8 text-center text-6xl font-black text-emerald-400 outline-none focus:border-emerald-500 italic leading-none">
+                <button onclick="saveTableNumber()" class="w-full bg-emerald-600 py-6 rounded-[2rem] font-black text-white hover:bg-emerald-500 uppercase tracking-widest shadow-2xl italic text-xl leading-none">GUARDAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const LOGO_URL = "logo.png"; 
+        const manualFirebaseConfig = {
+  apiKey: "AIzaSyCXn6jXWeB4pGtZ88zKLNrxvfFZyNO1Ts4",
+  authDomain: "rockola-bd.firebaseapp.com",
+  projectId: "rockola-bd",
+  storageBucket: "rockola-bd.firebasestorage.app",
+  messagingSenderId: "11460400316",
+  appId: "1:11460400316:web:2c632b33260feff97d6cb9",
+  measurementId: "G-1KG92J66RX"
+};; 
+        const YOUTUBE_API_KEY = "AIzaSyBB32TS0dFywl8N7cV1zWAuJsHWyxO3Pkk"; 
+
+        let firebaseConfig = manualFirebaseConfig;
+        let app, auth, db;
+        let appId = typeof __app_id !== 'undefined' ? __app_id : 'rocola-pro-bar-v1';
+        let player = null; 
+        let currentTrack = null;
+        let queue = [];
+        let searchTimeout = null;
+        let isAdminMuted = true;
+        let currentMode = null;
+        let searchType = 'music';
+        let selectedPayment = null;
+        let selectedSatisfactionValue = 0;
+        let selectedVideo = null;
+
+        try { if (!firebaseConfig && typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config); } catch(e) {}
+        window.onload = () => { applyLogo(); if (!firebaseConfig) alert("Configura Firebase."); else initFirebase(); };
+
+        async function initFirebase() {
+            try {
+                if (!firebase.apps.length) app = firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.firestore();
+                await auth.signInAnonymously();
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        document.getElementById('loading-screen').classList.add('hidden');
+                        document.getElementById('connection-badge').classList.remove('hidden');
+                        updateStatus(true);
+                        const params = new URLSearchParams(window.location.search);
+                        const mode = params.get('mode');
+                        if (mode) setMode(mode); else document.getElementById('menu-screen').classList.remove('hidden');
+                        startRealtimeSync();
+                    }
+                });
+            } catch (e) { updateStatus(false); }
+        }
+
+        function updateStatus(online) {
+            const dot = document.getElementById('status-dot');
+            dot.className = online ? "w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]" : "w-1.5 h-1.5 rounded-full bg-red-500";
+            document.getElementById('status-text').innerText = online ? "Sincronizado" : "Sin Red";
+        }
+
+        function applyLogo() {
+            if (LOGO_URL) {
+                const containers = ['reg-logo-container', 'menu-logo-container', 'header-logo-container'];
+                containers.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        const isLarge = id !== 'header-logo-container';
+                        el.innerHTML = `<img src="${LOGO_URL}" class="${isLarge ? 'logo-img-large' : 'logo-img'}" alt="Logo" onerror="handleLogoError('${id}')">`;
+                        if (id === 'reg-logo-container') document.getElementById('reg-title-text').classList.add('hidden');
+                    }
+                });
+            }
+        }
+
+        function handleLogoError(id) {
+            const el = document.getElementById(id);
+            if (id === 'header-logo-container') el.innerHTML = `<h2 class="text-2xl font-black italic uppercase tracking-tighter cursor-pointer text-white">Rocola <span class="text-red-600">Pro</span></h2>`;
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('main-screen').classList.remove('hidden');
+            document.getElementById('role-badge').innerText = (mode === 'admin') ? 'MODO DJ' : mode.toUpperCase();
+            document.getElementById('admin-view').classList.add('hidden');
+            document.getElementById('waiter-view').classList.add('hidden');
+            document.getElementById('client-footer').classList.add('hidden');
+
+            if (mode === 'display') {
+                document.getElementById('main-screen').classList.add('hidden');
+                document.getElementById('display-screen').classList.remove('hidden');
+                initYouTube('display-yt-player');
+            } else if (mode === 'admin') {
+                document.getElementById('admin-view').classList.remove('hidden');
+                initYouTube('yt-player');
+            } else if (mode === 'waiter') {
+                document.getElementById('waiter-view').classList.remove('hidden');
+                document.getElementById('queue-section').classList.add('hidden');
+            } else if (mode === 'client') {
+                document.getElementById('client-footer').classList.remove('hidden');
+                document.getElementById('client-wait-info').classList.remove('hidden');
+                document.getElementById('header-user-display').classList.remove('hidden');
+                const u = JSON.parse(localStorage.getItem('rocola_user_v1'));
+                if(u) document.getElementById('user-display-name').innerText = u.name;
+            }
+        }
+
+        function startRealtimeSync() {
+            db.collection(`artifacts/${appId}/public/data/rocola_queue`).onSnapshot(snap => {
+                let items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                items.sort((a, b) => ((b.votes || 0) - (a.votes || 0)) || ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0)));
+                currentTrack = items.find(i => i.status === 'playing') || null;
+                queue = items.filter(i => i.status === 'pending');
+                updateUI();
+                syncVideo();
+                if (currentMode === 'admin') updateAdminDashboard(items);
+            });
+            db.collection(`artifacts/${appId}/public/data/waiter_calls`).onSnapshot(snap => {
+                const calls = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (currentMode === 'waiter') updateWaiterView(calls);
+                updateClientWaiterStatus(calls);
+            });
+        }
+
+        function openTVTab() { window.open(`${window.location.origin}${window.location.pathname}?mode=display`, '_blank'); }
+
+        function openSearch() { document.getElementById('search-modal').classList.remove('hidden'); }
+        function closeSearch() { document.getElementById('search-modal').classList.add('hidden'); document.getElementById('search-input').value = ""; document.getElementById('search-results').innerHTML = ""; document.getElementById('search-results').classList.remove('hidden'); document.getElementById('final-step-container').classList.add('hidden'); selectedVideo = null; }
+
+        function debounceSearch() { clearTimeout(searchTimeout); searchTimeout = setTimeout(performSearch, 700); }
+        async function performSearch() {
+            const q = document.getElementById('search-input').value;
+            if (q.length < 3) return;
+            const fullQ = searchType === 'karaoke' ? `${q} karaoke` : q;
+            try {
+                const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&q=${encodeURIComponent(fullQ)}&type=video&key=${YOUTUBE_API_KEY}`);
+                const data = await res.json();
+                document.getElementById('search-results').innerHTML = data.items.map(i => `
+                    <button onclick="selectForOrder('${i.id.videoId}', '${i.snippet.title.replace(/'/g, "").replace(/"/g, "")}', '${i.snippet.channelTitle.replace(/'/g, "")}')" class="w-full p-4 bg-slate-800 hover:bg-slate-700 rounded-3xl flex items-center gap-4 text-left border border-transparent transition-all shadow-md group">
+                        <img src="${i.snippet.thumbnails.default.url}" class="w-16 h-12 object-cover rounded-xl group-hover:scale-105 transition-transform" />
+                        <div class="flex-1 min-w-0 text-white"><p class="font-black text-sm truncate italic leading-tight">${i.snippet.title}</p></div>
+                    </button>
+                `).join('');
+            } catch(e) { console.error("Error búsqueda", e); }
+        }
+
+        function selectForOrder(videoId, title, artist) {
+            selectedVideo = { videoId, title, artist };
+            document.getElementById('search-results').classList.add('hidden');
+            document.getElementById('selected-song-preview').innerText = title;
+            document.getElementById('final-step-container').classList.remove('hidden');
+        }
+
+        async function confirmOrder() {
+            if (!selectedVideo) return;
+            const u = JSON.parse(localStorage.getItem('rocola_user_v1'));
+            await db.collection(`artifacts/${appId}/public/data/rocola_queue`).add({
+                ...selectedVideo, status: (currentTrack === null && queue.length === 0) ? 'playing' : 'pending', votes: 1, userId: u.id, userName: u.name,
+                dedication: document.getElementById('song-dedication').value, showName: document.getElementById('song-show-name').checked,
+                isKaraoke: searchType === 'karaoke', showDedication: false, lastCommand: 'play', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            closeSearch();
+        }
+
+        function sendCommand(cmd, extra = {}) {
+            if (!currentTrack) return;
+            db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(currentTrack.id).update({
+                lastCommand: cmd, commandId: Math.random(), ...extra
+            });
+        }
+        function handleDJToggle() { if (currentTrack) sendCommand(currentTrack.lastCommand === 'pause' ? 'play' : 'pause'); }
+        async function toggleDedication() { if (currentTrack) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(currentTrack.id).update({ showDedication: !currentTrack.showDedication }); }
+
+        function syncVideo() {
+            if (!player || !player.loadVideoById || !currentTrack) return;
+            if (player.getVideoData?.().video_id !== currentTrack.videoId) player.loadVideoById(currentTrack.videoId);
+            if (currentTrack.lastCommand === 'pause') player.pauseVideo();
+            else if (currentTrack.lastCommand === 'play') player.playVideo();
+            if (currentTrack.lastCommand === 'seek' && currentTrack.offset) {
+                player.seekTo(player.getCurrentTime() + currentTrack.offset, true);
+                sendCommand('play');
+            }
+        }
+
+        function initYouTube(divId) { if (window.YT && window.YT.Player) createPlayer(divId); else { const tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(tag); window.onYouTubeIframeAPIReady = () => createPlayer(divId); } }
+        function createPlayer(divId) { player = new window.YT.Player(divId, { height: '100%', width: '100%', videoId: '', playerVars: { autoplay: 1, controls: (currentMode === 'admin' ? 1 : 0), modestbranding: 1, rel: 0, enablejsapi: 1 }, events: { onReady: (e) => { if (currentMode === 'admin' && isAdminMuted) e.target.mute(); syncVideo(); }, onStateChange: (e) => { if (e.data === window.YT.PlayerState.ENDED) skipSong(); } } }); }
+        
+        async function skipSong() { if (currentTrack) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(currentTrack.id).delete(); if (queue.length > 0) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(queue[0].id).update({ status: 'playing', createdAt: firebase.firestore.FieldValue.serverTimestamp(), showDedication: false, lastCommand: 'play' }); }
+        async function voteSong(id, v) { await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(id).update({ votes: v + 1 }); }
+
+        function updateAdminDashboard(items) { document.getElementById('stat-total-today').innerText = items.length; if (items.length > 0) { const top = [...items].sort((a,b) => b.votes - a.votes)[0]; document.getElementById('stat-top-song').innerText = top.title; const first = items.reduce((acc, i) => Math.min(acc, i.createdAt?.seconds || Infinity), Infinity); const hours = Math.max((Math.floor(Date.now() / 1000) - first) / 3600, 0.2); document.getElementById('stat-songs-hour').innerText = Math.round(items.length / hours); } }
+        function updateUI() {
+            const list = document.getElementById('queue-list');
+            if (list) {
+                list.innerHTML = queue.map((s, idx) => `<div class="glass p-6 rounded-[2.5rem] flex items-center gap-6 border-white/5 animate-in fade-in shadow-xl"><img src="https://img.youtube.com/vi/${s.videoId}/default.jpg" class="w-20 h-14 object-cover rounded-2xl shadow-lg" /><div class="flex-1 min-w-0 text-left text-white"><h4 class="font-black text-lg truncate italic leading-tight tracking-tighter">${s.title}</h4><p class="text-[10px] uppercase tracking-widest mt-1 italic text-slate-500">${s.isKaraoke ? '🎤 KARAOKE' : '🎵 MÚSICA'} • ${s.showName ? s.userName : 'Anónimo'}</p></div><button onclick="voteSong('${s.id}', ${s.votes || 0})" class="bg-white/5 hover:bg-red-600 p-4 rounded-2xl transition-all flex flex-col items-center min-w-[60px] shadow-inner font-black italic text-white leading-none"><span class="text-sm">🔥 ${s.votes || 0}</span></button></div>`).join('');
+            }
+        }
+
+        function setSearchType(t) { searchType = t; document.getElementById('btn-type-music').className = t === 'music' ? 'flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-red-600 text-white italic' : 'flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 italic'; document.getElementById('btn-type-karaoke').className = t === 'karaoke' ? 'flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-red-600 text-white italic' : 'flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 italic'; if (document.getElementById('search-input').value.length >= 3) performSearch(); }
+        function updateClientWaiterStatus(calls) { const u = JSON.parse(localStorage.getItem('rocola_user_v1')); if (!u) return; const myCalls = calls.filter(c => c.userId === u.id && c.status !== 'completed'); const waiterDot = document.getElementById('dot-waiter-container'); const billDot = document.getElementById('dot-bill-container'); waiterDot.classList.add('invisible'); billDot.classList.add('invisible'); myCalls.forEach(call => { if (call.type === 'bill') billDot.classList.remove('invisible'); else waiterDot.classList.remove('invisible'); }); }
+        
+        function updateWaiterView(calls) {
+            const list = document.getElementById('waiter-calls-list');
+            const closedList = document.getElementById('waiter-closed-list');
+            const activeCalls = calls.filter(c => c.status !== 'completed');
+            const completedCalls = calls.filter(c => c.status === 'completed');
+
+            document.getElementById('waiter-stat-open').innerText = activeCalls.length;
+            document.getElementById('waiter-stat-closed').innerText = completedCalls.length;
+            
+            const ratedCalls = completedCalls.filter(c => c.satisfaction);
+            if (ratedCalls.length > 0) {
+                const avg = ratedCalls.reduce((acc, c) => acc + c.satisfaction, 0) / ratedCalls.length;
+                const faces = ["😫", "😫", "☹️", "😐", "🙂", "🤩"];
+                document.getElementById('waiter-stat-satisfaction').innerText = faces[Math.round(avg)];
+            }
+            if (completedCalls.length > 0) {
+                const avgT = completedCalls.reduce((acc, c) => acc + (c.responseTime || 0), 0) / completedCalls.length;
+                document.getElementById('waiter-stat-avg').innerText = Math.round(avgT/60) + 'm';
+            }
+
+            if (list) {
+                list.innerHTML = activeCalls.map(c => `
+                    <div class="glass p-8 rounded-[3rem] ${c.type === 'bill' ? 'border-yellow-500/50 bg-yellow-500/5' : 'border-white/5'} flex flex-col gap-6 animate-in fade-in">
+                        <div class="flex justify-between items-start text-left text-white">
+                            <div>
+                                <h4 class="text-5xl font-black italic leading-none tracking-tighter">MESA ${c.table}</h4>
+                                <p class="text-[11px] font-black uppercase mt-2 tracking-widest italic text-slate-500">${c.type === 'bill' ? `💰 CUENTA (${c.payment.toUpperCase()})` : '🛎️ SERVICIO'}</p>
+                            </div>
+                            <span class="px-4 py-2 rounded-full text-[10px] font-black ${c.status === 'sent' ? 'bg-red-600 pulse-alert-red' : 'bg-indigo-600'} text-white uppercase italic">
+                                ${c.status === 'sent' ? 'ESPERANDO' : 'EN CAMINO'}
+                            </span>
+                        </div>
+                        <button onclick="updateCallStatus('${c.id}', '${c.status === 'sent' ? 'on_way' : 'completed'}')" class="w-full py-5 ${c.status === 'sent' ? 'bg-indigo-600' : 'bg-emerald-600'} rounded-[1.5rem] font-black text-[12px] uppercase shadow-lg transition-all active:scale-95 italic text-white">${c.status === 'sent' ? 'TOMAR PEDIDO' : 'COMPLETAR'}</button>
+                    </div>
+                `).join('');
+            }
+
+            const tableSessions = {};
+            completedCalls.forEach(c => {
+                if (!tableSessions[c.table]) tableSessions[c.table] = { reqs: 0, time: 0, satisf: 0, count: 0 };
+                tableSessions[c.table].reqs++;
+                tableSessions[c.table].time += (c.responseTime || 0);
+                if (c.satisfaction) { tableSessions[c.table].satisf += c.satisfaction; tableSessions[c.table].count++; }
+            });
+            if (closedList) {
+                closedList.innerHTML = Object.keys(tableSessions).map(mesa => {
+                    const s = tableSessions[mesa];
+                    const avgT = Math.round((s.time / s.reqs) / 60);
+                    const avgS = s.count > 0 ? (s.satisf / s.count) : 0;
+                    const faces = ["-", "😫", "☹️", "😐", "🙂", "🤩"];
+                    return `<tr><td class="p-6">Mesa ${mesa}</td><td class="p-6 text-center text-white">${s.reqs}</td><td class="p-6 text-center text-white">${avgT} min</td><td class="p-6 text-right text-white">${faces[Math.round(avgS)]}</td></tr>`;
+                }).join('');
+            }
+        }
+
+        function saveUserRegistration() { const n = document.getElementById('reg-name').value.trim(); const s = document.getElementById('reg-surname').value.trim(); const w = document.getElementById('reg-whatsapp').value.trim(); if (!n || !s || !w) return alert("Faltan datos."); localStorage.setItem('rocola_user_v1', JSON.stringify({ name: n, surname: s, whatsapp: w, id: auth.currentUser.uid })); document.getElementById('registration-screen').classList.add('hidden'); setMode('client'); }
+        function handleCallWaiter() { const table = localStorage.getItem('rocola_table_v1'); if (!table) document.getElementById('table-modal').classList.remove('hidden'); else sendWaiterCall(table, 'service'); }
+        function handleRequestBill() { const table = localStorage.getItem('rocola_table_v1'); if (!table) document.getElementById('table-modal').classList.remove('hidden'); else document.getElementById('bill-modal').classList.remove('hidden'); }
+        function saveTableNumber() { const table = document.getElementById('table-number-input').value; if (!table) return; localStorage.setItem('rocola_table_v1', table); document.getElementById('table-modal').classList.add('hidden'); }
+        
+        function selectPayment(type) { selectedPayment = type; document.getElementById('pay-efectivo').className = type === 'efectivo' ? 'py-6 rounded-3xl bg-yellow-600 border-2 border-white/20 font-black uppercase text-xs transition-all italic text-white' : 'py-6 rounded-3xl bg-slate-800 font-bold uppercase text-xs transition-all italic text-white'; document.getElementById('pay-tarjeta').className = type === 'tarjeta' ? 'py-6 rounded-3xl bg-yellow-600 border-2 border-white/20 font-black uppercase text-xs transition-all italic text-white' : 'py-6 rounded-3xl bg-slate-800 font-bold uppercase text-xs transition-all italic text-white'; checkBillForm(); }
+        function selectSatisfaction(level) { selectedSatisfactionValue = level; document.querySelectorAll('.satisfaction-btn').forEach((btn, i) => { if ((i + 1) === level) btn.classList.add('active'); else btn.classList.remove('active'); }); checkBillForm(); }
+        function checkBillForm() { if (selectedPayment && selectedSatisfactionValue > 0) { const btn = document.getElementById('confirm-bill-btn'); btn.disabled = false; btn.classList.remove('opacity-50'); } }
+        async function sendBillRequest() { const table = localStorage.getItem('rocola_table_v1'); await sendWaiterCall(table, 'bill', { payment: selectedPayment, satisfaction: selectedSatisfactionValue }); closeBillModal(); }
+        async function sendWaiterCall(table, type, extra = {}) { const u = JSON.parse(localStorage.getItem('rocola_user_v1')); if (!u) return; await db.collection(`artifacts/${appId}/public/data/waiter_calls`).add({ userId: u.id, userName: u.name, table: table, type: type, status: 'sent', createdAt: firebase.firestore.FieldValue.serverTimestamp(), ...extra }); }
+        function closeBillModal() { document.getElementById('bill-modal').classList.add('hidden'); selectedPayment = null; selectedSatisfactionValue = 0; document.querySelectorAll('.satisfaction-btn').forEach(btn => btn.classList.remove('active')); const confirmBtn = document.getElementById('confirm-bill-btn'); confirmBtn.disabled = true; confirmBtn.classList.add('opacity-50'); }
+        async function updateCallStatus(id, newStatus) { const ref = db.collection(`artifacts/${appId}/public/data/waiter_calls`).doc(id); const snap = await ref.get(); const data = snap.data(); const update = { status: newStatus }; if (newStatus === 'completed') update.responseTime = (Math.floor(Date.now() / 1000) - (data.createdAt?.seconds || 0)); await ref.update(update); }
+        function copyRoleLink(mode) { const baseUrl = window.location.origin + window.location.pathname; const fullUrl = `${baseUrl}?mode=${mode}`; navigator.clipboard.writeText(fullUrl); alert(`Enlace ${mode} copiado`); }
+        function toggleAdminMute() { isAdminMuted = !isAdminMuted; if (isAdminMuted) player.mute(); else player.unMute(); document.getElementById('mute-icon').innerHTML = isAdminMuted ? `<path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>` : `<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>`; }
+
+    </script>
+</body>
+</html>
