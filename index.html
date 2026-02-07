@@ -735,18 +735,60 @@
         async function toggleDedication() { if (currentTrack) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(currentTrack.id).update({ showDedication: !currentTrack.showDedication }); }
 
         function syncVideo() {
-            if (!player || !player.loadVideoById || !currentTrack) return;
-            if (player.getVideoData?.().video_id !== currentTrack.videoId) player.loadVideoById(currentTrack.videoId);
-            if (currentTrack.lastCommand === 'pause') player.pauseVideo();
-            else if (currentTrack.lastCommand === 'play') player.playVideo();
-            if (currentTrack.lastCommand === 'seek' && currentTrack.offset) {
-                player.seekTo(player.getCurrentTime() + currentTrack.offset, true);
-                sendCommand('play');
+            if (!player || !currentTrack) return;
+            try {
+                if (player.loadVideoById && currentTrack.videoId) {
+                    const currentVideoId = player.getVideoData?.()?.video_id;
+                    if (currentVideoId !== currentTrack.videoId) {
+                        player.loadVideoById(currentTrack.videoId);
+                    }
+                }
+                
+                // Wait a bit for video to load before playing
+                setTimeout(() => {
+                    if (!player || !currentTrack) return;
+                    if (currentTrack.lastCommand === 'pause') {
+                        player.pauseVideo?.();
+                    } else if (currentTrack.lastCommand === 'play') {
+                        player.playVideo?.();
+                    }
+                }, 500);
+                
+                if (currentTrack.lastCommand === 'seek' && currentTrack.offset) {
+                    player.seekTo?.(player.getCurrentTime?.() + currentTrack.offset, true);
+                    sendCommand('play');
+                }
+            } catch(e) {
+                console.error('syncVideo error:', e);
             }
         }
 
         function initYouTube(divId) { if (window.YT && window.YT.Player) createPlayer(divId); else { const tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(tag); window.onYouTubeIframeAPIReady = () => createPlayer(divId); } }
-        function createPlayer(divId) { player = new window.YT.Player(divId, { height: '100%', width: '100%', videoId: '', playerVars: { autoplay: 1, controls: (currentMode === 'admin' ? 1 : 0), modestbranding: 1, rel: 0, enablejsapi: 1 }, events: { onReady: (e) => { if (currentMode === 'admin' && isAdminMuted) e.target.mute(); syncVideo(); }, onStateChange: (e) => { if (e.data === window.YT.PlayerState.ENDED) skipSong(); } } }); }
+        function createPlayer(divId) { 
+            player = new window.YT.Player(divId, { 
+                height: '100%', 
+                width: '100%', 
+                videoId: '', 
+                playerVars: { 
+                    autoplay: 1, 
+                    controls: (currentMode === 'admin' || currentMode === 'display' ? 0 : 0), 
+                    modestbranding: 1, 
+                    rel: 0, 
+                    enablejsapi: 1,
+                    fs: 1,
+                    iv_load_policy: 3
+                }, 
+                events: { 
+                    onReady: (e) => { 
+                        if (currentMode === 'admin' && isAdminMuted) e.target.mute();
+                        if (currentTrack) syncVideo();
+                    }, 
+                    onStateChange: (e) => { 
+                        if (e.data === window.YT.PlayerState.ENDED) skipSong(); 
+                    } 
+                } 
+            }); 
+        }
         
         async function skipSong() { if (currentTrack) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(currentTrack.id).delete(); if (queue.length > 0) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(queue[0].id).update({ status: 'playing', createdAt: firebase.firestore.FieldValue.serverTimestamp(), showDedication: false, lastCommand: 'play' }); }
         async function voteSong(id, v) { await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(id).update({ votes: v + 1 }); }
@@ -1046,6 +1088,8 @@
         async function loadAnalyticsData() {
             try {
                 const { dateFrom, dateTo } = getDateRange();
+                console.log('📊 Analytics loading - Period:', analyticsPeriod, 'From:', new Date(dateFrom * 1000), 'To:', new Date(dateTo * 1000));
+                
                 const tsFrom = firebase.firestore.Timestamp.fromSeconds(dateFrom);
                 const tsTo = firebase.firestore.Timestamp.fromSeconds(dateTo);
                 
@@ -1056,6 +1100,7 @@
                     .get();
                 
                 const waiterCalls = waiterSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log('📞 Waiter calls found:', waiterCalls.length);
                 
                 // Cargar datos de rocola_queue
                 const queueSnap = await db.collection(`artifacts/${appId}/public/data/rocola_queue`)
@@ -1064,10 +1109,18 @@
                     .get();
                 
                 const queueItems = queueSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log('🎵 Queue items found:', queueItems.length);
                 
                 calculateMetrics(waiterCalls, queueItems, dateFrom, dateTo);
             } catch(err) {
-                console.error('Error loading analytics:', err);
+                console.error('❌ Error loading analytics:', err);
+                // Fallback: load all data without date filter
+                const waiterSnap = await db.collection(`artifacts/${appId}/public/data/waiter_calls`).get();
+                const waiterCalls = waiterSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const queueSnap = await db.collection(`artifacts/${appId}/public/data/rocola_queue`).get();
+                const queueItems = queueSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log('📊 Fallback - Waiter:', waiterCalls.length, 'Queue:', queueItems.length);
+                calculateMetrics(waiterCalls, queueItems, 0, Math.floor(Date.now() / 1000));
             }
         }
 
