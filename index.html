@@ -479,12 +479,7 @@
             setSyncError('Promesa rechazada. Revisa Firebase/Network.');
         });
 
-        window.onload = () => {
-            const syncText = document.getElementById('sync-text');
-            if (syncText) syncText.innerText = `Sincronizando sistema... (ONLOAD ${BUILD_ID})`;
-            applyLogo();
-            if (!firebaseConfig) alert("Configura Firebase."); else initFirebase();
-        };
+        // Removed window.onload - will call directly before closing body tag
 
         async function initFirebase() {
             try {
@@ -1115,6 +1110,20 @@
             document.getElementById('analytics-avg-orders').innerText = avgOrders;
             document.getElementById('analytics-songs-per-hour').innerText = songsPerHour;
         }
+    </script>
 
+    <!-- Direct initialization (not relying on window.onload) -->
+    <script>
+        try {
+            const syncText = document.getElementById('sync-text');
+            if (syncText) syncText.innerText = `Sincronizando sistema... (DIRECT INIT ${BUILD_ID})`;
+            applyLogo();
+            if (!firebaseConfig) alert("Configura Firebase."); else initFirebase();
+        } catch (e) {
+            console.error('Direct init error:', e);
+            const syncText = document.getElementById('sync-text');
+            if (syncText) syncText.innerText = `Error en inicialización. ${e.message}`;
+        }
+    </script>
 </body>
 </html>
