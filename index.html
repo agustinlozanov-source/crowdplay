@@ -689,15 +689,78 @@
                 document.getElementById('menu-screen').classList.add('hidden');
             }
         }
-        function handleCallWaiter() { const table = localStorage.getItem('rocola_table_v1'); if (!table) document.getElementById('table-modal').classList.remove('hidden'); else sendWaiterCall(table, 'service'); }
-        function handleRequestBill() { const table = localStorage.getItem('rocola_table_v1'); if (!table) document.getElementById('table-modal').classList.remove('hidden'); else document.getElementById('bill-modal').classList.remove('hidden'); }
-        function saveTableNumber() { const table = document.getElementById('table-number-input').value; if (!table) return; localStorage.setItem('rocola_table_v1', table); document.getElementById('table-modal').classList.add('hidden'); }
+        async function handleCallWaiter() { 
+            const table = localStorage.getItem('rocola_table_v1'); 
+            if (!table) {
+                document.getElementById('table-modal').classList.remove('hidden');
+            } else {
+                const btn = document.getElementById('call-waiter-btn');
+                btn.disabled = true;
+                btn.innerText = 'Enviando...';
+                await sendWaiterCall(table, 'service');
+                btn.disabled = false;
+                btn.innerText = 'Llamar mesero';
+            }
+        }
+        
+        function handleRequestBill() { 
+            const table = localStorage.getItem('rocola_table_v1'); 
+            if (!table) {
+                document.getElementById('table-modal').classList.remove('hidden');
+            } else {
+                document.getElementById('bill-modal').classList.remove('hidden');
+            }
+        }
+        
+        function saveTableNumber() { 
+            const table = document.getElementById('table-number-input').value; 
+            if (!table) return alert('Ingresa tu número de mesa'); 
+            localStorage.setItem('rocola_table_v1', table); 
+            document.getElementById('table-modal').classList.add('hidden');
+            document.getElementById('table-number-input').value = '';
+        }
         
         function selectPayment(type) { selectedPayment = type; document.getElementById('pay-efectivo').className = type === 'efectivo' ? 'py-6 rounded-3xl bg-yellow-600 border-2 border-white/20 font-black uppercase text-xs transition-all italic text-white' : 'py-6 rounded-3xl bg-slate-800 font-bold uppercase text-xs transition-all italic text-white'; document.getElementById('pay-tarjeta').className = type === 'tarjeta' ? 'py-6 rounded-3xl bg-yellow-600 border-2 border-white/20 font-black uppercase text-xs transition-all italic text-white' : 'py-6 rounded-3xl bg-slate-800 font-bold uppercase text-xs transition-all italic text-white'; checkBillForm(); }
         function selectSatisfaction(level) { selectedSatisfactionValue = level; document.querySelectorAll('.satisfaction-btn').forEach((btn, i) => { if ((i + 1) === level) btn.classList.add('active'); else btn.classList.remove('active'); }); checkBillForm(); }
         function checkBillForm() { if (selectedPayment && selectedSatisfactionValue > 0) { const btn = document.getElementById('confirm-bill-btn'); btn.disabled = false; btn.classList.remove('opacity-50'); } }
-        async function sendBillRequest() { const table = localStorage.getItem('rocola_table_v1'); await sendWaiterCall(table, 'bill', { payment: selectedPayment, satisfaction: selectedSatisfactionValue }); closeBillModal(); }
-        async function sendWaiterCall(table, type, extra = {}) { const u = JSON.parse(localStorage.getItem('rocola_user_v1')); if (!u) return; await db.collection(`artifacts/${appId}/public/data/waiter_calls`).add({ userId: u.id, userName: u.name, table: table, type: type, status: 'sent', createdAt: firebase.firestore.FieldValue.serverTimestamp(), ...extra }); }
+        async function sendBillRequest() { 
+            const table = localStorage.getItem('rocola_table_v1'); 
+            const btn = document.getElementById('confirm-bill-btn');
+            btn.disabled = true;
+            btn.innerText = 'Enviando...';
+            try {
+                await sendWaiterCall(table, 'bill', { payment: selectedPayment, satisfaction: selectedSatisfactionValue });
+                closeBillModal();
+                alert('✅ Solicitud enviada al mesero');
+            } catch(err) {
+                console.error('Error al enviar solicitud:', err);
+                alert('❌ Error al enviar. Intenta de nuevo.');
+                btn.disabled = false;
+                btn.innerText = 'Enviar Solicitud';
+            }
+        }
+        async function sendWaiterCall(table, type, extra = {}) { 
+            const u = JSON.parse(localStorage.getItem('rocola_user_v1')); 
+            if (!u) {
+                alert('Usuario no registrado. Recarga la página.');
+                return;
+            }
+            try {
+                await db.collection(`artifacts/${appId}/public/data/waiter_calls`).add({ 
+                    userId: u.id, 
+                    userName: u.name, 
+                    table: String(table), 
+                    type: type, 
+                    status: 'sent', 
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(), 
+                    ...extra 
+                });
+                console.log(`✅ Solicitud ${type} enviada a mesa ${table}`);
+            } catch(err) {
+                console.error('Error Firebase:', err);
+                throw err;
+            }
+        }
         function closeBillModal() { document.getElementById('bill-modal').classList.add('hidden'); selectedPayment = null; selectedSatisfactionValue = 0; document.querySelectorAll('.satisfaction-btn').forEach(btn => btn.classList.remove('active')); const confirmBtn = document.getElementById('confirm-bill-btn'); confirmBtn.disabled = true; confirmBtn.classList.add('opacity-50'); }
         async function updateCallStatus(id, newStatus) { const ref = db.collection(`artifacts/${appId}/public/data/waiter_calls`).doc(id); const snap = await ref.get(); const data = snap.data(); const update = { status: newStatus }; if (newStatus === 'completed') update.responseTime = (Math.floor(Date.now() / 1000) - (data.createdAt?.seconds || 0)); await ref.update(update); }
         function toggleAdminMute() { isAdminMuted = !isAdminMuted; if (isAdminMuted) player.mute(); else player.unMute(); document.getElementById('mute-icon').innerHTML = isAdminMuted ? `<path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>` : `<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>`; }
