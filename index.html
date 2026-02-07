@@ -482,13 +482,21 @@
 
         async function initFirebase() {
             try {
+                const syncText = document.getElementById('sync-text');
+                if (!window.firebase) {
+                    setSyncError('Firebase SDK no cargó. Revisa conexión o bloqueos.');
+                    return;
+                }
+
+                if (syncText) syncText.innerText = `Sincronizando sistema... (init)`;
+
                 if (!firebase.apps.length) app = firebase.initializeApp(firebaseConfig);
                 auth = firebase.auth();
                 db = firebase.firestore();
 
                 const syncTimeout = setTimeout(() => {
                     setSyncError('Sincronización tarda demasiado. Revisa Auth/Rules/Config.');
-                }, 8000);
+                }, 12000);
 
                 const proceedApp = () => {
                     clearTimeout(syncTimeout);
@@ -500,7 +508,10 @@
                     startRealtimeSync();
                 };
 
+                if (syncText) syncText.innerText = `Sincronizando sistema... (auth)`;
                 await auth.signInAnonymously();
+
+                if (syncText) syncText.innerText = `Sincronizando sistema... (auth ok)`;
 
                 // Fallback: if auth state is already available, proceed immediately
                 if (auth.currentUser) {
