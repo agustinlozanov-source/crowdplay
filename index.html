@@ -490,16 +490,26 @@
                     setSyncError('Sincronización tarda demasiado. Revisa Auth/Rules/Config.');
                 }, 8000);
 
+                const proceedApp = () => {
+                    clearTimeout(syncTimeout);
+                    document.getElementById('loading-screen').classList.add('hidden');
+                    updateStatus(true);
+                    const params = new URLSearchParams(window.location.search);
+                    const mode = params.get('mode');
+                    if (mode) setMode(mode); else document.getElementById('menu-screen').classList.remove('hidden');
+                    startRealtimeSync();
+                };
+
                 await auth.signInAnonymously();
+
+                // Fallback: if auth state is already available, proceed immediately
+                if (auth.currentUser) {
+                    proceedApp();
+                }
+
                 auth.onAuthStateChanged(user => {
                     if (user) {
-                        clearTimeout(syncTimeout);
-                        document.getElementById('loading-screen').classList.add('hidden');
-                        updateStatus(true);
-                        const params = new URLSearchParams(window.location.search);
-                        const mode = params.get('mode');
-                        if (mode) setMode(mode); else document.getElementById('menu-screen').classList.remove('hidden');
-                        startRealtimeSync();
+                        proceedApp();
                     } else {
                         setSyncError('No se pudo autenticar. Revisa Firebase Auth.');
                     }
