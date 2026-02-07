@@ -481,7 +481,7 @@
 
         window.onload = () => {
             const syncText = document.getElementById('sync-text');
-            if (syncText) syncText.innerText = `Sincronizando sistema... (${BUILD_ID})`;
+            if (syncText) syncText.innerText = `Sincronizando sistema... (ONLOAD ${BUILD_ID})`;
             applyLogo();
             if (!firebaseConfig) alert("Configura Firebase."); else initFirebase();
         };
