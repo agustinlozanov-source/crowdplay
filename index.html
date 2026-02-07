@@ -458,8 +458,24 @@
         let selectedSatisfactionValue = 0;
         let selectedVideo = null;
 
+        const BUILD_ID = '2026-02-07-analytics-1';
         try { if (!firebaseConfig && typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config); } catch(e) {}
-        window.onload = () => { applyLogo(); if (!firebaseConfig) alert("Configura Firebase."); else initFirebase(); };
+
+        window.addEventListener('error', (e) => {
+            console.error('Global error:', e.error || e.message);
+            setSyncError('Error de JS. Revisa consola o config.');
+        });
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('Unhandled rejection:', e.reason);
+            setSyncError('Promesa rechazada. Revisa Firebase/Network.');
+        });
+
+        window.onload = () => {
+            const syncText = document.getElementById('sync-text');
+            if (syncText) syncText.innerText = `Sincronizando sistema... (${BUILD_ID})`;
+            applyLogo();
+            if (!firebaseConfig) alert("Configura Firebase."); else initFirebase();
+        };
 
         async function initFirebase() {
             try {
