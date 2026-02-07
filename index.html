@@ -466,9 +466,15 @@
                 if (!firebase.apps.length) app = firebase.initializeApp(firebaseConfig);
                 auth = firebase.auth();
                 db = firebase.firestore();
+
+                const syncTimeout = setTimeout(() => {
+                    setSyncError('Sincronización tarda demasiado. Revisa Auth/Rules/Config.');
+                }, 8000);
+
                 await auth.signInAnonymously();
                 auth.onAuthStateChanged(user => {
                     if (user) {
+                        clearTimeout(syncTimeout);
                         document.getElementById('loading-screen').classList.add('hidden');
                         updateStatus(true);
                         const params = new URLSearchParams(window.location.search);
@@ -478,9 +484,12 @@
                     } else {
                         setSyncError('No se pudo autenticar. Revisa Firebase Auth.');
                     }
+                }, (err) => {
+                    console.error('Auth state error:', err);
+                    setSyncError('Error de autenticación. Verifica Auth Anónimo.');
                 });
             } catch (e) {
-                console.error('Firebase init error:', e);
+                console.error('Firebase init error:', e, firebaseConfig);
                 setSyncError('Error al sincronizar. Revisa Firebase/Rules/Auth.');
             }
         }
