@@ -690,16 +690,32 @@
             }
         }
         async function handleCallWaiter() { 
-            const table = localStorage.getItem('rocola_table_v1'); 
-            if (!table) {
-                document.getElementById('table-modal').classList.remove('hidden');
-            } else {
+            try {
+                const table = localStorage.getItem('rocola_table_v1'); 
+                if (!table) {
+                    document.getElementById('table-modal').classList.remove('hidden');
+                    return;
+                }
                 const btn = document.getElementById('call-waiter-btn');
                 btn.disabled = true;
+                const originalText = btn.innerText;
                 btn.innerText = 'Enviando...';
+                
                 await sendWaiterCall(table, 'service');
+                
+                btn.innerText = '✅ Enviado';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                }, 2000);
+            } catch(err) {
+                console.error('Error handleCallWaiter:', err);
+                const btn = document.getElementById('call-waiter-btn');
                 btn.disabled = false;
-                btn.innerText = 'Llamar mesero';
+                btn.innerText = '❌ Error - Intenta de nuevo';
+                setTimeout(() => {
+                    btn.innerText = 'Llamar mesero';
+                }, 3000);
             }
         }
         
@@ -724,29 +740,48 @@
         function selectSatisfaction(level) { selectedSatisfactionValue = level; document.querySelectorAll('.satisfaction-btn').forEach((btn, i) => { if ((i + 1) === level) btn.classList.add('active'); else btn.classList.remove('active'); }); checkBillForm(); }
         function checkBillForm() { if (selectedPayment && selectedSatisfactionValue > 0) { const btn = document.getElementById('confirm-bill-btn'); btn.disabled = false; btn.classList.remove('opacity-50'); } }
         async function sendBillRequest() { 
-            const table = localStorage.getItem('rocola_table_v1'); 
-            const btn = document.getElementById('confirm-bill-btn');
-            btn.disabled = true;
-            btn.innerText = 'Enviando...';
             try {
+                const table = localStorage.getItem('rocola_table_v1'); 
+                if (!table) {
+                    alert('Por favor ingresa tu número de mesa primero');
+                    return;
+                }
+                const btn = document.getElementById('confirm-bill-btn');
+                const originalText = btn.innerText;
+                btn.disabled = true;
+                btn.innerText = 'Enviando...';
+                
                 await sendWaiterCall(table, 'bill', { payment: selectedPayment, satisfaction: selectedSatisfactionValue });
-                closeBillModal();
-                alert('✅ Solicitud enviada al mesero');
+                
+                btn.innerText = '✅ Enviado';
+                setTimeout(() => {
+                    closeBillModal();
+                    btn.innerText = originalText;
+                }, 1500);
+                
             } catch(err) {
-                console.error('Error al enviar solicitud:', err);
-                alert('❌ Error al enviar. Intenta de nuevo.');
+                console.error('Error sendBillRequest:', err);
+                const btn = document.getElementById('confirm-bill-btn');
                 btn.disabled = false;
-                btn.innerText = 'Enviar Solicitud';
+                btn.innerText = '❌ Error - Intenta de nuevo';
+                setTimeout(() => {
+                    btn.innerText = 'Enviar Solicitud';
+                }, 3000);
             }
         }
         async function sendWaiterCall(table, type, extra = {}) { 
+            if (!db) {
+                throw new Error('Base de datos no inicializada. Recarga la página.');
+            }
             const u = JSON.parse(localStorage.getItem('rocola_user_v1')); 
-            if (!u) {
-                alert('Usuario no registrado. Recarga la página.');
-                return;
+            if (!u || !u.id) {
+                throw new Error('Usuario no registrado. Por favor, registrate primero.');
+            }
+            if (!table) {
+                throw new Error('Número de mesa no guardado.');
             }
             try {
-                await db.collection(`artifacts/${appId}/public/data/waiter_calls`).add({ 
+                const docRef = await db.collection(`artifacts/${appId}/public/data/waiter_calls`).add({ 
                     userId: u.id, 
                     userName: u.name, 
                     table: String(table), 
@@ -755,10 +790,11 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(), 
                     ...extra 
                 });
-                console.log(`✅ Solicitud ${type} enviada a mesa ${table}`);
+                console.log(`✅ Solicitud ${type} enviada a mesa ${table}, docId: ${docRef.id}`);
+                return docRef.id;
             } catch(err) {
-                console.error('Error Firebase:', err);
-                throw err;
+                console.error(`❌ Error Firebase sendWaiterCall:`, err);
+                throw new Error(`No se pudo enviar: ${err.message}`);
             }
         }
         function closeBillModal() { document.getElementById('bill-modal').classList.add('hidden'); selectedPayment = null; selectedSatisfactionValue = 0; document.querySelectorAll('.satisfaction-btn').forEach(btn => btn.classList.remove('active')); const confirmBtn = document.getElementById('confirm-bill-btn'); confirmBtn.disabled = true; confirmBtn.classList.add('opacity-50'); }
