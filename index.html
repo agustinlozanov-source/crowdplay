@@ -100,6 +100,12 @@
                     </div>
                     <div><h3 class="font-black text-2xl text-white italic uppercase tracking-tighter">Modo DJ</h3><p class="text-sm text-slate-500 font-bold uppercase tracking-widest">Gestión de Ambiente</p></div>
                 </button>
+                <button onclick="setMode('analytics')" class="glass p-8 rounded-[3rem] flex items-center gap-8 hover:bg-slate-800 transition-all text-left border-purple-500/20 group shadow-2xl">
+                    <div class="bg-purple-600/20 p-5 rounded-[1.5rem] text-purple-400 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/><rect x="5" y="2" width="4" height="3" rx="1"/><rect x="15" y="2" width="4" height="3" rx="1"/></svg>
+                    </div>
+                    <div><h3 class="font-black text-2xl text-white italic uppercase tracking-tighter">Analytics</h3><p class="text-sm text-slate-500 font-bold uppercase tracking-widest">Estadísticas Detalladas</p></div>
+                </button>
             </div>
         </div>
 
@@ -235,6 +241,69 @@
                         <div class="inline-flex items-center gap-3 bg-indigo-600 text-white px-8 py-3 rounded-full text-xs font-black uppercase mt-4 shadow-xl italic tracking-widest">
                              ⏳ Espera est: <span id="wait-minutes">0</span> min
                         </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN ANALYTICS -->
+                <div id="analytics-view" class="hidden space-y-12">
+                    <!-- Filtros de Fecha -->
+                    <div class="glass p-8 rounded-[3rem] border-white/5 shadow-2xl space-y-6">
+                        <h3 class="text-2xl font-black italic text-white uppercase tracking-tighter">Período</h3>
+                        <div class="flex gap-3 flex-wrap">
+                            <button onclick="setAnalyticsPeriod('today')" id="btn-period-today" class="px-6 py-3 rounded-2xl bg-purple-600 text-white font-black text-sm uppercase italic transition-all shadow-lg">Hoy</button>
+                            <button onclick="setAnalyticsPeriod('week')" id="btn-period-week" class="px-6 py-3 rounded-2xl bg-slate-700 hover:bg-slate-600 text-white font-black text-sm uppercase italic transition-all shadow-lg">Esta Semana</button>
+                            <button onclick="setAnalyticsPeriod('month')" id="btn-period-month" class="px-6 py-3 rounded-2xl bg-slate-700 hover:bg-slate-600 text-white font-black text-sm uppercase italic transition-all shadow-lg">Este Mes</button>
+                            <button onclick="setAnalyticsPeriod('year')" id="btn-period-year" class="px-6 py-3 rounded-2xl bg-slate-700 hover:bg-slate-600 text-white font-black text-sm uppercase italic transition-all shadow-lg">Este Año</button>
+                            <button onclick="toggleCustomDateRange()" id="btn-period-custom" class="px-6 py-3 rounded-2xl bg-slate-700 hover:bg-slate-600 text-white font-black text-sm uppercase italic transition-all shadow-lg">Rango Custom</button>
+                        </div>
+                        <!-- Custom Date Range (oculto por defecto) -->
+                        <div id="custom-date-range" class="hidden space-y-4 border-t border-white/10 pt-6">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest italic mb-2 block">Desde</label>
+                                    <input id="date-from" type="date" class="w-full bg-slate-800 border border-white/10 rounded-xl p-3 text-white font-black outline-none focus:border-purple-600">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest italic mb-2 block">Hasta</label>
+                                    <input id="date-to" type="date" class="w-full bg-slate-800 border border-white/10 rounded-xl p-3 text-white font-black outline-none focus:border-purple-600">
+                                </div>
+                            </div>
+                            <button onclick="applyCustomDateRange()" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-2xl font-black text-sm uppercase italic shadow-lg transition-all">Aplicar</button>
+                        </div>
+                    </div>
+
+                    <!-- KPIs Principales -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div class="stat-card p-8 rounded-[2rem] border border-purple-500/20 shadow-xl text-center">
+                            <p class="text-[12px] text-purple-500 uppercase tracking-widest mb-2 leading-none font-black italic">Atención Promedio</p>
+                            <h4 id="analytics-avg-attention" class="text-5xl font-black text-white stat-number tracking-tighter">--</h4>
+                            <p class="text-[10px] text-slate-500 mt-2">minutos</p>
+                        </div>
+                        <div class="stat-card p-8 rounded-[2rem] border border-emerald-500/20 shadow-xl text-center">
+                            <p class="text-[12px] text-emerald-500 uppercase tracking-widest mb-2 leading-none font-black italic">Calidad Servicio</p>
+                            <h4 id="analytics-avg-quality" class="text-5xl font-black text-white stat-number tracking-tighter">--</h4>
+                            <p class="text-[10px] text-slate-500 mt-2">rating</p>
+                        </div>
+                        <div class="stat-card p-8 rounded-[2rem] border border-cyan-500/20 shadow-xl text-center">
+                            <p class="text-[12px] text-cyan-500 uppercase tracking-widest mb-2 leading-none font-black italic">Mesas Atendidas</p>
+                            <h4 id="analytics-total-tables" class="text-5xl font-black text-white stat-number tracking-tighter">0</h4>
+                            <p class="text-[10px] text-slate-500 mt-2">total</p>
+                        </div>
+                        <div class="stat-card p-8 rounded-[2rem] border border-yellow-500/20 shadow-xl text-center">
+                            <p class="text-[12px] text-yellow-500 uppercase tracking-widest mb-2 leading-none font-black italic">Pedidos/Mesa</p>
+                            <h4 id="analytics-avg-orders" class="text-5xl font-black text-white stat-number tracking-tighter">--</h4>
+                            <p class="text-[10px] text-slate-500 mt-2">promedio</p>
+                        </div>
+                        <div class="stat-card p-8 rounded-[2rem] border border-red-500/20 shadow-xl text-center">
+                            <p class="text-[12px] text-red-500 uppercase tracking-widest mb-2 leading-none font-black italic">Canciones/Hora</p>
+                            <h4 id="analytics-songs-per-hour" class="text-5xl font-black text-white stat-number tracking-tighter">--</h4>
+                            <p class="text-[10px] text-slate-500 mt-2">ritmo</p>
+                        </div>
+                    </div>
+
+                    <!-- Gráficos / Detalles (placeholder) -->
+                    <div class="glass p-10 rounded-[3rem] border-white/5 shadow-2xl text-center">
+                        <p class="text-slate-500 font-bold italic">📊 Gráficos detallados disponibles pronto</p>
                     </div>
                 </div>
 
@@ -443,9 +512,10 @@
             currentMode = mode;
             document.getElementById('menu-screen').classList.add('hidden');
             document.getElementById('main-screen').classList.remove('hidden');
-            document.getElementById('role-badge').innerText = (mode === 'admin') ? 'MODO DJ' : mode.toUpperCase();
+            document.getElementById('role-badge').innerText = (mode === 'admin') ? 'MODO DJ' : (mode === 'analytics') ? 'ANALYTICS' : mode.toUpperCase();
             document.getElementById('admin-view').classList.add('hidden');
             document.getElementById('waiter-view').classList.add('hidden');
+            document.getElementById('analytics-view').classList.add('hidden');
             document.getElementById('client-footer').classList.add('hidden');
 
             if (mode === 'display') {
@@ -459,6 +529,10 @@
                 document.getElementById('waiter-view').classList.remove('hidden');
                 document.getElementById('queue-section').classList.add('hidden');
                 loadWaiterInitialData();
+            } else if (mode === 'analytics') {
+                document.getElementById('analytics-view').classList.remove('hidden');
+                document.getElementById('queue-section').classList.add('hidden');
+                initAnalytics();
             } else if (mode === 'client') {
                 document.getElementById('client-footer').classList.remove('hidden');
                 document.getElementById('client-wait-info').classList.remove('hidden');
@@ -823,6 +897,154 @@
         function toggleAdminMute() { isAdminMuted = !isAdminMuted; if (isAdminMuted) player.mute(); else player.unMute(); document.getElementById('mute-icon').innerHTML = isAdminMuted ? `<path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>` : `<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>`; }
         function copyRoleLink(mode) { const baseUrl = window.location.origin + window.location.pathname; const fullUrl = `${baseUrl}?mode=${mode}`; navigator.clipboard.writeText(fullUrl); alert(`Enlace ${mode} copiado`); }
 
-    </script>
+        // ===== ANALYTICS =====
+        let analyticsPeriod = 'today';
+        let analyticsDateFrom = null;
+        let analyticsDateTo = null;
+
+        function initAnalytics() {
+            setAnalyticsPeriod('today');
+        }
+
+        function setAnalyticsPeriod(period) {
+            analyticsPeriod = period;
+            analyticsDateFrom = null;
+            analyticsDateTo = null;
+            document.getElementById('custom-date-range').classList.add('hidden');
+            updateAnalyticsButtons();
+            loadAnalyticsData();
+        }
+
+        function toggleCustomDateRange() {
+            document.getElementById('custom-date-range').classList.toggle('hidden');
+        }
+
+        function applyCustomDateRange() {
+            const from = document.getElementById('date-from').value;
+            const to = document.getElementById('date-to').value;
+            if (!from || !to) {
+                alert('Por favor completa ambas fechas');
+                return;
+            }
+            analyticsDateFrom = new Date(from).getTime() / 1000;
+            analyticsDateTo = new Date(to).getTime() / 1000 + 86400; // Hasta final del día
+            analyticsPeriod = 'custom';
+            updateAnalyticsButtons();
+            loadAnalyticsData();
+        }
+
+        function updateAnalyticsButtons() {
+            document.querySelectorAll('[id^="btn-period-"]').forEach(btn => {
+                btn.classList.remove('bg-purple-600');
+                btn.classList.add('bg-slate-700', 'hover:bg-slate-600');
+            });
+            const activeBtn = document.getElementById(`btn-period-${analyticsPeriod}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-slate-700', 'hover:bg-slate-600');
+                activeBtn.classList.add('bg-purple-600');
+            }
+        }
+
+        async function loadAnalyticsData() {
+            try {
+                const { dateFrom, dateTo } = getDateRange();
+                
+                // Cargar datos de waiter_calls
+                const waiterSnap = await db.collection(`artifacts/${appId}/public/data/waiter_calls`)
+                    .where('createdAt', '>=', { seconds: dateFrom })
+                    .where('createdAt', '<', { seconds: dateTo })
+                    .get();
+                
+                const waiterCalls = waiterSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Cargar datos de rocola_queue
+                const queueSnap = await db.collection(`artifacts/${appId}/public/data/rocola_queue`)
+                    .where('createdAt', '>=', { seconds: dateFrom })
+                    .where('createdAt', '<', { seconds: dateTo })
+                    .get();
+                
+                const queueItems = queueSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                calculateMetrics(waiterCalls, queueItems, dateFrom, dateTo);
+            } catch(err) {
+                console.error('Error loading analytics:', err);
+            }
+        }
+
+        function getDateRange() {
+            const now = Math.floor(Date.now() / 1000);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todaySeconds = Math.floor(today.getTime() / 1000);
+            
+            let dateFrom, dateTo;
+            
+            if (analyticsPeriod === 'today') {
+                dateFrom = todaySeconds;
+                dateTo = now;
+            } else if (analyticsPeriod === 'week') {
+                const weekStart = new Date(today);
+                weekStart.setDate(today.getDate() - today.getDay());
+                dateFrom = Math.floor(weekStart.getTime() / 1000);
+                dateTo = now;
+            } else if (analyticsPeriod === 'month') {
+                const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+                dateFrom = Math.floor(monthStart.getTime() / 1000);
+                dateTo = now;
+            } else if (analyticsPeriod === 'year') {
+                const yearStart = new Date(today.getFullYear(), 0, 1);
+                dateFrom = Math.floor(yearStart.getTime() / 1000);
+                dateTo = now;
+            } else if (analyticsPeriod === 'custom') {
+                dateFrom = analyticsDateFrom || todaySeconds;
+                dateTo = analyticsDateTo || now;
+            }
+            
+            return { dateFrom, dateTo };
+        }
+
+        function calculateMetrics(waiterCalls, queueItems, dateFrom, dateTo) {
+            // 1. Tiempo de atención promedio
+            const completedCalls = waiterCalls.filter(c => c.status === 'completed');
+            let avgAttention = '--';
+            if (completedCalls.length > 0) {
+                const totalTime = completedCalls.reduce((acc, c) => acc + (c.responseTime || 0), 0);
+                avgAttention = Math.round(totalTime / completedCalls.length / 60) + ' min';
+            }
+            
+            // 2. Promedio de calidad de servicio
+            const ratedCalls = completedCalls.filter(c => c.satisfaction);
+            let avgQuality = '--';
+            if (ratedCalls.length > 0) {
+                const avg = ratedCalls.reduce((acc, c) => acc + c.satisfaction, 0) / ratedCalls.length;
+                avgQuality = avg.toFixed(1);
+            }
+            
+            // 3. Total de mesas atendidas
+            const uniqueTables = new Set(completedCalls.map(c => c.table));
+            const totalTables = uniqueTables.size;
+            
+            // 4. Pedidos promedio por mesa
+            let avgOrders = '--';
+            if (totalTables > 0) {
+                const totalOrders = completedCalls.length;
+                avgOrders = (totalOrders / totalTables).toFixed(1);
+            }
+            
+            // 5. Canciones pedidas por hora
+            const durationHours = (dateTo - dateFrom) / 3600;
+            let songsPerHour = '--';
+            if (durationHours > 0) {
+                songsPerHour = (queueItems.length / Math.max(durationHours, 1)).toFixed(1);
+            }
+            
+            // Actualizar UI
+            document.getElementById('analytics-avg-attention').innerText = avgAttention;
+            document.getElementById('analytics-avg-quality').innerText = avgQuality;
+            document.getElementById('analytics-total-tables').innerText = totalTables;
+            document.getElementById('analytics-avg-orders').innerText = avgOrders;
+            document.getElementById('analytics-songs-per-hour').innerText = songsPerHour;
+        }
+
 </body>
 </html>
