@@ -588,7 +588,28 @@
         }
 
         function setSearchType(t) { searchType = t; document.getElementById('btn-type-music').className = t === 'music' ? 'flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-red-600 text-white italic' : 'flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 italic'; document.getElementById('btn-type-karaoke').className = t === 'karaoke' ? 'flex-1 py-3 rounded-xl font-black text-[10px] uppercase bg-red-600 text-white italic' : 'flex-1 py-3 rounded-xl font-black text-[10px] uppercase text-slate-400 italic'; if (document.getElementById('search-input').value.length >= 3) performSearch(); }
-        function updateClientWaiterStatus(calls) { const u = JSON.parse(localStorage.getItem('rocola_user_v1')); if (!u) return; const myCalls = calls.filter(c => c.userId === u.id && c.status !== 'completed'); const waiterDot = document.getElementById('dot-waiter-container'); const billDot = document.getElementById('dot-bill-container'); if(waiterDot) waiterDot.classList.add('invisible'); if(billDot) billDot.classList.add('invisible'); myCalls.forEach(call => { if (call.type === 'bill' && billDot) billDot.classList.remove('invisible'); else if (waiterDot) waiterDot.classList.remove('invisible'); }); }
+        function updateClientWaiterStatus(calls) { 
+            const u = JSON.parse(localStorage.getItem('rocola_user_v1')); 
+            if (!u) return; 
+            const myCalls = calls.filter(c => c.userId === u.id && c.status !== 'completed'); 
+            const waiterDot = document.getElementById('dot-waiter-container'); 
+            const billDot = document.getElementById('dot-bill-container');
+            const waiterText = waiterDot ? waiterDot.querySelector('span') : null;
+            const billText = billDot ? billDot.querySelector('span') : null;
+            
+            if(waiterDot) waiterDot.classList.add('invisible'); 
+            if(billDot) billDot.classList.add('invisible');
+            
+            myCalls.forEach(call => { 
+                if (call.type === 'bill' && billDot) {
+                    billDot.classList.remove('invisible');
+                    if (billText) billText.innerText = call.status === 'on_way' ? 'En camino' : 'Pago';
+                } else if (call.type === 'service' && waiterDot) {
+                    waiterDot.classList.remove('invisible');
+                    if (waiterText) waiterText.innerText = call.status === 'on_way' ? 'En camino' : 'Atención';
+                }
+            }); 
+        }
         
         function loadWaiterInitialData() {
             db.collection(`artifacts/${appId}/public/data/waiter_calls`).get().then(snap => {
