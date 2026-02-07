@@ -619,16 +619,17 @@
                 syncVideo();
                 
                 // Update display screen
-                if (currentMode === 'display') {
+                if (currentMode === 'display' && currentTrack) {
                     const displayTitle = document.getElementById('display-title');
                     const displayArtist = document.getElementById('display-artist');
-                    if (currentTrack) {
-                        if (displayTitle) displayTitle.innerText = currentTrack.title;
-                        if (displayArtist) displayArtist.innerText = currentTrack.artist;
-                    } else {
-                        if (displayTitle) displayTitle.innerText = 'Esperando canciones...';
-                        if (displayArtist) displayArtist.innerText = '';
-                    }
+                    if (displayTitle) displayTitle.innerText = currentTrack.title;
+                    if (displayArtist) displayArtist.innerText = currentTrack.artist;
+                    console.log('📺 Display updated:', currentTrack.title);
+                    // Force sync if player exists
+                    if (player) syncVideo();
+                } else if (currentMode === 'display' && !currentTrack) {
+                    const displayTitle = document.getElementById('display-title');
+                    if (displayTitle) displayTitle.innerText = 'Esperando canciones...';
                 }
                 
                 if (currentMode === 'admin') updateAdminDashboard(items);
@@ -788,7 +789,16 @@
                     onReady: (e) => { 
                         console.log('✅ Player ready');
                         if (currentMode === 'admin' && isAdminMuted) e.target.mute();
-                        if (currentTrack) {
+                        // In display mode, wait a bit for realtime data to come in
+                        if (currentMode === 'display') {
+                            console.log('📺 Display mode - waiting for sync data');
+                            setTimeout(() => {
+                                if (currentTrack) {
+                                    console.log('📺 Now syncing with:', currentTrack.title);
+                                    syncVideo();
+                                }
+                            }, 500);
+                        } else if (currentTrack) {
                             console.log('🎵 Current track on ready:', currentTrack.title);
                             syncVideo();
                         } else {
