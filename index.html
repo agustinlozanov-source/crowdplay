@@ -853,6 +853,7 @@
         }
         async function handleCallWaiter() { 
             try {
+                console.log('🔍 handleCallWaiter - isAppReady:', isAppReady, 'db:', !!db);
                 const table = localStorage.getItem('rocola_table_v1'); 
                 if (!table) {
                     document.getElementById('table-modal').classList.remove('hidden');
@@ -933,7 +934,7 @@
         }
         async function sendWaiterCall(table, type, extra = {}) { 
             if (!isAppReady || !db) {
-                throw new Error('App no está lista. Espera a que cargue completamente.');
+                throw new Error(`App no está lista. isAppReady=${isAppReady}, db=${!!db}`);
             }
             const u = JSON.parse(localStorage.getItem('rocola_user_v1')); 
             if (!u || !u.id) {
