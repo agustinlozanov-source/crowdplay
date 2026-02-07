@@ -1053,7 +1053,17 @@
         }
         function closeBillModal() { document.getElementById('bill-modal').classList.add('hidden'); selectedPayment = null; selectedSatisfactionValue = 0; document.querySelectorAll('.satisfaction-btn').forEach(btn => btn.classList.remove('active')); const confirmBtn = document.getElementById('confirm-bill-btn'); confirmBtn.disabled = true; confirmBtn.classList.add('opacity-50'); }
         async function updateCallStatus(id, newStatus) { const ref = db.collection(`artifacts/${appId}/public/data/waiter_calls`).doc(id); const snap = await ref.get(); const data = snap.data(); const update = { status: newStatus }; if (newStatus === 'completed') update.responseTime = (Math.floor(Date.now() / 1000) - (data.createdAt?.seconds || 0)); await ref.update(update); }
-        function toggleAdminMute() { isAdminMuted = !isAdminMuted; if (isAdminMuted) player.mute(); else player.unMute(); document.getElementById('mute-icon').innerHTML = isAdminMuted ? `<path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>` : `<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>`; }
+        function toggleAdminMute() { 
+            if (!player) return;
+            isAdminMuted = !isAdminMuted; 
+            try {
+                if (isAdminMuted) player.mute?.(); 
+                else player.unMute?.();
+            } catch(e) {
+                console.error('Mute error:', e);
+            }
+            document.getElementById('mute-icon').innerHTML = isAdminMuted ? `<path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>` : `<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>`; 
+        }
         function copyRoleLink(mode) { const baseUrl = window.location.origin + window.location.pathname; const fullUrl = `${baseUrl}?mode=${mode}`; navigator.clipboard.writeText(fullUrl); alert(`Enlace ${mode} copiado`); }
 
         // ===== ANALYTICS =====
