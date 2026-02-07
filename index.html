@@ -617,6 +617,20 @@
                 queue = items.filter(i => i.status === 'pending');
                 updateUI();
                 syncVideo();
+                
+                // Update display screen
+                if (currentMode === 'display') {
+                    const displayTitle = document.getElementById('display-title');
+                    const displayArtist = document.getElementById('display-artist');
+                    if (currentTrack) {
+                        if (displayTitle) displayTitle.innerText = currentTrack.title;
+                        if (displayArtist) displayArtist.innerText = currentTrack.artist;
+                    } else {
+                        if (displayTitle) displayTitle.innerText = 'Esperando canciones...';
+                        if (displayArtist) displayArtist.innerText = '';
+                    }
+                }
+                
                 if (currentMode === 'admin') updateAdminDashboard(items);
             });
             db.collection(`artifacts/${appId}/public/data/waiter_calls`).onSnapshot(snap => {
@@ -676,13 +690,22 @@
             btn.disabled = true;
             btn.innerText = "PROCESANDO...";
             
-            const u = JSON.parse(localStorage.getItem('rocola_user_v1'));
-            await db.collection(`artifacts/${appId}/public/data/rocola_queue`).add({
-                ...selectedVideo, status: (currentTrack === null && queue.length === 0) ? 'playing' : 'pending', votes: 1, userId: u.id, userName: u.name,
-                dedication: document.getElementById('song-dedication').value, showName: document.getElementById('song-show-name').checked,
-                isKaraoke: searchType === 'karaoke', showDedication: false, lastCommand: 'play', createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            closeSearch();
+            try {
+                const u = JSON.parse(localStorage.getItem('rocola_user_v1'));
+                await db.collection(`artifacts/${appId}/public/data/rocola_queue`).add({
+                    ...selectedVideo, status: (currentTrack === null && queue.length === 0) ? 'playing' : 'pending', votes: 1, userId: u.id, userName: u.name,
+                    dedication: document.getElementById('song-dedication').value, showName: document.getElementById('song-show-name').checked,
+                    isKaraoke: searchType === 'karaoke', showDedication: false, lastCommand: 'play', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                closeSearch();
+            } catch(err) {
+                console.error('Error sending song:', err);
+                btn.disabled = false;
+                btn.innerText = "❌ Error - Intenta de nuevo";
+                setTimeout(() => {
+                    btn.innerText = "🚀 ENVIAR A LA COLA";
+                }, 3000);
+            }
         }
 
         function closeSearch() {
@@ -691,6 +714,14 @@
             document.getElementById('search-results').innerHTML = "";
             document.getElementById('search-results').classList.remove('hidden');
             document.getElementById('final-step-container').classList.add('hidden');
+            
+            // Reset button state
+            const btn = document.querySelector('#final-step-container button[onclick*="confirmOrder"]');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = '🚀 ENVIAR A LA COLA';
+            }
+            
             selectedVideo = null;
         }
 
@@ -1015,19 +1046,21 @@
         async function loadAnalyticsData() {
             try {
                 const { dateFrom, dateTo } = getDateRange();
+                const tsFrom = firebase.firestore.Timestamp.fromSeconds(dateFrom);
+                const tsTo = firebase.firestore.Timestamp.fromSeconds(dateTo);
                 
                 // Cargar datos de waiter_calls
                 const waiterSnap = await db.collection(`artifacts/${appId}/public/data/waiter_calls`)
-                    .where('createdAt', '>=', { seconds: dateFrom })
-                    .where('createdAt', '<', { seconds: dateTo })
+                    .where('createdAt', '>=', tsFrom)
+                    .where('createdAt', '<', tsTo)
                     .get();
                 
                 const waiterCalls = waiterSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
                 // Cargar datos de rocola_queue
                 const queueSnap = await db.collection(`artifacts/${appId}/public/data/rocola_queue`)
-                    .where('createdAt', '>=', { seconds: dateFrom })
-                    .where('createdAt', '<', { seconds: dateTo })
+                    .where('createdAt', '>=', tsFrom)
+                    .where('createdAt', '<', tsTo)
                     .get();
                 
                 const queueItems = queueSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
