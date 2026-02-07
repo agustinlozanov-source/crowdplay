@@ -436,6 +436,11 @@
     </div>
 
     <script>
+        // Immediate JS execution marker
+        try {
+            const syncTextEl = document.getElementById('sync-text');
+            if (syncTextEl) syncTextEl.innerText = 'Sincronizando sistema... (JS OK)';
+        } catch (e) {}
         const LOGO_URL = "logo.png"; 
         const manualFirebaseConfig = {
   apiKey: "AIzaSyAia_yRHvYg3gGQ60VwPRwcRm3B0aja4cw",
