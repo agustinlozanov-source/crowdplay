@@ -475,9 +475,24 @@
                         const mode = params.get('mode');
                         if (mode) setMode(mode); else document.getElementById('menu-screen').classList.remove('hidden');
                         startRealtimeSync();
+                    } else {
+                        setSyncError('No se pudo autenticar. Revisa Firebase Auth.');
                     }
                 });
-            } catch (e) { updateStatus(false); }
+            } catch (e) {
+                console.error('Firebase init error:', e);
+                setSyncError('Error al sincronizar. Revisa Firebase/Rules/Auth.');
+            }
+        }
+
+        function setSyncError(message) {
+            updateStatus(false);
+            const syncText = document.getElementById('sync-text');
+            if (syncText) {
+                syncText.innerText = message;
+                syncText.classList.remove('text-slate-500');
+                syncText.classList.add('text-red-400');
+            }
         }
 
         function updateStatus(online) {
