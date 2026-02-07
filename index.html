@@ -455,6 +455,7 @@
 
         let firebaseConfig = manualFirebaseConfig;
         let app, auth, db;
+        let isAppReady = false; // Flag to track Firebase initialization
         let appId = typeof __app_id !== 'undefined' ? __app_id : 'rocola-crowdplay2-v1';
         let player = null; 
         let currentTrack = null;
@@ -501,6 +502,7 @@
 
                 const proceedApp = () => {
                     clearTimeout(syncTimeout);
+                    isAppReady = true; // Mark app as ready
                     document.getElementById('loading-screen').classList.add('hidden');
                     updateStatus(true);
                     const params = new URLSearchParams(window.location.search);
@@ -930,8 +932,8 @@
             }
         }
         async function sendWaiterCall(table, type, extra = {}) { 
-            if (!db) {
-                throw new Error('Base de datos no inicializada. Recarga la página.');
+            if (!isAppReady || !db) {
+                throw new Error('App no está lista. Espera a que cargue completamente.');
             }
             const u = JSON.parse(localStorage.getItem('rocola_user_v1')); 
             if (!u || !u.id) {
