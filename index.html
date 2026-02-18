@@ -2696,10 +2696,11 @@ function initYouTube(divId) {
 }
 function createPlayer(divId) {
     // CAMBIO 3: Para display-yt-player, auto 1 y mute 1 (requerido para autoplay sin interacción)
+    if (!currentTrack || !currentTrack.videoId) return;
     const isDisplay = divId === 'display-yt-player';
     player = new window.YT.Player(divId, {
         height: '100%', width: '100%',
-        videoId: currentTrack?.videoId || '',
+        videoId: currentTrack.videoId,
         playerVars: { autoplay: 1, controls: 0, modestbranding: 1, rel: 0, enablejsapi: 1, fs: 1, iv_load_policy: 3, mute: isDisplay ? 1 : 0 },
         events: {
             onReady: (e) => {
@@ -2721,10 +2722,7 @@ function syncVideo() {
     }
     try {
         const currentVideoId = player.getVideoData?.()?.video_id;
-        if (!currentVideoId || currentVideoId !== currentTrack.videoId) {
-            console.log('Loading video:', currentTrack.videoId);
-            player.loadVideoById?.(currentTrack.videoId);
-        }
+        if (currentVideoId !== currentTrack.videoId) player.loadVideoById?.(currentTrack.videoId);
         setTimeout(() => {
             if (!player || !currentTrack) return;
             if (currentTrack.lastCommand === 'pause') player.pauseVideo?.();
@@ -2789,7 +2787,6 @@ function showAdminPanel(profile) {
     if (chip) { chip.innerText = 'SUPER ADMIN'; chip.style.background = 'rgba(232,54,42,0.15)'; chip.style.borderColor = 'rgba(232,54,42,0.3)'; chip.style.color = 'var(--accent-red)'; }
     currentMode = 'admin';
     switchStaffPanel('dashboard');
-    initYouTube('yt-player');
 }
 
 async function createStaffAccount() {
