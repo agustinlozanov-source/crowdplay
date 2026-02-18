@@ -765,6 +765,7 @@
         /* ── DJ VIEW ── */
         .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 16px; background: black; }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        #yt-player { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
         .sampler-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
         .sampler-btn {
@@ -2688,44 +2689,31 @@ function initYouTube(divId) {
 function createPlayer(divId) {
     // CAMBIO 3: Para display-yt-player, auto 1 y mute 1 (requerido para autoplay sin interacción)
     const isDisplay = divId === 'display-yt-player';
-    console.log('createPlayer llamado para:', divId, 'currentTrack:', currentTrack);
     player = new window.YT.Player(divId, {
         height: '100%', width: '100%',
         videoId: currentTrack?.videoId || '',
         playerVars: { autoplay: 1, controls: 0, modestbranding: 1, rel: 0, enablejsapi: 1, fs: 1, iv_load_policy: 3, mute: isDisplay ? 1 : 0 },
         events: {
             onReady: (e) => {
-                console.log('Player ready! VideoID:', currentTrack?.videoId);
                 if (currentMode === 'admin' && isAdminMuted) e.target.mute();
                 if (isDisplay) { e.target.unMute(); e.target.setVolume(100); }
                 if (currentTrack) syncVideo();
             },
-            onStateChange: (e) => { 
-                console.log('Player state changed:', e.data);
-                if (e.data === window.YT.PlayerState.ENDED) skipSong(); 
-            },
-            onError: (e) => {
-                console.error('Player error:', e.data);
-                alert('Error en YouTube: ' + e.data);
-            }
+            onStateChange: (e) => { if (e.data === window.YT.PlayerState.ENDED) skipSong(); },
+            onError: (e) => console.error('Player error:', e.data)
         }
     });
 }
 function syncVideo() {
     if (!currentTrack) return;
     if (!player) {
-        console.log('Player no existe, inicializando...');
         if (currentMode === 'display') initYouTube('display-yt-player');
         else if (currentMode === 'admin') initYouTube('yt-player');
         return;
     }
     try {
         const currentVideoId = player.getVideoData?.()?.video_id;
-        console.log('syncVideo: currentVideoId:', currentVideoId, 'trackVideoId:', currentTrack.videoId);
-        if (currentVideoId !== currentTrack.videoId) {
-            console.log('Cargando video:', currentTrack.videoId);
-            player.loadVideoById?.(currentTrack.videoId);
-        }
+        if (currentVideoId !== currentTrack.videoId) player.loadVideoById?.(currentTrack.videoId);
         setTimeout(() => {
             if (!player || !currentTrack) return;
             if (currentTrack.lastCommand === 'pause') player.pauseVideo?.();
