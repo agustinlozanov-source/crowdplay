@@ -2157,6 +2157,10 @@ function startRealtimeSync() {
         if (currentMode === 'display' && currentTrack) {
             setTimeout(() => syncVideo(), 1000);
         }
+        // Sincronizar video en admin mode también
+        if (currentMode === 'admin' && currentTrack) {
+            setTimeout(() => syncVideo(), 500);
+        }
 
         if (currentMode === 'display' && currentTrack) {
             const dTitle = document.getElementById('display-title');
@@ -2168,7 +2172,12 @@ function startRealtimeSync() {
             if (dTitle) dTitle.innerText = 'Esperando canciones...';
         }
 
-        if (currentMode === 'admin') updateAdminDashboard(items);
+        if (currentMode === 'admin') {
+            updateAdminDashboard(items);
+            // Actualizar título en admin
+            const adminTitle = document.getElementById('admin-current-title');
+            if (adminTitle) adminTitle.innerText = currentTrack ? currentTrack.title : 'Standby...';
+        }
     });
 
     db.collection(`artifacts/${appId}/public/data/waiter_calls`).onSnapshot(snap => {
