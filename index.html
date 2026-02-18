@@ -2014,7 +2014,7 @@ function applyLogo() {
         const el = document.getElementById(id);
         if (!el) return;
         const isSmall = id === 'client-header-logo';
-        el.innerHTML = `<img src="${LOGO_URL}" style="max-height:${isSmall ? '28px' : '100px'};width:auto;object-fit:contain;" alt="Logo" onerror="handleLogoError('${id}')">`;
+        el.innerHTML = `<img src="${LOGO_URL}" style="max-height:${isSmall ? '32px' : '100px'};width:auto;object-fit:contain;" alt="Logo" onerror="handleLogoError('${id}')">`;
         if (id === 'reg-logo-container') {
             const title = document.getElementById('reg-title-text');
             if (title) title.classList.add('hidden');
@@ -2025,7 +2025,7 @@ function applyLogo() {
     if (sidebarHeader) {
         const logoText = sidebarHeader.querySelector('.sidebar-logo-text');
         if (logoText) {
-            logoText.outerHTML = `<img src="${LOGO_URL}" style="max-height:28px;width:auto;object-fit:contain;" alt="Logo" onerror="this.outerHTML='CrowdPlay'" id="sidebar-logo-img">`;
+            logoText.outerHTML = `<img src="${LOGO_URL}" style="max-height:32px;width:auto;object-fit:contain;" alt="Logo" onerror="this.outerHTML='CrowdPlay'" id="sidebar-logo-img">`;
         }
     }
     // CAMBIO 4: Reemplazar RocolaPro en menu screen y loading screen
@@ -2042,8 +2042,12 @@ function applyLogo() {
 function handleLogoError(id) {
     const el = document.getElementById(id);
     if (!el) return;
-    if (id === 'client-header-logo') el.innerHTML = '';
-    else el.innerHTML = '';
+    // En client-header-logo, dejar vacío si falla
+    if (id === 'client-header-logo') {
+        el.innerHTML = '';
+    } else {
+        el.innerHTML = 'CrowdPlay';
+    }
 }
 
 /* ═══════════════════════════════════════
