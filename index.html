@@ -1114,6 +1114,11 @@
             const login = document.getElementById('admin-login-screen');
             if (loading) loading.classList.add('hidden');
             if (login) login.classList.remove('hidden');
+            // Cargar logo en sidebar
+            const sidebarLogoContainer = document.getElementById('sidebar-logo-container');
+            if (sidebarLogoContainer) {
+                sidebarLogoContainer.innerHTML = '<img src="/logo.png" style="max-height:32px;width:auto;object-fit:contain;" alt="Logo">';
+            }
         });
     }
 </script>
@@ -1377,7 +1382,7 @@
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-logo-text">Rocola<span class="text-red">Pro</span></div>
+            <div class="sidebar-logo-text" id="sidebar-logo-container"></div>
             <button class="sidebar-toggle" onclick="toggleSidebar()" title="Colapsar sidebar">
                 <svg id="sidebar-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
