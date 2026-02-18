@@ -1856,7 +1856,6 @@ let firebaseConfig = manualFirebaseConfig;
 try { if (!firebaseConfig && typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config); } catch(e) {}
 
 let app, auth, db;
-const appId = 'rocola-crowdplay2-v1';
 let isAppReady = false;
 let appId = typeof __app_id !== 'undefined' ? __app_id : 'rocola-crowdplay2-v1';
 let player = null;
