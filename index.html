@@ -1040,6 +1040,7 @@
             align-items: center; justify-content: center;
             padding: 48px;
             text-align: center;
+            cursor: none;
         }
         #display-screen .video-container {
             border: 8px solid rgba(255,255,255,0.04);
@@ -1098,7 +1099,7 @@
      LOADING SCREEN
 ═══════════════════════════════════════ -->
 <div id="loading-screen">
-    <div class="loading-logo">Rocola<span class="text-red">Pro</span></div>
+    <div class="loading-logo"></div>
     <div class="loading-spinner"></div>
     <p id="sync-text" style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-top:8px;">Sincronizando...</p>
     <noscript><p style="color:var(--accent-red);font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">JavaScript desactivado.</p></noscript>
@@ -1189,7 +1190,6 @@
     <div class="client-topbar">
         <div style="display:flex;align-items:center;gap:10px;">
             <div id="client-header-logo"></div>
-            <span class="client-logo">Rocola<span class="text-red">Pro</span></span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
             <div id="client-wait-pill" class="wait-pill hidden">
@@ -1836,6 +1836,18 @@ window.addEventListener('unhandledrejection', (e) => {
     console.error('Unhandled rejection:', e.reason);
     setSyncError('Error de red o Firebase.');
 });
+// CAMBIO 3: Toggle fullscreen con tecla F en display mode
+window.addEventListener('keydown', (e) => {
+    if ((e.key === 'f' || e.key === 'F') && currentMode === 'display') {
+        const el = document.getElementById('display-screen');
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        } else {
+            if (el.requestFullscreen) el.requestFullscreen();
+            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        }
+    }
+});
 
 async function initFirebase() {
     try {
@@ -1912,6 +1924,23 @@ function applyLogo() {
             if (title) title.classList.add('hidden');
         }
     });
+    // CAMBIO 4: Reemplazar sidebar-logo-text con img
+    const sidebarHeader = document.getElementById('sidebar-header');
+    if (sidebarHeader) {
+        const logoText = sidebarHeader.querySelector('.sidebar-logo-text');
+        if (logoText) {
+            logoText.outerHTML = `<img src="${LOGO_URL}" style="max-height:28px;width:auto;object-fit:contain;" alt="Logo" onerror="this.outerHTML='CrowdPlay'" id="sidebar-logo-img">`;
+        }
+    }
+    // CAMBIO 4: Reemplazar RocolaPro en menu screen y loading screen
+    const menuH1 = document.querySelector('#menu-screen h1');
+    if (menuH1) {
+        menuH1.innerHTML = 'CrowdPlay';
+    }
+    const loadingLogo = document.querySelector('.loading-logo');
+    if (loadingLogo) {
+        loadingLogo.innerHTML = `<img src="${LOGO_URL}" style="max-height:60px;width:auto;object-fit:contain;" alt="Logo" onerror="this.outerHTML='CrowdPlay'">`;
+    }
 }
 
 function handleLogoError(id) {
@@ -1934,6 +1963,12 @@ function setMode(mode) {
     if (mode === 'display') {
         document.getElementById('display-screen').classList.remove('hidden');
         initYouTube('display-yt-player');
+        // CAMBIO 3: Fullscreen después de 1.5s
+        setTimeout(() => {
+            const el = document.getElementById('display-screen');
+            if (el.requestFullscreen) el.requestFullscreen();
+            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        }, 1500);
 
     } else if (mode === 'client') {
         document.getElementById('client-app').classList.remove('hidden');
@@ -2031,6 +2066,10 @@ function startRealtimeSync() {
         updateClientUI();
         updateDJQueuePanel();
         syncVideo();
+        // CAMBIO 3: Sincronizar video en display mode con delay
+        if (currentMode === 'display' && currentTrack) {
+            setTimeout(() => syncVideo(), 1000);
+        }
 
         if (currentMode === 'display' && currentTrack) {
             const dTitle = document.getElementById('display-title');
@@ -2224,6 +2263,21 @@ function selectForOrder(videoId, title, artist) {
 async function confirmOrder() {
     if (!selectedVideo) return;
     const btn = document.getElementById('confirm-order-btn');
+    
+    // CAMBIO 1: Cooldown de 3 minutos
+    const lastOrderTs = localStorage.getItem('rocola_last_order_ts');
+    if (lastOrderTs) {
+        const elapsed = Date.now() - parseInt(lastOrderTs);
+        const cooldown = 180000; // 3 minutos en ms
+        if (elapsed < cooldown) {
+            const remaining = Math.ceil((cooldown - elapsed) / 1000);
+            const mins = Math.floor(remaining / 60);
+            const secs = remaining % 60;
+            toast(`Espera ${mins} min ${secs} seg para pedir otra canción`, 'warning');
+            return;
+        }
+    }
+    
     btn.disabled = true;
     btn.innerHTML = '<div class="loading-spinner" style="width:18px;height:18px;margin:0 auto;"></div>';
     try {
@@ -2238,6 +2292,8 @@ async function confirmOrder() {
             showDedication: false, lastCommand: 'play',
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
+        // CAMBIO 1: Guardar timestamp del último pedido
+        localStorage.setItem('rocola_last_order_ts', Date.now().toString());
         toast('¡Canción enviada a la cola! 🎵', 'success');
         closeSearch();
         switchClientTab('queue');
@@ -2511,7 +2567,18 @@ async function skipSong() {
     if (queue.length > 0) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(queue[0].id).update({ status: 'playing', createdAt: firebase.firestore.FieldValue.serverTimestamp(), showDedication: false, lastCommand: 'play' });
 }
 async function voteSong(id, v) {
+    // CAMBIO 2: Un voto por canción por usuario
+    const votes = JSON.parse(localStorage.getItem('rocola_votes') || '{}');
+    if (votes[id] === true) {
+        toast('Ya votaste por esta canción', 'info');
+        return;
+    }
+    
     await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(id).update({ votes: v + 1 });
+    
+    // Guardar el voto en localStorage
+    votes[id] = true;
+    localStorage.setItem('rocola_votes', JSON.stringify(votes));
 }
 function toggleAdminMute() {
     if (!player) return;
@@ -2532,13 +2599,16 @@ function initYouTube(divId) {
     }
 }
 function createPlayer(divId) {
+    // CAMBIO 3: Para display-yt-player, auto 1 y mute 1 (requerido para autoplay sin interacción)
+    const isDisplay = divId === 'display-yt-player';
     player = new window.YT.Player(divId, {
         height: '100%', width: '100%',
         videoId: currentTrack?.videoId || '',
-        playerVars: { autoplay: 1, controls: 0, modestbranding: 1, rel: 0, enablejsapi: 1, fs: 1, iv_load_policy: 3 },
+        playerVars: { autoplay: 1, controls: 0, modestbranding: 1, rel: 0, enablejsapi: 1, fs: 1, iv_load_policy: 3, mute: isDisplay ? 1 : 0 },
         events: {
             onReady: (e) => {
                 if (currentMode === 'admin' && isAdminMuted) e.target.mute();
+                if (isDisplay) { e.target.unMute(); e.target.setVolume(100); }
                 if (currentTrack) syncVideo();
             },
             onStateChange: (e) => { if (e.data === window.YT.PlayerState.ENDED) skipSong(); },
