@@ -1,0 +1,2676 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.googleapis.com https://cdn.tailwindcss.com https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; img-src 'self' data: https:; connect-src 'self' https://firestore.googleapis.com https://www.googleapis.com https://www.gstatic.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com; font-src 'self' https://fonts.gstatic.com data:;">
+    <title>Rocola Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ═══════════════════════════════════════════
+           DESIGN TOKENS — NEW PALETTE
+        ═══════════════════════════════════════════ */
+        :root {
+            --bg-base:    #08090d;
+            --bg-surface: #0f1117;
+            --bg-card:    #151820;
+            --bg-elevated:#1c2030;
+            --border:     rgba(255,255,255,0.07);
+            --border-mid: rgba(255,255,255,0.12);
+            --text-primary:   #f0f2f8;
+            --text-secondary: #7a8099;
+            --text-muted:     #3d4460;
+            --accent-red:   #e8362a;
+            --accent-red-glow: rgba(232,54,42,0.3);
+            --accent-green: #1fd670;
+            --accent-amber: #f0b429;
+            --accent-indigo:#5b6ef5;
+            --accent-purple:#8b5cf6;
+            --sidebar-w: 240px;
+            --sidebar-w-collapsed: 64px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Barlow', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Barlow Condensed = display/heading font */
+        .font-display { font-family: 'Barlow Condensed', sans-serif; }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 3px; height: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
+
+        /* ── GLASS CARDS ── */
+        .glass {
+            background: rgba(21, 24, 32, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+        }
+        .glass-elevated {
+            background: rgba(28, 32, 48, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-mid);
+        }
+
+        /* ── NOISE TEXTURE OVERLAY ── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.4;
+        }
+
+        /* ══════════════════════════════════════════
+           ANIMATIONS
+        ══════════════════════════════════════════ */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(100%); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideRight {
+            from { opacity: 0; transform: translateX(-20px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pulseDot {
+            0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 currentColor; }
+            50% { transform: scale(1.3); opacity: 0.7; box-shadow: 0 0 6px 2px currentColor; }
+        }
+        @keyframes pulseRed {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.5); }
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateY(0) scale(1); }
+            to   { opacity: 0; transform: translateY(20px) scale(0.9); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes nowPlaying {
+            0%, 100% { transform: scaleY(0.3); }
+            50% { transform: scaleY(1); }
+        }
+
+        .animate-fade-up   { animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
+        .animate-fade-in   { animation: fadeIn 0.3s ease forwards; }
+        .animate-slide-up  { animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
+        .animate-slide-right { animation: slideRight 0.3s cubic-bezier(0.16,1,0.3,1) forwards; }
+        .animate-spin-slow { animation: spin 1s linear infinite; }
+        .pulse-dot         { animation: pulseDot 1.5s ease-in-out infinite; }
+        .pulse-red         { animation: pulseRed 0.8s ease-in-out infinite; }
+
+        /* Stagger helpers */
+        .stagger-1 { animation-delay: 0.05s; }
+        .stagger-2 { animation-delay: 0.1s; }
+        .stagger-3 { animation-delay: 0.15s; }
+        .stagger-4 { animation-delay: 0.2s; }
+        .stagger-5 { animation-delay: 0.25s; }
+
+        /* ══════════════════════════════════════════
+           LOADING SCREEN
+        ══════════════════════════════════════════ */
+        #loading-screen {
+            background: var(--bg-base);
+            position: fixed; inset: 0; z-index: 1000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+        }
+        .loading-logo {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 3rem; font-weight: 900; font-style: italic;
+            letter-spacing: -0.02em;
+        }
+        .loading-spinner {
+            width: 32px; height: 32px;
+            border: 2px solid var(--text-muted);
+            border-top-color: var(--accent-red);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* ══════════════════════════════════════════
+           REGISTRATION SCREEN
+        ══════════════════════════════════════════ */
+        #registration-screen {
+            background: var(--bg-base);
+            min-height: 100dvh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 24px;
+        }
+        .reg-card {
+            width: 100%; max-width: 420px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 40px 32px;
+        }
+        .reg-input {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 20px;
+            color: var(--text-primary);
+            font-family: 'Barlow', sans-serif;
+            font-size: 16px; font-weight: 600;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .reg-input:focus { border-color: var(--accent-red); }
+        .reg-input::placeholder { color: var(--text-muted); }
+
+        /* ══════════════════════════════════════════
+           MENU SCREEN (Role selector)
+        ══════════════════════════════════════════ */
+        #menu-screen {
+            background: var(--bg-base);
+            min-height: 100dvh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 32px 24px;
+        }
+        .menu-card {
+            display: flex; align-items: center; gap: 16px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 20px; padding: 20px 24px;
+            cursor: pointer; transition: all 0.2s;
+            width: 100%; max-width: 400px;
+        }
+        .menu-card:hover { background: var(--bg-elevated); border-color: var(--border-mid); transform: translateX(4px); }
+        .menu-card:active { transform: scale(0.98); }
+        .menu-icon {
+            width: 48px; height: 48px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* ══════════════════════════════════════════
+           TOAST SYSTEM
+        ══════════════════════════════════════════ */
+        #toast-container {
+            position: fixed;
+            bottom: 100px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 9000;
+            display: flex; flex-direction: column; gap: 8px;
+            align-items: center;
+            pointer-events: none;
+            width: calc(100% - 32px); max-width: 400px;
+        }
+        .toast {
+            padding: 14px 20px;
+            border-radius: 14px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700; font-size: 15px; letter-spacing: 0.02em;
+            text-transform: uppercase;
+            display: flex; align-items: center; gap: 10px;
+            width: 100%;
+            pointer-events: auto;
+            animation: toastIn 0.35s cubic-bezier(0.16,1,0.3,1) forwards;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .toast.removing { animation: toastOut 0.3s ease forwards; }
+        .toast-success { background: rgba(31,214,112,0.15); border: 1px solid rgba(31,214,112,0.3); color: #1fd670; }
+        .toast-error   { background: rgba(232,54,42,0.15);  border: 1px solid rgba(232,54,42,0.3);  color: #e8362a; }
+        .toast-info    { background: rgba(91,110,245,0.15); border: 1px solid rgba(91,110,245,0.3); color: #8b9cf5; }
+        .toast-warning { background: rgba(240,180,41,0.15); border: 1px solid rgba(240,180,41,0.3); color: #f0b429; }
+
+        /* ══════════════════════════════════════════
+           ████ CLIENT VIEW — MOBILE FIRST ████
+        ══════════════════════════════════════════ */
+        #client-app {
+            height: 100dvh;
+            display: flex; flex-direction: column;
+            background: var(--bg-base);
+            overflow: hidden;
+        }
+
+        /* Client Top Bar */
+        .client-topbar {
+            height: 56px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 16px;
+            background: var(--bg-base);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            position: relative;
+            z-index: 10;
+        }
+        .client-logo {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900; font-style: italic;
+            font-size: 1.4rem; letter-spacing: -0.01em;
+        }
+
+        /* Client Content Area */
+        .client-content {
+            flex: 1; overflow-y: auto; overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
+
+        /* Now Playing Hero */
+        .now-playing-hero {
+            padding: 16px;
+        }
+        .now-playing-card {
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(232,54,42,0.08) 100%);
+            border: 1px solid rgba(232,54,42,0.15);
+            border-radius: 20px;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        .now-playing-card::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, transparent 60%, rgba(232,54,42,0.05));
+            pointer-events: none;
+        }
+        .np-thumb {
+            width: 72px; height: 54px;
+            object-fit: cover; border-radius: 10px;
+            flex-shrink: 0;
+        }
+        .np-thumb-placeholder {
+            width: 72px; height: 54px;
+            background: var(--bg-elevated);
+            border-radius: 10px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .eq-bars {
+            display: flex; align-items: flex-end; gap: 2px; height: 18px;
+        }
+        .eq-bar {
+            width: 3px; background: var(--accent-red); border-radius: 2px;
+        }
+        .eq-bar:nth-child(1) { animation: nowPlaying 0.8s ease-in-out infinite; animation-delay: 0s; }
+        .eq-bar:nth-child(2) { animation: nowPlaying 0.8s ease-in-out infinite; animation-delay: 0.15s; }
+        .eq-bar:nth-child(3) { animation: nowPlaying 0.8s ease-in-out infinite; animation-delay: 0.3s; }
+        .eq-bar:nth-child(4) { animation: nowPlaying 0.8s ease-in-out infinite; animation-delay: 0.1s; }
+
+        /* Queue list — streaming style */
+        .queue-section { padding: 0 16px 8px; }
+        .queue-header {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.7rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 8px 4px;
+        }
+        .queue-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            transition: background 0.15s;
+            cursor: pointer;
+            animation: fadeUp 0.3s ease forwards;
+            opacity: 0;
+        }
+        .queue-item:active { background: var(--bg-card); }
+        .queue-rank {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.75rem; font-weight: 700;
+            color: var(--text-muted);
+            width: 20px; text-align: center;
+            flex-shrink: 0;
+        }
+        .queue-thumb {
+            width: 52px; height: 38px;
+            object-fit: cover; border-radius: 8px;
+            flex-shrink: 0;
+        }
+        .queue-info { flex: 1; min-width: 0; }
+        .queue-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.95rem; font-weight: 700; font-style: italic;
+            color: var(--text-primary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            line-height: 1.2;
+        }
+        .queue-meta {
+            font-size: 0.65rem; font-weight: 600;
+            color: var(--text-muted); letter-spacing: 0.06em;
+            text-transform: uppercase; margin-top: 2px;
+        }
+        .vote-btn {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 6px 10px;
+            display: flex; align-items: center; gap: 4px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.8rem; font-weight: 700;
+            color: var(--text-secondary);
+            cursor: pointer; transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .vote-btn:active { background: rgba(232,54,42,0.2); border-color: rgba(232,54,42,0.4); color: var(--accent-red); transform: scale(0.95); }
+
+        /* Wait info pill */
+        .wait-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(91,110,245,0.12);
+            border: 1px solid rgba(91,110,245,0.25);
+            border-radius: 100px; padding: 6px 14px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.75rem; font-weight: 700;
+            color: #8b9cf5; letter-spacing: 0.05em; text-transform: uppercase;
+        }
+
+        /* Client Bottom Nav */
+        .client-bottom-nav {
+            height: 72px;
+            background: var(--bg-surface);
+            border-top: 1px solid var(--border);
+            display: flex; align-items: stretch;
+            flex-shrink: 0;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .nav-tab {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 4px; cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .nav-tab-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.6rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+        .nav-tab-icon {
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+        .nav-tab.active .nav-tab-label,
+        .nav-tab.active .nav-tab-icon { color: var(--accent-red); }
+        .nav-tab.active::before {
+            content: '';
+            position: absolute; top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 32px; height: 2px;
+            background: var(--accent-red);
+            border-radius: 0 0 2px 2px;
+        }
+        /* Center tab — CTA */
+        .nav-tab-cta {
+            background: var(--accent-red);
+            width: 52px; height: 52px;
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 20px rgba(232,54,42,0.4);
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        }
+        .nav-tab-cta:active { transform: scale(0.92); box-shadow: 0 2px 10px rgba(232,54,42,0.3); }
+
+        /* Tab content panels */
+        .client-tab-panel { display: none; height: 100%; overflow-y: auto; }
+        .client-tab-panel.active { display: block; }
+
+        /* Service panel */
+        .service-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 12px; padding: 16px;
+        }
+        .service-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 20px 16px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            cursor: pointer; transition: all 0.2s;
+            text-align: center;
+        }
+        .service-card:active { transform: scale(0.96); }
+        .service-card-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+        }
+        .service-card-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.8rem; font-weight: 700;
+            letter-spacing: 0.05em; text-transform: uppercase;
+            color: var(--text-primary);
+        }
+        .service-card-sub {
+            font-size: 0.65rem; color: var(--text-muted);
+            font-weight: 600; letter-spacing: 0.03em;
+        }
+
+        /* Status indicators */
+        .status-bubble {
+            position: absolute; top: 6px; right: 6px;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+        }
+
+        /* ══════════════════════════════════════════
+           ████ STAFF SAAS LAYOUT ████
+        ══════════════════════════════════════════ */
+        #staff-app {
+            height: 100dvh;
+            display: flex;
+            background: var(--bg-base);
+            overflow: hidden;
+        }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            flex-shrink: 0;
+            transition: width 0.25s cubic-bezier(0.4,0,0.2,1);
+            overflow: hidden;
+            position: relative;
+            z-index: 50;
+        }
+        .sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+
+        .sidebar-header {
+            height: 64px;
+            display: flex; align-items: center;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .sidebar-logo-text {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900; font-style: italic;
+            font-size: 1.2rem; letter-spacing: -0.01em;
+            white-space: nowrap; overflow: hidden;
+            transition: opacity 0.2s, max-width 0.25s;
+            max-width: 160px;
+        }
+        .sidebar.collapsed .sidebar-logo-text { max-width: 0; opacity: 0; }
+
+        .sidebar-toggle {
+            margin-left: auto; flex-shrink: 0;
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        .sidebar-toggle:hover { background: var(--bg-elevated); color: var(--text-primary); }
+
+        /* Sidebar nav section */
+        .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
+
+        .sidebar-section-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.6rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 8px 8px 4px;
+            white-space: nowrap; overflow: hidden;
+            transition: opacity 0.2s;
+        }
+        .sidebar.collapsed .sidebar-section-label { opacity: 0; }
+
+        .sidebar-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap; overflow: hidden;
+            position: relative;
+        }
+        .sidebar-item:hover { background: var(--bg-elevated); }
+        .sidebar-item.active {
+            background: rgba(232,54,42,0.12);
+            border: 1px solid rgba(232,54,42,0.2);
+        }
+        .sidebar-item-icon {
+            width: 20px; height: 20px; flex-shrink: 0;
+            color: var(--text-secondary);
+            transition: color 0.15s;
+        }
+        .sidebar-item.active .sidebar-item-icon { color: var(--accent-red); }
+        .sidebar-item-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.9rem; font-weight: 700;
+            letter-spacing: 0.03em; text-transform: uppercase;
+            color: var(--text-secondary);
+            overflow: hidden; text-overflow: ellipsis;
+            transition: opacity 0.2s, color 0.15s;
+        }
+        .sidebar-item.active .sidebar-item-label { color: var(--text-primary); }
+        .sidebar.collapsed .sidebar-item-label { opacity: 0; }
+
+        /* Badge */
+        .sidebar-badge {
+            margin-left: auto; flex-shrink: 0;
+            background: var(--accent-red);
+            color: white;
+            font-size: 0.6rem; font-weight: 700;
+            border-radius: 100px; padding: 2px 6px;
+            min-width: 18px; text-align: center;
+            transition: opacity 0.2s;
+        }
+        .sidebar.collapsed .sidebar-badge { opacity: 0; }
+
+        /* Sidebar footer */
+        .sidebar-footer {
+            padding: 12px 8px;
+            border-top: 1px solid var(--border);
+        }
+        .sidebar-status {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .status-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .status-dot.online { background: var(--accent-green); animation: pulseDot 2s ease-in-out infinite; }
+        .status-dot.offline { background: var(--accent-red); }
+        .sidebar-status-text {
+            font-size: 0.7rem; font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap; overflow: hidden;
+            transition: opacity 0.2s;
+        }
+        .sidebar.collapsed .sidebar-status-text { opacity: 0; }
+
+        /* ── STAFF MAIN AREA ── */
+        .staff-main {
+            flex: 1; display: flex; flex-direction: column;
+            overflow: hidden; min-width: 0;
+        }
+
+        /* Staff Topbar */
+        .staff-topbar {
+            height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-surface);
+            flex-shrink: 0;
+        }
+        .staff-page-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.25rem; font-weight: 900; font-style: italic;
+            letter-spacing: 0.02em; text-transform: uppercase;
+            color: var(--text-primary);
+        }
+        .staff-topbar-right {
+            display: flex; align-items: center; gap: 12px;
+        }
+        .role-chip {
+            background: rgba(91,110,245,0.15);
+            border: 1px solid rgba(91,110,245,0.3);
+            color: #8b9cf5;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.65rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            padding: 4px 10px; border-radius: 100px;
+        }
+
+        /* Staff Content */
+        .staff-content {
+            flex: 1; overflow-y: auto; overflow-x: hidden;
+            padding: 24px;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+
+        /* Staff View Panels */
+        .staff-panel { display: none; }
+        .staff-panel.active { display: flex; flex-direction: column; gap: 20px; }
+
+        /* ── STATS ROW ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px; padding: 20px;
+        }
+        .stat-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.65rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: 6px;
+        }
+        .stat-value {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 2.5rem; font-weight: 900;
+            line-height: 1; letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+        .stat-sub {
+            font-size: 0.65rem; color: var(--text-muted);
+            font-weight: 600; margin-top: 4px;
+            letter-spacing: 0.05em; text-transform: uppercase;
+        }
+
+        /* ── STAFF CONTENT CARDS ── */
+        .content-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px; padding: 20px;
+        }
+        .content-card-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: 16px;
+        }
+
+        /* ── WAITER CALL CARDS ── */
+        .call-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 16px; padding: 16px;
+            display: flex; flex-direction: column; gap: 12px;
+            animation: fadeUp 0.3s ease forwards;
+        }
+        .call-card.bill-type { border-color: rgba(240,180,41,0.2); background: rgba(240,180,41,0.04); }
+        .call-card-header { display: flex; align-items: flex-start; justify-content: space-between; }
+        .call-table {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 2rem; font-weight: 900; font-style: italic;
+            line-height: 1; letter-spacing: -0.02em;
+        }
+        .call-type-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.65rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--text-muted); margin-top: 2px;
+        }
+        .call-status-badge {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.65rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            padding: 4px 10px; border-radius: 100px;
+        }
+        .badge-waiting { background: rgba(232,54,42,0.15); color: var(--accent-red); border: 1px solid rgba(232,54,42,0.3); }
+        .badge-onway   { background: rgba(91,110,245,0.15); color: #8b9cf5; border: 1px solid rgba(91,110,245,0.3); }
+
+        .calls-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+
+        /* History table */
+        .history-table { width: 100%; border-collapse: collapse; }
+        .history-table th {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.65rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--text-muted); padding: 8px 12px; text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .history-table td {
+            padding: 12px 12px;
+            font-size: 0.85rem; font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .history-table tr:last-child td { border-bottom: none; }
+        .history-table tr:hover td { color: var(--text-primary); background: rgba(255,255,255,0.02); }
+
+        /* ── DJ VIEW ── */
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 16px; background: black; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+        .sampler-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .sampler-btn {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px; padding: 16px 8px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.85rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.03em;
+            color: var(--text-secondary);
+            cursor: pointer; transition: all 0.15s;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+        }
+        .sampler-btn:active { background: rgba(232,54,42,0.15); border-color: rgba(232,54,42,0.3); color: var(--accent-red); transform: scale(0.96); }
+
+        .transport-bar {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .transport-btn {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px; padding: 12px;
+            color: var(--text-secondary);
+            cursor: pointer; transition: all 0.15s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .transport-btn:hover { background: var(--bg-card); color: var(--text-primary); }
+        .transport-btn:active { transform: scale(0.94); }
+        .transport-play {
+            flex: 1; background: var(--text-primary); color: var(--bg-base);
+            border: none; border-radius: 12px; padding: 14px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.9rem; font-weight: 900;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .transport-play:active { transform: scale(0.97); }
+
+        /* ── ANALYTICS VIEW ── */
+        .period-tabs {
+            display: flex; gap: 6px; flex-wrap: wrap;
+        }
+        .period-tab {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.06em; text-transform: uppercase;
+            padding: 7px 14px; border-radius: 10px;
+            cursor: pointer; transition: all 0.15s;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .period-tab.active {
+            background: rgba(139,92,246,0.15);
+            border-color: rgba(139,92,246,0.3);
+            color: #a78bfa;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px; padding: 20px 16px;
+            text-align: center;
+        }
+        .kpi-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.65rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .kpi-value {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 2.2rem; font-weight: 900;
+            line-height: 1; letter-spacing: -0.02em;
+        }
+        .kpi-unit {
+            font-size: 0.65rem; color: var(--text-muted);
+            font-weight: 600; margin-top: 4px;
+            letter-spacing: 0.05em; text-transform: uppercase;
+        }
+
+        /* ══════════════════════════════════════════
+           MODALS
+        ══════════════════════════════════════════ */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 500;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex; align-items: flex-end; justify-content: center;
+            padding: 0;
+        }
+        .modal-overlay.center { align-items: center; padding: 16px; }
+
+        .modal-sheet {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 24px 24px 0 0;
+            width: 100%; max-width: 520px;
+            max-height: 92dvh;
+            display: flex; flex-direction: column;
+            animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
+            overflow: hidden;
+        }
+        .modal-sheet.is-center {
+            border-radius: 24px;
+            max-height: 90dvh;
+        }
+        .modal-handle {
+            width: 36px; height: 4px; border-radius: 2px;
+            background: var(--text-muted);
+            margin: 12px auto 0;
+            flex-shrink: 0;
+        }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .modal-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.1rem; font-weight: 900; font-style: italic;
+            letter-spacing: 0.02em; text-transform: uppercase;
+        }
+        .modal-close {
+            width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-muted);
+            transition: all 0.15s;
+        }
+        .modal-close:hover { background: var(--bg-elevated); color: var(--text-primary); }
+        .modal-body { flex: 1; overflow-y: auto; padding: 20px; }
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        /* Search modal specifics */
+        .search-type-toggle {
+            display: flex; background: var(--bg-elevated);
+            border-radius: 10px; padding: 3px; gap: 2px;
+        }
+        .search-type-btn {
+            flex: 1; padding: 8px;
+            border-radius: 8px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.05em; text-transform: uppercase;
+            color: var(--text-muted);
+            cursor: pointer; transition: all 0.2s;
+        }
+        .search-type-btn.active { background: var(--accent-red); color: white; }
+
+        .search-input-wrapper {
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px 14px 44px;
+            color: var(--text-primary);
+            font-family: 'Barlow', sans-serif;
+            font-size: 16px; font-weight: 600;
+            outline: none; transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: rgba(232,54,42,0.5); }
+        .search-input::placeholder { color: var(--text-muted); }
+        .search-icon {
+            position: absolute; left: 14px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted); pointer-events: none;
+        }
+
+        .search-result-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            cursor: pointer; transition: background 0.15s;
+        }
+        .search-result-item:hover, .search-result-item:active { background: var(--bg-elevated); }
+        .search-result-thumb {
+            width: 60px; height: 44px;
+            object-fit: cover; border-radius: 8px; flex-shrink: 0;
+        }
+        .search-result-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.95rem; font-weight: 700; font-style: italic;
+            color: var(--text-primary);
+            overflow: hidden; text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .search-result-meta { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; }
+
+        /* Confirmation panel inside search */
+        .confirm-panel {
+            background: rgba(232,54,42,0.06);
+            border: 1px solid rgba(232,54,42,0.15);
+            border-radius: 14px; padding: 16px;
+        }
+        .confirm-song-name {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.1rem; font-weight: 700; font-style: italic;
+            color: var(--text-primary); letter-spacing: -0.01em;
+        }
+
+        /* Bill modal */
+        .payment-option {
+            flex: 1; padding: 16px;
+            background: var(--bg-elevated);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.85rem; font-weight: 700;
+            letter-spacing: 0.05em; text-transform: uppercase;
+            color: var(--text-secondary);
+            cursor: pointer; transition: all 0.2s;
+            text-align: center;
+        }
+        .payment-option.selected { border-color: var(--accent-amber); background: rgba(240,180,41,0.1); color: var(--accent-amber); }
+
+        .satisfaction-row { display: flex; justify-content: space-between; align-items: center; padding: 0 8px; }
+        .sat-btn { font-size: 2rem; cursor: pointer; transition: all 0.2s; filter: grayscale(1) opacity(0.4); }
+        .sat-btn.active { filter: grayscale(0) opacity(1); transform: scale(1.3); }
+
+        /* Table input modal */
+        .table-input {
+            width: 100%; background: var(--bg-elevated);
+            border: 1px solid var(--border); border-radius: 14px;
+            padding: 24px; text-align: center;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 4rem; font-weight: 900;
+            color: var(--accent-green); outline: none;
+            transition: border-color 0.2s;
+        }
+        .table-input:focus { border-color: var(--accent-green); }
+
+        /* ══════════════════════════════════════════
+           BTN SYSTEM
+        ══════════════════════════════════════════ */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            border-radius: 12px; padding: 13px 20px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 0.85rem; font-weight: 700;
+            letter-spacing: 0.06em; text-transform: uppercase;
+            cursor: pointer; transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary   { background: var(--accent-red);    color: white; box-shadow: 0 4px 16px rgba(232,54,42,0.3); }
+        .btn-primary:hover { background: #d42d22; }
+        .btn-secondary { background: var(--bg-elevated);   color: var(--text-secondary); border-color: var(--border); }
+        .btn-secondary:hover { background: var(--bg-card); color: var(--text-primary); }
+        .btn-success   { background: var(--accent-green);  color: var(--bg-base); }
+        .btn-amber     { background: var(--accent-amber);  color: var(--bg-base); }
+        .btn-indigo    { background: var(--accent-indigo); color: white; }
+        .btn-ghost     { background: transparent; color: var(--text-muted); }
+        .btn-ghost:hover { color: var(--text-primary); }
+        .btn-full { width: 100%; }
+        .btn-lg { padding: 16px 24px; font-size: 1rem; border-radius: 14px; }
+
+        /* ══════════════════════════════════════════
+           TV / DISPLAY SCREEN
+        ══════════════════════════════════════════ */
+        #display-screen {
+            position: fixed; inset: 0;
+            background: black; z-index: 200;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 48px;
+            text-align: center;
+        }
+        #display-screen .video-container {
+            border: 8px solid rgba(255,255,255,0.04);
+            border-radius: 24px;
+        }
+        .tv-dedication {
+            position: absolute; top: 40px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15,17,23,0.95);
+            border: 1px solid var(--border-mid);
+            backdrop-filter: blur(20px);
+            border-radius: 20px; padding: 24px 32px;
+            max-width: 600px; width: 90%;
+            animation: slideUp 0.6s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        /* ══════════════════════════════════════════
+           UTILITIES
+        ══════════════════════════════════════════ */
+        .hidden { display: none !important; }
+        .text-red   { color: var(--accent-red); }
+        .text-green { color: var(--accent-green); }
+        .text-amber { color: var(--accent-amber); }
+        .text-indigo{ color: var(--accent-indigo); }
+        .text-purple{ color: var(--accent-purple); }
+        .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* Shimmer skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-elevated) 50%, var(--bg-card) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        /* ══════════════════════════════════════════
+           RESPONSIVE — STAFF SIDEBAR on mobile
+        ══════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            :root { --sidebar-w: 200px; }
+            .staff-content { padding: 16px; }
+            .staff-topbar { padding: 0 16px; }
+            .sampler-grid { grid-template-columns: repeat(2, 1fr); }
+            .stats-grid   { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     TOAST CONTAINER
+═══════════════════════════════════════ -->
+<div id="toast-container"></div>
+
+<!-- ═══════════════════════════════════════
+     LOADING SCREEN
+═══════════════════════════════════════ -->
+<div id="loading-screen">
+    <div class="loading-logo">Rocola<span class="text-red">Pro</span></div>
+    <div class="loading-spinner"></div>
+    <p id="sync-text" style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-top:8px;">Sincronizando...</p>
+    <noscript><p style="color:var(--accent-red);font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">JavaScript desactivado.</p></noscript>
+</div>
+
+<!-- ═══════════════════════════════════════
+     REGISTRATION SCREEN
+═══════════════════════════════════════ -->
+<div id="registration-screen" class="hidden">
+    <div class="reg-card animate-fade-up">
+        <div id="reg-logo-container" style="display:flex;justify-content:center;margin-bottom:8px;"></div>
+        <h1 id="reg-title-text" class="font-display" style="font-size:2rem;font-weight:900;font-style:italic;letter-spacing:-0.02em;text-align:center;margin-bottom:4px;">Acceso Cliente</h1>
+        <p style="font-size:0.7rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);text-align:center;margin-bottom:28px;">Crea tu perfil para continuar</p>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+            <input id="reg-name"     class="reg-input" type="text" placeholder="Nombre" autocomplete="given-name">
+            <input id="reg-surname"  class="reg-input" type="text" placeholder="Apellido" autocomplete="family-name">
+            <input id="reg-whatsapp" class="reg-input" type="tel"  placeholder="WhatsApp" autocomplete="tel">
+            <button onclick="saveUserRegistration()" class="btn btn-primary btn-full btn-lg" style="margin-top:8px;">
+                Ingresar
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MENU SCREEN
+═══════════════════════════════════════ -->
+<div id="menu-screen" class="hidden">
+    <div style="text-align:center;margin-bottom:40px;" class="animate-fade-up">
+        <div id="menu-logo-container" style="display:flex;justify-content:center;margin-bottom:12px;"></div>
+        <h1 class="font-display" style="font-size:3.5rem;font-weight:900;font-style:italic;letter-spacing:-0.03em;line-height:0.9;">Rocola<span class="text-red">Pro</span></h1>
+        <p style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-top:8px;">Selecciona tu modo</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:400px;">
+        <div class="menu-card animate-fade-up stagger-1" onclick="checkClientRegistration()">
+            <div class="menu-icon" style="background:rgba(232,54,42,0.1);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            </div>
+            <div>
+                <div class="font-display" style="font-size:1rem;font-weight:900;font-style:italic;letter-spacing:0.02em;text-transform:uppercase;">Cliente</div>
+                <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);">Música y Servicios</div>
+            </div>
+            <svg style="margin-left:auto;color:var(--text-muted);" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        <div class="menu-card animate-fade-up stagger-2" onclick="setMode('waiter')">
+            <div class="menu-icon" style="background:rgba(31,214,112,0.1);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2.5"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/></svg>
+            </div>
+            <div>
+                <div class="font-display" style="font-size:1rem;font-weight:900;font-style:italic;letter-spacing:0.02em;text-transform:uppercase;">Mesero</div>
+                <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);">Atención en Mesa</div>
+            </div>
+            <svg style="margin-left:auto;color:var(--text-muted);" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        <div class="menu-card animate-fade-up stagger-3" onclick="setMode('admin')">
+            <div class="menu-icon" style="background:rgba(232,54,42,0.1);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            </div>
+            <div>
+                <div class="font-display" style="font-size:1rem;font-weight:900;font-style:italic;letter-spacing:0.02em;text-transform:uppercase;">Modo DJ</div>
+                <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);">Gestión de Ambiente</div>
+            </div>
+            <svg style="margin-left:auto;color:var(--text-muted);" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        <div class="menu-card animate-fade-up stagger-4" onclick="setMode('analytics')">
+            <div class="menu-icon" style="background:rgba(139,92,246,0.1);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-purple)" stroke-width="2.5"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            </div>
+            <div>
+                <div class="font-display" style="font-size:1rem;font-weight:900;font-style:italic;letter-spacing:0.02em;text-transform:uppercase;">Analytics</div>
+                <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);">Estadísticas Detalladas</div>
+            </div>
+            <svg style="margin-left:auto;color:var(--text-muted);" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     ████ CLIENT APP — MOBILE FIRST ████
+═══════════════════════════════════════ -->
+<div id="client-app" class="hidden">
+
+    <!-- Top Bar -->
+    <div class="client-topbar">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div id="client-header-logo"></div>
+            <span class="client-logo">Rocola<span class="text-red">Pro</span></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <div id="client-wait-pill" class="wait-pill hidden">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <span>~<span id="client-wait-mins">0</span> min</span>
+            </div>
+            <div id="client-status-dot" style="width:7px;height:7px;border-radius:50%;background:var(--text-muted);"></div>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="client-content">
+
+        <!-- TAB: COLA (default) -->
+        <div id="tab-queue" class="client-tab-panel active">
+            <!-- Now Playing -->
+            <div class="now-playing-hero" id="now-playing-section">
+                <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;padding:0 4px;">Sonando ahora</div>
+                <div class="now-playing-card" id="now-playing-card">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div class="np-thumb-placeholder" id="np-thumb-wrap">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div class="font-display truncate" style="font-size:1.05rem;font-weight:700;font-style:italic;" id="np-title">Sin reproducción</div>
+                            <div style="font-size:0.65rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-top:2px;" id="np-meta">—</div>
+                        </div>
+                        <div class="eq-bars" id="eq-bars" style="display:none;">
+                            <div class="eq-bar" style="height:18px;"></div>
+                            <div class="eq-bar" style="height:12px;"></div>
+                            <div class="eq-bar" style="height:16px;"></div>
+                            <div class="eq-bar" style="height:10px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Queue List -->
+            <div class="queue-section">
+                <div class="queue-header">En espera</div>
+                <div id="client-queue-list">
+                    <div style="text-align:center;padding:32px 16px;color:var(--text-muted);">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 8px;display:block;opacity:0.4;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                        <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;opacity:0.5;">Cola vacía</p>
+                    </div>
+                </div>
+            </div>
+            <div style="height:16px;"></div>
+        </div>
+
+        <!-- TAB: PEDIR (search) — opens modal -->
+        <div id="tab-request" class="client-tab-panel">
+            <div style="padding:24px;text-align:center;">
+                <div style="font-size:3rem;margin-bottom:12px;">🎵</div>
+                <h2 class="font-display" style="font-size:1.5rem;font-weight:900;font-style:italic;">Pide tu canción</h2>
+                <p style="font-size:0.75rem;color:var(--text-muted);font-weight:600;margin:8px 0 20px;">Busca en millones de canciones</p>
+                <button onclick="openSearch()" class="btn btn-primary btn-full btn-lg">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    Buscar canción
+                </button>
+            </div>
+        </div>
+
+        <!-- TAB: SERVICIOS -->
+        <div id="tab-services" class="client-tab-panel">
+            <div style="padding:16px 16px 8px;">
+                <div class="font-display" style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px;">Servicios de mesa</div>
+                <div id="client-user-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                    <div style="width:36px;height:36px;border-radius:10px;background:rgba(232,54,42,0.1);display:flex;align-items:center;justify-content:center;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    <div>
+                        <div id="client-user-name" class="font-display" style="font-size:0.95rem;font-weight:700;font-style:italic;"></div>
+                        <div id="client-table-info" style="font-size:0.65rem;color:var(--text-muted);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;"></div>
+                    </div>
+                    <button onclick="document.getElementById('table-modal').classList.remove('hidden')" style="margin-left:auto;font-size:0.65rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent-indigo);background:none;border:none;cursor:pointer;">Cambiar mesa</button>
+                </div>
+            </div>
+
+            <div class="service-grid">
+                <div class="service-card" onclick="handleCallWaiter()" style="position:relative;">
+                    <div id="waiter-status-bubble" class="status-bubble hidden" style="background:var(--accent-green);"></div>
+                    <div class="service-card-icon" style="background:rgba(31,214,112,0.1);">🛎️</div>
+                    <div>
+                        <div class="service-card-label">Llamar Mesero</div>
+                        <div class="service-card-sub">Solicitar atención</div>
+                    </div>
+                </div>
+                <div class="service-card" onclick="handleRequestBill()" style="position:relative;">
+                    <div id="bill-status-bubble" class="status-bubble hidden" style="background:var(--accent-amber);"></div>
+                    <div class="service-card-icon" style="background:rgba(240,180,41,0.1);">💳</div>
+                    <div>
+                        <div class="service-card-label">Pedir Cuenta</div>
+                        <div class="service-card-sub">Elegir forma de pago</div>
+                    </div>
+                </div>
+                <div class="service-card" onclick="openSearch()">
+                    <div class="service-card-icon" style="background:rgba(232,54,42,0.1);">🎵</div>
+                    <div>
+                        <div class="service-card-label">Pedir Canción</div>
+                        <div class="service-card-sub">Agregar a la cola</div>
+                    </div>
+                </div>
+                <div class="service-card" onclick="openSearch(); document.querySelector && setSearchType('karaoke')">
+                    <div class="service-card-icon" style="background:rgba(91,110,245,0.1);">🎤</div>
+                    <div>
+                        <div class="service-card-label">Karaoke</div>
+                        <div class="service-card-sub">Canta tu favorita</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- end client-content -->
+
+    <!-- Bottom Nav -->
+    <div class="client-bottom-nav">
+        <div class="nav-tab active" id="nav-queue" onclick="switchClientTab('queue')">
+            <svg class="nav-tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+            <span class="nav-tab-label">Cola</span>
+        </div>
+        <div class="nav-tab" id="nav-request" onclick="openSearch()">
+            <div class="nav-tab-cta">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
+            </div>
+        </div>
+        <div class="nav-tab" id="nav-services" onclick="switchClientTab('services')">
+            <svg class="nav-tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/></svg>
+            <span class="nav-tab-label">Servicios</span>
+        </div>
+    </div>
+
+</div><!-- end client-app -->
+
+
+<!-- ═══════════════════════════════════════
+     ████ STAFF APP — SAAS LAYOUT ████
+═══════════════════════════════════════ -->
+<div id="staff-app" class="hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo-text">Rocola<span class="text-red">Pro</span></div>
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Colapsar sidebar">
+                <svg id="sidebar-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <!-- DJ -->
+            <div class="sidebar-section-label">Modo DJ</div>
+            <div class="sidebar-item" id="sitem-dashboard" onclick="switchStaffPanel('dashboard')">
+                <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="7" height="9" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/><rect x="11" y="3" width="11" height="5" rx="1"/><rect x="11" y="10" width="11" height="11" rx="1"/></svg>
+                <span class="sidebar-item-label">Dashboard</span>
+            </div>
+            <div class="sidebar-item" id="sitem-player" onclick="switchStaffPanel('player')">
+                <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16"/></svg>
+                <span class="sidebar-item-label">Reproductor</span>
+            </div>
+            <div class="sidebar-item" id="sitem-queue-dj" onclick="switchStaffPanel('queue-dj')">
+                <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                <span class="sidebar-item-label">Cola de canciones</span>
+                <span class="sidebar-badge" id="sb-queue-count" style="display:none;">0</span>
+            </div>
+            <div class="sidebar-item" id="sitem-sampler" onclick="switchStaffPanel('sampler')">
+                <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="8" width="4" height="12" rx="1"/><rect x="8" y="4" width="4" height="16" rx="1"/><rect x="14" y="10" width="4" height="10" rx="1"/><rect x="20" y="6" width="4" height="14" rx="1" transform="translate(-4,0)"/></svg>
+                <span class="sidebar-item-label">Sampler DJ</span>
+            </div>
+            <div class="sidebar-item" id="sitem-tv" onclick="openTVTab()">
+                <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="15" rx="2"/><path d="M8 20h8M12 19v1"/></svg>
+                <span class="sidebar-item-label">Abrir TV</span>
+            </div>
+
+            <div style="height:8px;"></div>
+            <div style="height:1px;background:var(--border);margin:4px 8px;"></div>
+            <div style="height:8px;"></div>
+
+            <!-- WAITER -->
+            <div class="sidebar-section-label">Mesero</div>
+            <div class="sidebar-item" id="sitem-waiter" onclick="switchStaffPanel('waiter')">
+                <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/></svg>
+                <span class="sidebar-item-label">Solicitudes</span>
+                <span class="sidebar-badge" id="sb-waiter-count" style="display:none;">0</span>
+            </div>
+            <div class="sidebar-item" id="sitem-history" onclick="switchStaffPanel('history')">
+                <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M8 17V9M12 17V12M16 17V5"/></svg>
+                <span class="sidebar-item-label">Historial</span>
+            </div>
+
+            <div style="height:8px;"></div>
+            <div style="height:1px;background:var(--border);margin:4px 8px;"></div>
+            <div style="height:8px;"></div>
+
+            <!-- ANALYTICS -->
+            <div class="sidebar-section-label">Analytics</div>
+            <div class="sidebar-item" id="sitem-analytics" onclick="switchStaffPanel('analytics')">
+                <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                <span class="sidebar-item-label">Métricas</span>
+            </div>
+
+            <div style="height:8px;"></div>
+            <div style="height:1px;background:var(--border);margin:4px 8px;"></div>
+            <div style="height:8px;"></div>
+
+            <!-- SYSTEM -->
+            <div class="sidebar-section-label">Sistema</div>
+            <div class="sidebar-item" onclick="copyRoleLink(currentMode)">
+                <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <span class="sidebar-item-label">Copiar enlace</span>
+            </div>
+            <div class="sidebar-item" onclick="location.href=window.location.origin + window.location.pathname">
+                <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span class="sidebar-item-label">Salir</span>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-status">
+                <div class="status-dot offline" id="sidebar-status-dot"></div>
+                <span class="sidebar-status-text" id="sidebar-status-text">Desconectado</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="staff-main">
+        <!-- Topbar -->
+        <div class="staff-topbar">
+            <span class="staff-page-title" id="staff-page-title">Dashboard</span>
+            <div class="staff-topbar-right">
+                <span class="role-chip" id="staff-role-chip">ROL</span>
+                <div id="conn-status-badge" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:100px;">
+                    <div class="status-dot offline" id="staff-status-dot"></div>
+                    <span id="staff-status-text" style="font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);">Desconectado</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content area -->
+        <div class="staff-content">
+
+            <!-- ── PANEL: DASHBOARD ── -->
+            <div class="staff-panel active" id="panel-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label text-red">Canción Favorita</div>
+                        <div class="font-display truncate" id="stat-top-song" style="font-size:1.1rem;font-weight:700;font-style:italic;color:var(--text-primary);line-height:1.2;margin:4px 0;">Esperando...</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" style="color:var(--accent-indigo);">Ritmo</div>
+                        <div class="stat-value" id="stat-songs-hour">0</div>
+                        <div class="stat-sub">canciones/hora</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label text-green">Total hoy</div>
+                        <div class="stat-value" id="stat-total-today">0</div>
+                        <div class="stat-sub">canciones</div>
+                    </div>
+                </div>
+                <div class="content-card">
+                    <div class="content-card-title">Acciones rápidas</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <button onclick="switchStaffPanel('player')" class="btn btn-secondary">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16"/></svg>
+                            Reproductor
+                        </button>
+                        <button onclick="openTVTab()" class="btn btn-primary">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="15" rx="2"/><path d="M8 20h8M12 19v1"/></svg>
+                            Abrir TV
+                        </button>
+                        <button onclick="switchStaffPanel('waiter')" class="btn btn-secondary">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/></svg>
+                            Solicitudes
+                        </button>
+                        <button onclick="switchStaffPanel('analytics')" class="btn btn-secondary">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                            Analytics
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── PANEL: PLAYER (DJ) ── -->
+            <div class="staff-panel" id="panel-player">
+                <div class="content-card">
+                    <div class="content-card-title">Reproduciendo</div>
+                    <div class="video-container">
+                        <div id="yt-player"></div>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
+                        <div class="font-display truncate" id="admin-current-title" style="font-size:1.1rem;font-weight:700;font-style:italic;flex:1;min-width:0;margin-right:12px;">Standby...</div>
+                        <button id="admin-mute-btn" onclick="toggleAdminMute()" class="btn btn-secondary" style="flex-shrink:0;padding:10px;">
+                            <svg id="mute-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="content-card">
+                    <div class="content-card-title">Transport</div>
+                    <div class="transport-bar">
+                        <button onclick="sendCommand('seek', { offset: -10 })" class="transport-btn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
+                        </button>
+                        <button onclick="handleDJToggle()" class="transport-play">▶ / ⏸ Play · Pausa</button>
+                        <button onclick="sendCommand('seek', { offset: 10 })" class="transport-btn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>
+                        </button>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+                        <button onclick="skipSong()" class="btn btn-primary">⏭ Saltar</button>
+                        <button id="toggle-dedication-btn" onclick="toggleDedication()" class="btn btn-indigo">✨ Dedicatoria</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── PANEL: QUEUE DJ ── -->
+            <div class="staff-panel" id="panel-queue-dj">
+                <div class="content-card">
+                    <div class="content-card-title">Cola de reproducción</div>
+                    <div id="dj-queue-list" style="display:flex;flex-direction:column;gap:6px;">
+                        <p style="text-align:center;color:var(--text-muted);font-size:0.8rem;padding:24px 0;font-weight:600;">Cola vacía</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── PANEL: SAMPLER ── -->
+            <div class="staff-panel" id="panel-sampler">
+                <div class="content-card">
+                    <div class="content-card-title">Sampler DJ</div>
+                    <div class="sampler-grid">
+                        <button class="sampler-btn"><span style="font-size:1.5rem;">👏</span>Aplausos</button>
+                        <button class="sampler-btn"><span style="font-size:1.5rem;">🥳</span>Ovación</button>
+                        <button class="sampler-btn"><span style="font-size:1.5rem;">😂</span>Risas</button>
+                        <button class="sampler-btn"><span style="font-size:1.5rem;">🎺</span>Corneta</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── PANEL: WAITER ── -->
+            <div class="staff-panel" id="panel-waiter">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label text-red">Pendientes</div>
+                        <div class="stat-value" id="waiter-stat-open">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label" style="color:var(--text-muted);">Cerradas</div>
+                        <div class="stat-value" id="waiter-stat-closed">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label text-indigo">Atención prom.</div>
+                        <div class="stat-value" id="waiter-stat-avg">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label text-amber">Satisfacción</div>
+                        <div class="stat-value" id="waiter-stat-satisfaction">--</div>
+                    </div>
+                </div>
+                <div class="content-card">
+                    <div class="content-card-title">Solicitudes activas</div>
+                    <div class="calls-grid" id="waiter-calls-list">
+                        <p style="text-align:center;color:var(--text-muted);font-size:0.8rem;padding:24px 0;font-weight:600;grid-column:1/-1;">Sin solicitudes</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── PANEL: HISTORY ── -->
+            <div class="staff-panel" id="panel-history">
+                <div class="content-card">
+                    <div class="content-card-title">Historial de mesas</div>
+                    <div style="overflow-x:auto;">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Mesa</th>
+                                    <th>Pedidos</th>
+                                    <th>Atención</th>
+                                    <th>Rating</th>
+                                </tr>
+                            </thead>
+                            <tbody id="waiter-closed-list">
+                                <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px;">Sin historial</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── PANEL: ANALYTICS ── -->
+            <div class="staff-panel" id="panel-analytics">
+                <div class="content-card">
+                    <div class="content-card-title">Período de análisis</div>
+                    <div class="period-tabs">
+                        <button onclick="setAnalyticsPeriod('today')"  id="btn-period-today"  class="period-tab active">Hoy</button>
+                        <button onclick="setAnalyticsPeriod('week')"   id="btn-period-week"   class="period-tab">Semana</button>
+                        <button onclick="setAnalyticsPeriod('month')"  id="btn-period-month"  class="period-tab">Mes</button>
+                        <button onclick="setAnalyticsPeriod('year')"   id="btn-period-year"   class="period-tab">Año</button>
+                        <button onclick="toggleCustomDateRange()"      id="btn-period-custom" class="period-tab">Rango</button>
+                    </div>
+                    <div id="custom-date-range" class="hidden" style="margin-top:16px;display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--border);padding-top:16px;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div>
+                                <label style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);display:block;margin-bottom:6px;">Desde</label>
+                                <input id="date-from" type="date" style="width:100%;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:14px;outline:none;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);display:block;margin-bottom:6px;">Hasta</label>
+                                <input id="date-to" type="date" style="width:100%;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:14px;outline:none;">
+                            </div>
+                        </div>
+                        <button onclick="applyCustomDateRange()" class="btn btn-primary">Aplicar rango</button>
+                    </div>
+                </div>
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label text-purple">Atención prom.</div>
+                        <div class="kpi-value" id="analytics-avg-attention">--</div>
+                        <div class="kpi-unit">minutos</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label text-green">Calidad</div>
+                        <div class="kpi-value" id="analytics-avg-quality">--</div>
+                        <div class="kpi-unit">rating</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label" style="color:var(--accent-indigo);">Mesas</div>
+                        <div class="kpi-value" id="analytics-total-tables">0</div>
+                        <div class="kpi-unit">atendidas</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label text-amber">Pedidos/Mesa</div>
+                        <div class="kpi-value" id="analytics-avg-orders">--</div>
+                        <div class="kpi-unit">promedio</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label text-red">Canciones</div>
+                        <div class="kpi-value" id="analytics-songs-per-hour">--</div>
+                        <div class="kpi-unit">por hora</div>
+                    </div>
+                </div>
+                <div class="content-card" style="text-align:center;padding:32px;">
+                    <div style="font-size:2rem;margin-bottom:8px;">📊</div>
+                    <p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;">Gráficos detallados disponibles pronto</p>
+                </div>
+            </div>
+
+        </div><!-- end staff-content -->
+    </div><!-- end staff-main -->
+</div><!-- end staff-app -->
+
+
+<!-- ═══════════════════════════════════════
+     TV DISPLAY SCREEN
+═══════════════════════════════════════ -->
+<div id="display-screen" class="hidden">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 120%, rgba(232,54,42,0.15) 0%, transparent 70%);pointer-events:none;"></div>
+    <div id="tv-dedication-widget" class="tv-dedication hidden">
+        <p id="tv-dedication-text" class="font-display" style="font-size:2rem;font-weight:700;font-style:italic;color:var(--text-primary);line-height:1.3;"></p>
+        <p id="tv-dedication-from" style="font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-top:12px;text-transform:uppercase;letter-spacing:0.08em;"></p>
+    </div>
+    <div style="position:relative;z-index:10;width:100%;max-width:1400px;display:flex;flex-direction:column;gap:32px;">
+        <div class="video-container" style="box-shadow:0 40px 100px rgba(0,0,0,0.8);">
+            <div id="display-yt-player"></div>
+        </div>
+        <div style="text-align:center;">
+            <h1 id="display-title" class="font-display truncate" style="font-size:5rem;font-weight:900;font-style:italic;letter-spacing:-0.02em;line-height:1;margin-bottom:8px;"></h1>
+            <p id="display-artist" style="font-size:1.4rem;color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.3em;"></p>
+        </div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     MODALS
+═══════════════════════════════════════ -->
+
+<!-- SEARCH MODAL -->
+<div id="search-modal" class="modal-overlay hidden">
+    <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <span class="modal-title">Nueva Petición</span>
+            <button class="modal-close" onclick="closeSearch()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div style="display:flex;flex-direction:column;gap:14px;">
+                <div class="search-type-toggle">
+                    <button class="search-type-btn active" id="btn-type-music" onclick="setSearchType('music')">🎵 Música</button>
+                    <button class="search-type-btn" id="btn-type-karaoke" onclick="setSearchType('karaoke')">🎤 Karaoke</button>
+                </div>
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input id="search-input" class="search-input" type="text" placeholder="Busca tu rola favorita..." oninput="debounceSearch()" autocomplete="off">
+                </div>
+                <div id="search-results" style="display:flex;flex-direction:column;gap:4px;min-height:48px;">
+                    <p style="text-align:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;padding:16px;text-transform:uppercase;letter-spacing:0.08em;">Escribe para buscar</p>
+                </div>
+                <div id="final-step-container" class="hidden" style="display:flex;flex-direction:column;gap:12px;">
+                    <div class="confirm-panel">
+                        <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent-red);margin-bottom:4px;">Selección:</div>
+                        <div class="confirm-song-name" id="selected-song-preview"></div>
+                    </div>
+                    <input id="song-dedication" type="text" placeholder="Dedicatoria (opcional)" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:13px 16px;color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:15px;outline:none;width:100%;">
+                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 12px;background:var(--bg-elevated);border-radius:10px;border:1px solid var(--border);">
+                        <input id="song-show-name" type="checkbox" checked style="width:16px;height:16px;accent-color:var(--accent-red);">
+                        <span style="font-size:0.75rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;">Mostrar mi nombre</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" id="search-modal-footer" style="display:none;">
+            <button onclick="confirmOrder()" class="btn btn-success btn-full btn-lg" id="confirm-order-btn">
+                🚀 Enviar a la cola
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- BILL MODAL -->
+<div id="bill-modal" class="modal-overlay hidden">
+    <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <span class="modal-title">Pedir la Cuenta</span>
+            <button class="modal-close" onclick="closeBillModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div style="display:flex;flex-direction:column;gap:20px;">
+                <div>
+                    <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;">Forma de pago</div>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="selectPayment('efectivo')" id="pay-efectivo" class="payment-option">💵 Efectivo</button>
+                        <button onclick="selectPayment('tarjeta')" id="pay-tarjeta" class="payment-option">💳 Tarjeta</button>
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px;">Califica nuestro servicio</div>
+                    <div class="satisfaction-row">
+                        <button onclick="selectSatisfaction(1)" class="sat-btn">😫</button>
+                        <button onclick="selectSatisfaction(2)" class="sat-btn">☹️</button>
+                        <button onclick="selectSatisfaction(3)" class="sat-btn">😐</button>
+                        <button onclick="selectSatisfaction(4)" class="sat-btn">🙂</button>
+                        <button onclick="selectSatisfaction(5)" class="sat-btn">🤩</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" style="display:flex;gap:8px;">
+            <button onclick="closeBillModal()" class="btn btn-ghost">Cancelar</button>
+            <button id="confirm-bill-btn" onclick="sendBillRequest()" disabled class="btn btn-amber btn-full" style="opacity:0.5;">Enviar solicitud</button>
+        </div>
+    </div>
+</div>
+
+<!-- TABLE MODAL -->
+<div id="table-modal" class="modal-overlay center hidden">
+    <div class="modal-sheet is-center" style="max-width:360px;">
+        <div class="modal-header">
+            <span class="modal-title">Tu Mesa</span>
+        </div>
+        <div class="modal-body" style="text-align:center;">
+            <input id="table-number-input" type="number" class="table-input" placeholder="#">
+            <p style="font-size:0.7rem;color:var(--text-muted);font-weight:600;margin-top:12px;text-transform:uppercase;letter-spacing:0.08em;">Ingresa el número de tu mesa</p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="saveTableNumber()" class="btn btn-success btn-full btn-lg">Guardar mesa</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     JAVASCRIPT MODULES
+═══════════════════════════════════════ -->
+<script>
+/* ═══════════════════════════════════════
+   MODULE: CONFIG
+═══════════════════════════════════════ */
+const LOGO_URL = "logo.png";
+const manualFirebaseConfig = {
+    apiKey: "AIzaSyAia_yRHvYg3gGQ60VwPRwcRm3B0aja4cw",
+    authDomain: "rocola-crowdplay2.firebaseapp.com",
+    projectId: "rocola-crowdplay2",
+    storageBucket: "rocola-crowdplay2.firebasestorage.app",
+    messagingSenderId: "519952213703",
+    appId: "1:519952213703:web:0e0ecb8cb3fc81064240e2"
+};
+const YOUTUBE_API_KEY = "AIzaSyBB32TS0dFywl8N7cV1zWAuJsHWyxO3Pkk";
+const BUILD_ID = '2026-02-18-redesign-v2';
+
+let firebaseConfig = manualFirebaseConfig;
+try { if (!firebaseConfig && typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config); } catch(e) {}
+
+let app, auth, db;
+let isAppReady = false;
+let appId = typeof __app_id !== 'undefined' ? __app_id : 'rocola-crowdplay2-v1';
+let player = null;
+let currentTrack = null;
+let queue = [];
+let searchTimeout = null;
+let isAdminMuted = true;
+let currentMode = null;
+let searchType = 'music';
+let selectedPayment = null;
+let selectedSatisfactionValue = 0;
+let selectedVideo = null;
+let isSidebarCollapsed = false;
+let currentStaffPanel = 'dashboard';
+
+/* ═══════════════════════════════════════
+   MODULE: TOAST
+═══════════════════════════════════════ */
+function toast(message, type = 'info', duration = 3000) {
+    const container = document.getElementById('toast-container');
+    const icons = {
+        success: '✓',
+        error:   '✕',
+        info:    'ℹ',
+        warning: '⚠'
+    };
+    const el = document.createElement('div');
+    el.className = `toast toast-${type}`;
+    el.innerHTML = `<span style="font-size:1rem;">${icons[type]}</span><span>${message}</span>`;
+    container.appendChild(el);
+    setTimeout(() => {
+        el.classList.add('removing');
+        setTimeout(() => el.remove(), 300);
+    }, duration);
+}
+
+/* ═══════════════════════════════════════
+   MODULE: INIT
+═══════════════════════════════════════ */
+window.addEventListener('error', (e) => {
+    console.error('Global error:', e.error || e.message);
+    setSyncError('Error JS. Revisa consola.');
+});
+window.addEventListener('unhandledrejection', (e) => {
+    console.error('Unhandled rejection:', e.reason);
+    setSyncError('Error de red o Firebase.');
+});
+
+async function initFirebase() {
+    try {
+        const syncText = document.getElementById('sync-text');
+        if (!window.firebase) { setSyncError('Firebase SDK no cargó.'); return; }
+        if (syncText) syncText.innerText = 'Conectando...';
+
+        if (!firebase.apps.length) app = firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.firestore();
+
+        const syncTimeout = setTimeout(() => setSyncError('Tiempo de conexión agotado.'), 12000);
+
+        const proceedApp = () => {
+            clearTimeout(syncTimeout);
+            isAppReady = true;
+            document.getElementById('loading-screen').classList.add('hidden');
+            updateStatus(true);
+            applyLogo();
+            const params = new URLSearchParams(window.location.search);
+            const mode = params.get('mode');
+            if (mode) setMode(mode);
+            else document.getElementById('menu-screen').classList.remove('hidden');
+            startRealtimeSync();
+        };
+
+        await auth.signInAnonymously();
+        if (auth.currentUser) proceedApp();
+        auth.onAuthStateChanged(user => {
+            if (user) proceedApp();
+            else setSyncError('No se pudo autenticar. Verifica Firebase Auth.');
+        }, err => { setSyncError('Error de auth. Verifica reglas Firebase.'); });
+
+    } catch(e) {
+        console.error('Firebase init error:', e);
+        setSyncError('Error al conectar Firebase.');
+    }
+}
+
+function setSyncError(message) {
+    updateStatus(false);
+    const el = document.getElementById('sync-text');
+    if (el) { el.innerText = message; el.style.color = 'var(--accent-red)'; }
+}
+
+/* ═══════════════════════════════════════
+   MODULE: STATUS & LOGO
+═══════════════════════════════════════ */
+function updateStatus(online) {
+    // Sidebar dot
+    const ssDot  = document.getElementById('sidebar-status-dot');
+    const ssTxt  = document.getElementById('sidebar-status-text');
+    if (ssDot) ssDot.className = online ? 'status-dot online' : 'status-dot offline';
+    if (ssTxt) ssTxt.innerText = online ? 'Sincronizado' : 'Sin conexión';
+    // Staff topbar dot
+    const stDot  = document.getElementById('staff-status-dot');
+    const stTxt  = document.getElementById('staff-status-text');
+    if (stDot) stDot.className = online ? 'status-dot online' : 'status-dot offline';
+    if (stTxt) stTxt.innerText = online ? 'Sincronizado' : 'Sin conexión';
+    // Client dot
+    const cDot = document.getElementById('client-status-dot');
+    if (cDot) cDot.style.background = online ? 'var(--accent-green)' : 'var(--accent-red)';
+}
+
+function applyLogo() {
+    const containers = ['reg-logo-container', 'menu-logo-container', 'client-header-logo'];
+    containers.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const isSmall = id === 'client-header-logo';
+        el.innerHTML = `<img src="${LOGO_URL}" style="max-height:${isSmall ? '28px' : '100px'};width:auto;object-fit:contain;" alt="Logo" onerror="handleLogoError('${id}')">`;
+        if (id === 'reg-logo-container') {
+            const title = document.getElementById('reg-title-text');
+            if (title) title.classList.add('hidden');
+        }
+    });
+}
+
+function handleLogoError(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (id === 'client-header-logo') el.innerHTML = '';
+    else el.innerHTML = '';
+}
+
+/* ═══════════════════════════════════════
+   MODULE: ROUTING / MODE
+═══════════════════════════════════════ */
+function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('menu-screen').classList.add('hidden');
+    document.getElementById('client-app').classList.add('hidden');
+    document.getElementById('staff-app').classList.add('hidden');
+    document.getElementById('display-screen').classList.add('hidden');
+
+    if (mode === 'display') {
+        document.getElementById('display-screen').classList.remove('hidden');
+        initYouTube('display-yt-player');
+
+    } else if (mode === 'client') {
+        document.getElementById('client-app').classList.remove('hidden');
+        const u = JSON.parse(localStorage.getItem('rocola_user_v1'));
+        if (u) {
+            const nameEl = document.getElementById('client-user-name');
+            if (nameEl) nameEl.innerText = u.name + ' ' + (u.surname || '');
+        }
+        const tableN = localStorage.getItem('rocola_table_v1');
+        const tInfo = document.getElementById('client-table-info');
+        if (tInfo) tInfo.innerText = tableN ? `Mesa ${tableN}` : 'Mesa no asignada';
+        if (!tableN) setTimeout(() => document.getElementById('table-modal').classList.remove('hidden'), 800);
+
+    } else {
+        // Staff modes: admin (DJ), waiter, analytics
+        document.getElementById('staff-app').classList.remove('hidden');
+        const roleMap = { admin: 'MODO DJ', waiter: 'MESERO', analytics: 'ANALYTICS' };
+        const chipEl = document.getElementById('staff-role-chip');
+        if (chipEl) chipEl.innerText = roleMap[mode] || mode.toUpperCase();
+
+        if (mode === 'admin') {
+            switchStaffPanel('dashboard');
+            initYouTube('yt-player');
+        } else if (mode === 'waiter') {
+            switchStaffPanel('waiter');
+            loadWaiterInitialData();
+        } else if (mode === 'analytics') {
+            switchStaffPanel('analytics');
+            initAnalytics();
+        }
+    }
+}
+
+/* ═══════════════════════════════════════
+   MODULE: SIDEBAR (Staff)
+═══════════════════════════════════════ */
+function toggleSidebar() {
+    isSidebarCollapsed = !isSidebarCollapsed;
+    const sidebar = document.getElementById('sidebar');
+    const icon = document.getElementById('sidebar-toggle-icon');
+    sidebar.classList.toggle('collapsed', isSidebarCollapsed);
+    if (icon) {
+        icon.innerHTML = isSidebarCollapsed
+            ? '<path d="M9 18l6-6-6-6"/>'
+            : '<path d="M15 18l-6-6 6-6"/>';
+    }
+}
+
+function switchStaffPanel(panelName) {
+    currentStaffPanel = panelName;
+    // Hide all panels
+    document.querySelectorAll('.staff-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    // Show target
+    const panel = document.getElementById(`panel-${panelName}`);
+    if (panel) panel.classList.add('active');
+    const sitem = document.getElementById(`sitem-${panelName}`);
+    if (sitem) sitem.classList.add('active');
+    // Update topbar title
+    const titles = {
+        'dashboard': 'Dashboard',
+        'player': 'Reproductor',
+        'queue-dj': 'Cola de Canciones',
+        'sampler': 'Sampler DJ',
+        'waiter': 'Solicitudes',
+        'history': 'Historial',
+        'analytics': 'Analytics',
+        'tv': 'Emisión TV'
+    };
+    const titleEl = document.getElementById('staff-page-title');
+    if (titleEl) titleEl.innerText = titles[panelName] || panelName;
+}
+
+/* ═══════════════════════════════════════
+   MODULE: CLIENT TABS
+═══════════════════════════════════════ */
+function switchClientTab(tabName) {
+    document.querySelectorAll('.client-tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    const panel = document.getElementById(`tab-${tabName}`);
+    if (panel) panel.classList.add('active');
+    const nav = document.getElementById(`nav-${tabName}`);
+    if (nav) nav.classList.add('active');
+}
+
+/* ═══════════════════════════════════════
+   MODULE: REALTIME SYNC
+═══════════════════════════════════════ */
+function startRealtimeSync() {
+    db.collection(`artifacts/${appId}/public/data/rocola_queue`).onSnapshot(snap => {
+        let items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        items.sort((a, b) => ((b.votes || 0) - (a.votes || 0)) || ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0)));
+        currentTrack = items.find(i => i.status === 'playing') || null;
+        queue = items.filter(i => i.status === 'pending');
+        updateClientUI();
+        updateDJQueuePanel();
+        syncVideo();
+
+        if (currentMode === 'display' && currentTrack) {
+            const dTitle = document.getElementById('display-title');
+            const dArtist = document.getElementById('display-artist');
+            if (dTitle) dTitle.innerText = currentTrack.title;
+            if (dArtist) dArtist.innerText = currentTrack.artist;
+        } else if (currentMode === 'display' && !currentTrack) {
+            const dTitle = document.getElementById('display-title');
+            if (dTitle) dTitle.innerText = 'Esperando canciones...';
+        }
+
+        if (currentMode === 'admin') updateAdminDashboard(items);
+    });
+
+    db.collection(`artifacts/${appId}/public/data/waiter_calls`).onSnapshot(snap => {
+        const calls = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (currentMode === 'waiter' || currentStaffPanel === 'waiter' || currentStaffPanel === 'history') {
+            updateWaiterView(calls);
+        }
+        updateClientWaiterStatus(calls);
+        // Update waiter badge
+        const activeCalls = calls.filter(c => c.status !== 'completed');
+        const badge = document.getElementById('sb-waiter-count');
+        if (badge) {
+            badge.style.display = activeCalls.length > 0 ? 'block' : 'none';
+            badge.innerText = activeCalls.length;
+        }
+    });
+}
+
+/* ═══════════════════════════════════════
+   MODULE: CLIENT UI UPDATE
+═══════════════════════════════════════ */
+function updateClientUI() {
+    // Now playing card
+    const npTitle = document.getElementById('np-title');
+    const npMeta  = document.getElementById('np-meta');
+    const eqBars  = document.getElementById('eq-bars');
+    const npThumbWrap = document.getElementById('np-thumb-wrap');
+
+    if (currentTrack) {
+        if (npTitle) npTitle.innerText = currentTrack.title;
+        if (npMeta) {
+            const tags = [];
+            if (currentTrack.isKaraoke) tags.push('🎤 Karaoke');
+            else tags.push('🎵 Música');
+            if (currentTrack.showName && currentTrack.userName) tags.push(currentTrack.userName);
+            npMeta.innerText = tags.join(' · ');
+        }
+        if (eqBars) eqBars.style.display = 'flex';
+        if (npThumbWrap) {
+            npThumbWrap.outerHTML = `<img class="np-thumb" id="np-thumb-wrap" src="https://img.youtube.com/vi/${currentTrack.videoId}/mqdefault.jpg" onerror="this.style.display='none'" />`;
+        }
+    } else {
+        if (npTitle) npTitle.innerText = 'Sin reproducción';
+        if (npMeta) npMeta.innerText = '—';
+        if (eqBars) eqBars.style.display = 'none';
+    }
+
+    // Wait time estimate
+    const waitMins = document.getElementById('client-wait-mins');
+    const waitPill = document.getElementById('client-wait-pill');
+    const avgSongLen = 3.5;
+    const waitTime = Math.round(queue.length * avgSongLen);
+    if (waitMins) waitMins.innerText = waitTime;
+    if (waitPill) waitPill.classList.toggle('hidden', queue.length === 0);
+
+    // Queue list
+    const qList = document.getElementById('client-queue-list');
+    if (qList) {
+        if (queue.length === 0) {
+            qList.innerHTML = `<div style="text-align:center;padding:32px 16px;color:var(--text-muted);">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 8px;display:block;opacity:0.4;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                <p style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;opacity:0.5;">Cola vacía — ¡Pide la primera!</p>
+            </div>`;
+        } else {
+            qList.innerHTML = queue.map((s, idx) => `
+                <div class="queue-item" style="animation-delay:${idx * 0.04}s;">
+                    <span class="queue-rank">${idx + 1}</span>
+                    <img class="queue-thumb" src="https://img.youtube.com/vi/${s.videoId}/default.jpg" onerror="this.style.display='none'">
+                    <div class="queue-info">
+                        <div class="queue-title">${s.title}</div>
+                        <div class="queue-meta">${s.isKaraoke ? '🎤' : '🎵'} ${s.showName ? s.userName : 'Anónimo'}</div>
+                    </div>
+                    <button class="vote-btn" onclick="voteSong('${s.id}', ${s.votes || 0})">
+                        🔥 <span>${s.votes || 0}</span>
+                    </button>
+                </div>
+            `).join('');
+        }
+    }
+
+    // DJ queue badge
+    const qBadge = document.getElementById('sb-queue-count');
+    if (qBadge) {
+        qBadge.style.display = queue.length > 0 ? 'block' : 'none';
+        qBadge.innerText = queue.length;
+    }
+}
+
+function updateDJQueuePanel() {
+    const list = document.getElementById('dj-queue-list');
+    if (!list) return;
+    const allItems = currentTrack ? [currentTrack, ...queue] : queue;
+    if (allItems.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:0.8rem;padding:24px 0;font-weight:600;">Cola vacía</p>';
+        return;
+    }
+    list.innerHTML = allItems.map((s, idx) => `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;${s.status === 'playing' ? 'background:rgba(232,54,42,0.08);border:1px solid rgba(232,54,42,0.15);' : ''}">
+            <img src="https://img.youtube.com/vi/${s.videoId}/default.jpg" style="width:48px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;">
+            <div style="flex:1;min-width:0;">
+                <div class="font-display" style="font-size:0.9rem;font-weight:700;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${s.status === 'playing' ? 'color:var(--accent-red);' : ''}">${s.status === 'playing' ? '▶ ' : ''}${s.title}</div>
+                <div style="font-size:0.65rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-top:1px;">${s.isKaraoke ? '🎤' : '🎵'} ${s.showName ? s.userName : 'Anónimo'} · 🔥 ${s.votes || 0}</div>
+            </div>
+        </div>
+    `).join('');
+    // Update admin title
+    if (currentTrack) {
+        const adminTitle = document.getElementById('admin-current-title');
+        if (adminTitle) adminTitle.innerText = currentTrack.title;
+    }
+}
+
+/* ═══════════════════════════════════════
+   MODULE: SEARCH
+═══════════════════════════════════════ */
+function openSearch() {
+    document.getElementById('search-modal').classList.remove('hidden');
+}
+function closeSearch() {
+    document.getElementById('search-modal').classList.add('hidden');
+    document.getElementById('search-input').value = '';
+    document.getElementById('search-results').innerHTML = `<p style="text-align:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;padding:16px;text-transform:uppercase;letter-spacing:0.08em;">Escribe para buscar</p>`;
+    document.getElementById('search-results').style.display = '';
+    document.getElementById('final-step-container').classList.add('hidden');
+    document.getElementById('search-modal-footer').style.display = 'none';
+    const btn = document.getElementById('confirm-order-btn');
+    if (btn) { btn.disabled = false; btn.innerHTML = '🚀 Enviar a la cola'; }
+    selectedVideo = null;
+}
+
+function debounceSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(performSearch, 600);
+}
+
+async function performSearch() {
+    const q = document.getElementById('search-input').value.trim();
+    const resultsEl = document.getElementById('search-results');
+    if (q.length < 2) {
+        resultsEl.innerHTML = `<p style="text-align:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;padding:16px;text-transform:uppercase;letter-spacing:0.08em;">Escribe para buscar</p>`;
+        return;
+    }
+    resultsEl.innerHTML = `<div style="text-align:center;padding:20px;"><div class="loading-spinner" style="margin:0 auto;width:24px;height:24px;"></div></div>`;
+    document.getElementById('final-step-container').classList.add('hidden');
+    document.getElementById('search-modal-footer').style.display = 'none';
+    try {
+        const query = searchType === 'karaoke' ? `${q} karaoke` : q;
+        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&maxResults=8&key=${YOUTUBE_API_KEY}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data || !Array.isArray(data.items) || data.items.length === 0) {
+            resultsEl.innerHTML = `<p style="text-align:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;padding:16px;text-transform:uppercase;letter-spacing:0.08em;">Sin resultados</p>`;
+            return;
+        }
+        resultsEl.innerHTML = data.items.map(i => {
+            const videoId = i.id?.videoId || '';
+            const title = (i.snippet.title || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+            const thumb = i.snippet.thumbnails?.default?.url || '';
+            return `<div class="search-result-item" onclick="selectForOrder('${videoId}', '${title}', '')">
+                <img class="search-result-thumb" src="${thumb}">
+                <div style="flex:1;min-width:0;">
+                    <div class="search-result-title">${title}</div>
+                </div>
+            </div>`;
+        }).join('');
+    } catch(e) {
+        resultsEl.innerHTML = `<p style="text-align:center;color:var(--accent-red);font-size:0.75rem;font-weight:600;padding:16px;text-transform:uppercase;letter-spacing:0.08em;">Error de búsqueda</p>`;
+    }
+}
+
+function selectForOrder(videoId, title, artist) {
+    selectedVideo = { videoId, title: title.replace(/&#39;/g, "'").replace(/&quot;/g, '"'), artist };
+    document.getElementById('search-results').style.display = 'none';
+    document.getElementById('selected-song-preview').innerText = selectedVideo.title;
+    document.getElementById('final-step-container').classList.remove('hidden');
+    document.getElementById('search-modal-footer').style.display = 'block';
+}
+
+async function confirmOrder() {
+    if (!selectedVideo) return;
+    const btn = document.getElementById('confirm-order-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="loading-spinner" style="width:18px;height:18px;margin:0 auto;"></div>';
+    try {
+        const u = JSON.parse(localStorage.getItem('rocola_user_v1'));
+        await db.collection(`artifacts/${appId}/public/data/rocola_queue`).add({
+            ...selectedVideo,
+            status: (!currentTrack && queue.length === 0) ? 'playing' : 'pending',
+            votes: 1, userId: u.id, userName: u.name,
+            dedication: document.getElementById('song-dedication').value,
+            showName: document.getElementById('song-show-name').checked,
+            isKaraoke: searchType === 'karaoke',
+            showDedication: false, lastCommand: 'play',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        toast('¡Canción enviada a la cola! 🎵', 'success');
+        closeSearch();
+        switchClientTab('queue');
+    } catch(err) {
+        console.error('Error sending song:', err);
+        btn.disabled = false;
+        btn.innerHTML = '🚀 Enviar a la cola';
+        toast('Error al enviar. Intenta de nuevo.', 'error');
+    }
+}
+
+function setSearchType(t) {
+    searchType = t;
+    document.getElementById('btn-type-music').className = t === 'music' ? 'search-type-btn active' : 'search-type-btn';
+    document.getElementById('btn-type-karaoke').className = t === 'karaoke' ? 'search-type-btn active' : 'search-type-btn';
+    if (document.getElementById('search-input').value.length >= 2) performSearch();
+}
+
+/* ═══════════════════════════════════════
+   MODULE: REGISTRATION
+═══════════════════════════════════════ */
+function checkClientRegistration() {
+    try {
+        const u = JSON.parse(localStorage.getItem('rocola_user_v1'));
+        if (u && u.id) setMode('client');
+        else {
+            document.getElementById('registration-screen').classList.remove('hidden');
+            document.getElementById('menu-screen').classList.add('hidden');
+        }
+    } catch(e) {
+        document.getElementById('registration-screen').classList.remove('hidden');
+        document.getElementById('menu-screen').classList.add('hidden');
+    }
+}
+
+function saveUserRegistration() {
+    const n = document.getElementById('reg-name').value.trim();
+    const s = document.getElementById('reg-surname').value.trim();
+    const w = document.getElementById('reg-whatsapp').value.trim();
+    if (!n || !s || !w) { toast('Por favor completa todos los campos.', 'warning'); return; }
+    localStorage.setItem('rocola_user_v1', JSON.stringify({ name: n, surname: s, whatsapp: w, id: auth.currentUser.uid }));
+    document.getElementById('registration-screen').classList.add('hidden');
+    setMode('client');
+}
+
+/* ═══════════════════════════════════════
+   MODULE: TABLE
+═══════════════════════════════════════ */
+function saveTableNumber() {
+    const table = document.getElementById('table-number-input').value;
+    if (!table) { toast('Ingresa tu número de mesa.', 'warning'); return; }
+    localStorage.setItem('rocola_table_v1', table);
+    document.getElementById('table-modal').classList.add('hidden');
+    document.getElementById('table-number-input').value = '';
+    const tInfo = document.getElementById('client-table-info');
+    if (tInfo) tInfo.innerText = `Mesa ${table}`;
+    toast(`Mesa ${table} guardada ✓`, 'success');
+}
+
+/* ═══════════════════════════════════════
+   MODULE: WAITER CALLS (Client side)
+═══════════════════════════════════════ */
+async function handleCallWaiter() {
+    const table = localStorage.getItem('rocola_table_v1');
+    if (!table) { document.getElementById('table-modal').classList.remove('hidden'); return; }
+    const card = document.querySelector('.service-card:nth-child(1)');
+    try {
+        await sendWaiterCall(table, 'service');
+        toast('Mesero en camino 🛎️', 'success');
+    } catch(err) {
+        toast('Error al llamar mesero. Intenta de nuevo.', 'error');
+    }
+}
+
+function handleRequestBill() {
+    const table = localStorage.getItem('rocola_table_v1');
+    if (!table) document.getElementById('table-modal').classList.remove('hidden');
+    else document.getElementById('bill-modal').classList.remove('hidden');
+}
+
+async function sendWaiterCall(table, type, extra = {}) {
+    if (!isAppReady || !db) throw new Error('App no lista.');
+    const u = JSON.parse(localStorage.getItem('rocola_user_v1'));
+    if (!u?.id) throw new Error('Usuario no registrado.');
+    const docRef = await db.collection(`artifacts/${appId}/public/data/waiter_calls`).add({
+        userId: u.id, userName: u.name, table: String(table),
+        type, status: 'sent',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        ...extra
+    });
+    return docRef.id;
+}
+
+function updateClientWaiterStatus(calls) {
+    const u = JSON.parse(localStorage.getItem('rocola_user_v1'));
+    if (!u) return;
+    const myCalls = calls.filter(c => c.userId === u.id && c.status !== 'completed');
+    const waiterBubble = document.getElementById('waiter-status-bubble');
+    const billBubble   = document.getElementById('bill-status-bubble');
+    if (waiterBubble) waiterBubble.classList.add('hidden');
+    if (billBubble) billBubble.classList.add('hidden');
+    myCalls.forEach(call => {
+        if (call.type === 'bill' && billBubble) billBubble.classList.remove('hidden');
+        else if (call.type === 'service' && waiterBubble) waiterBubble.classList.remove('hidden');
+    });
+}
+
+/* ═══════════════════════════════════════
+   MODULE: BILL
+═══════════════════════════════════════ */
+function selectPayment(type) {
+    selectedPayment = type;
+    document.getElementById('pay-efectivo').className = type === 'efectivo' ? 'payment-option selected' : 'payment-option';
+    document.getElementById('pay-tarjeta').className  = type === 'tarjeta'  ? 'payment-option selected' : 'payment-option';
+    checkBillForm();
+}
+function selectSatisfaction(level) {
+    selectedSatisfactionValue = level;
+    document.querySelectorAll('.sat-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', (i + 1) === level);
+    });
+    checkBillForm();
+}
+function checkBillForm() {
+    const btn = document.getElementById('confirm-bill-btn');
+    if (selectedPayment && selectedSatisfactionValue > 0) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+    }
+}
+function closeBillModal() {
+    document.getElementById('bill-modal').classList.add('hidden');
+    selectedPayment = null; selectedSatisfactionValue = 0;
+    document.querySelectorAll('.sat-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById('confirm-bill-btn');
+    btn.disabled = true; btn.style.opacity = '0.5';
+}
+async function sendBillRequest() {
+    const table = localStorage.getItem('rocola_table_v1');
+    if (!table) { toast('Mesa no asignada.', 'warning'); return; }
+    const btn = document.getElementById('confirm-bill-btn');
+    btn.disabled = true; btn.innerText = 'Enviando...';
+    try {
+        await sendWaiterCall(table, 'bill', { payment: selectedPayment, satisfaction: selectedSatisfactionValue });
+        toast('Solicitud de cuenta enviada 💳', 'success');
+        setTimeout(() => closeBillModal(), 1000);
+    } catch(err) {
+        btn.disabled = false; btn.innerText = 'Enviar solicitud';
+        toast('Error al enviar solicitud.', 'error');
+    }
+}
+
+/* ═══════════════════════════════════════
+   MODULE: WAITER VIEW (Staff)
+═══════════════════════════════════════ */
+function loadWaiterInitialData() {
+    db.collection(`artifacts/${appId}/public/data/waiter_calls`).get()
+        .then(snap => updateWaiterView(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
+        .catch(err => console.error('Error loading waiter data:', err));
+}
+
+function updateWaiterView(calls) {
+    if (!calls) calls = [];
+    const activeCalls    = calls.filter(c => c.status !== 'completed');
+    const completedCalls = calls.filter(c => c.status === 'completed');
+
+    const el = (id) => document.getElementById(id);
+    if (el('waiter-stat-open'))    el('waiter-stat-open').innerText    = activeCalls.length;
+    if (el('waiter-stat-closed'))  el('waiter-stat-closed').innerText  = completedCalls.length;
+
+    const ratedCalls = completedCalls.filter(c => c.satisfaction);
+    if (ratedCalls.length > 0 && el('waiter-stat-satisfaction')) {
+        const avg = ratedCalls.reduce((a, c) => a + c.satisfaction, 0) / ratedCalls.length;
+        el('waiter-stat-satisfaction').innerText = ["😫","😫","☹️","😐","🙂","🤩"][Math.round(avg)];
+    }
+    if (completedCalls.length > 0 && el('waiter-stat-avg')) {
+        const avgT = completedCalls.reduce((a, c) => a + (c.responseTime || 0), 0) / completedCalls.length;
+        el('waiter-stat-avg').innerText = Math.round(avgT / 60) + 'm';
+    }
+
+    const list = el('waiter-calls-list');
+    if (list) {
+        if (activeCalls.length === 0) {
+            list.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:0.8rem;padding:32px 0;font-weight:600;grid-column:1/-1;">Sin solicitudes pendientes ✓</p>';
+        } else {
+            list.innerHTML = activeCalls.map(c => `
+                <div class="call-card ${c.type === 'bill' ? 'bill-type' : ''}">
+                    <div class="call-card-header">
+                        <div>
+                            <div class="call-table">Mesa ${c.table}</div>
+                            <div class="call-type-label">${c.type === 'bill' ? `💰 Cuenta · ${(c.payment || '').toUpperCase()}` : '🛎️ Servicio'}</div>
+                        </div>
+                        <span class="call-status-badge ${c.status === 'sent' ? 'badge-waiting pulse-red' : 'badge-onway'}">
+                            ${c.status === 'sent' ? 'Esperando' : 'En camino'}
+                        </span>
+                    </div>
+                    <button onclick="updateCallStatus('${c.id}', '${c.status === 'sent' ? 'on_way' : 'completed'}')" class="btn ${c.status === 'sent' ? 'btn-indigo' : 'btn-success'} btn-full">
+                        ${c.status === 'sent' ? 'Tomar pedido' : '✓ Completar'}
+                    </button>
+                </div>
+            `).join('');
+        }
+    }
+
+    // History table
+    const closedList = el('waiter-closed-list');
+    if (closedList) {
+        const sessions = {};
+        completedCalls.forEach(c => {
+            if (!sessions[c.table]) sessions[c.table] = { reqs: 0, time: 0, satisf: 0, count: 0 };
+            sessions[c.table].reqs++;
+            sessions[c.table].time += (c.responseTime || 0);
+            if (c.satisfaction) { sessions[c.table].satisf += c.satisfaction; sessions[c.table].count++; }
+        });
+        const keys = Object.keys(sessions);
+        if (keys.length === 0) {
+            closedList.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px;">Sin historial</td></tr>';
+        } else {
+            const faces = ['-','😫','☹️','😐','🙂','🤩'];
+            closedList.innerHTML = keys.map(mesa => {
+                const s = sessions[mesa];
+                return `<tr>
+                    <td><span style="font-weight:700;color:var(--text-primary);">Mesa ${mesa}</span></td>
+                    <td style="text-align:center;">${s.reqs}</td>
+                    <td style="text-align:center;">${Math.round(s.time / s.reqs / 60)} min</td>
+                    <td style="text-align:center;">${s.count > 0 ? faces[Math.round(s.satisf / s.count)] : '—'}</td>
+                </tr>`;
+            }).join('');
+        }
+    }
+}
+
+async function updateCallStatus(id, newStatus) {
+    const ref = db.collection(`artifacts/${appId}/public/data/waiter_calls`).doc(id);
+    const snap = await ref.get();
+    const update = { status: newStatus };
+    if (newStatus === 'completed') update.responseTime = Math.floor(Date.now() / 1000) - (snap.data().createdAt?.seconds || 0);
+    await ref.update(update);
+    toast(newStatus === 'completed' ? 'Solicitud completada ✓' : 'En camino 🚶', 'success');
+}
+
+/* ═══════════════════════════════════════
+   MODULE: DJ / ADMIN
+═══════════════════════════════════════ */
+function updateAdminDashboard(items) {
+    const totalEl = document.getElementById('stat-total-today');
+    const topEl   = document.getElementById('stat-top-song');
+    const rpmEl   = document.getElementById('stat-songs-hour');
+    if (totalEl) totalEl.innerText = items.length;
+    if (items.length > 0) {
+        const top = [...items].sort((a, b) => b.votes - a.votes)[0];
+        if (topEl) topEl.innerText = top.title;
+        const first = items.reduce((acc, i) => Math.min(acc, i.createdAt?.seconds || Infinity), Infinity);
+        const hours = Math.max((Math.floor(Date.now() / 1000) - first) / 3600, 0.2);
+        if (rpmEl) rpmEl.innerText = Math.round(items.length / hours);
+    }
+}
+
+function sendCommand(cmd, extra = {}) {
+    if (!currentTrack) return;
+    db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(currentTrack.id).update({ lastCommand: cmd, commandId: Math.random(), ...extra });
+}
+function handleDJToggle() {
+    if (currentTrack) sendCommand(currentTrack.lastCommand === 'pause' ? 'play' : 'pause');
+}
+async function toggleDedication() {
+    if (currentTrack) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(currentTrack.id).update({ showDedication: !currentTrack.showDedication });
+}
+async function skipSong() {
+    if (currentTrack) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(currentTrack.id).delete();
+    if (queue.length > 0) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(queue[0].id).update({ status: 'playing', createdAt: firebase.firestore.FieldValue.serverTimestamp(), showDedication: false, lastCommand: 'play' });
+}
+async function voteSong(id, v) {
+    await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(id).update({ votes: v + 1 });
+}
+function toggleAdminMute() {
+    if (!player) return;
+    isAdminMuted = !isAdminMuted;
+    try { isAdminMuted ? player.mute?.() : player.unMute?.(); } catch(e) {}
+    document.getElementById('mute-icon').innerHTML = isAdminMuted
+        ? `<path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>`
+        : `<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>`;
+}
+
+/* ═══════════════════════════════════════
+   MODULE: YOUTUBE
+═══════════════════════════════════════ */
+function initYouTube(divId) {
+    if (window.YT && window.YT.Player) createPlayer(divId);
+    else {
+        window.onYouTubeIframeAPIReady = () => createPlayer(divId);
+    }
+}
+function createPlayer(divId) {
+    player = new window.YT.Player(divId, {
+        height: '100%', width: '100%',
+        videoId: currentTrack?.videoId || '',
+        playerVars: { autoplay: 1, controls: 0, modestbranding: 1, rel: 0, enablejsapi: 1, fs: 1, iv_load_policy: 3 },
+        events: {
+            onReady: (e) => {
+                if (currentMode === 'admin' && isAdminMuted) e.target.mute();
+                if (currentTrack) syncVideo();
+            },
+            onStateChange: (e) => { if (e.data === window.YT.PlayerState.ENDED) skipSong(); },
+            onError: (e) => console.error('Player error:', e.data)
+        }
+    });
+}
+function syncVideo() {
+    if (!player || !currentTrack) return;
+    try {
+        const currentVideoId = player.getVideoData?.()?.video_id;
+        if (currentVideoId !== currentTrack.videoId) player.loadVideoById?.(currentTrack.videoId);
+        setTimeout(() => {
+            if (!player || !currentTrack) return;
+            if (currentTrack.lastCommand === 'pause') player.pauseVideo?.();
+            else if (currentTrack.lastCommand === 'play') player.playVideo?.();
+        }, 500);
+        if (currentTrack.lastCommand === 'seek' && currentTrack.offset) {
+            player.seekTo?.(player.getCurrentTime?.() + currentTrack.offset, true);
+            sendCommand('play');
+        }
+    } catch(e) { console.error('syncVideo error:', e); }
+}
+function openTVTab() { window.open(`${window.location.origin}${window.location.pathname}?mode=display`, '_blank'); }
+function copyRoleLink(mode) {
+    const url = `${window.location.origin}${window.location.pathname}?mode=${mode}`;
+    navigator.clipboard.writeText(url).then(() => toast('Enlace copiado al portapapeles', 'info'));
+}
+
+/* ═══════════════════════════════════════
+   MODULE: ANALYTICS
+═══════════════════════════════════════ */
+let analyticsPeriod = 'today';
+let analyticsDateFrom = null;
+let analyticsDateTo = null;
+
+function initAnalytics() { setAnalyticsPeriod('today'); }
+
+function setAnalyticsPeriod(period) {
+    analyticsPeriod = period;
+    analyticsDateFrom = null; analyticsDateTo = null;
+    document.getElementById('custom-date-range').classList.add('hidden');
+    updateAnalyticsButtons();
+    loadAnalyticsData();
+}
+
+function toggleCustomDateRange() {
+    const el = document.getElementById('custom-date-range');
+    el.classList.toggle('hidden');
+    el.style.display = el.classList.contains('hidden') ? 'none' : 'flex';
+}
+
+function applyCustomDateRange() {
+    const from = document.getElementById('date-from').value;
+    const to   = document.getElementById('date-to').value;
+    if (!from || !to) { toast('Completa ambas fechas', 'warning'); return; }
+    analyticsDateFrom = new Date(from).getTime() / 1000;
+    analyticsDateTo   = new Date(to).getTime() / 1000 + 86400;
+    analyticsPeriod = 'custom';
+    updateAnalyticsButtons();
+    loadAnalyticsData();
+}
+
+function updateAnalyticsButtons() {
+    document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+    const active = document.getElementById(`btn-period-${analyticsPeriod}`);
+    if (active) active.classList.add('active');
+}
+
+async function loadAnalyticsData() {
+    try {
+        const { dateFrom, dateTo } = getDateRange();
+        const tsFrom = firebase.firestore.Timestamp.fromSeconds(dateFrom);
+        const tsTo   = firebase.firestore.Timestamp.fromSeconds(dateTo);
+        const [waiterSnap, queueSnap] = await Promise.all([
+            db.collection(`artifacts/${appId}/public/data/waiter_calls`).where('createdAt','>=',tsFrom).where('createdAt','<',tsTo).get(),
+            db.collection(`artifacts/${appId}/public/data/rocola_queue`).where('createdAt','>=',tsFrom).where('createdAt','<',tsTo).get()
+        ]);
+        calculateMetrics(
+            waiterSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+            queueSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+            dateFrom, dateTo
+        );
+    } catch(err) {
+        console.error('Analytics error:', err);
+    }
+}
+
+function getDateRange() {
+    const now = Math.floor(Date.now() / 1000);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const todayS = Math.floor(today.getTime() / 1000);
+    if (analyticsPeriod === 'today')  return { dateFrom: todayS, dateTo: now };
+    if (analyticsPeriod === 'week')   { const w = new Date(today); w.setDate(today.getDate()-today.getDay()); return { dateFrom: Math.floor(w.getTime()/1000), dateTo: now }; }
+    if (analyticsPeriod === 'month')  return { dateFrom: Math.floor(new Date(today.getFullYear(), today.getMonth(), 1).getTime()/1000), dateTo: now };
+    if (analyticsPeriod === 'year')   return { dateFrom: Math.floor(new Date(today.getFullYear(), 0, 1).getTime()/1000), dateTo: now };
+    if (analyticsPeriod === 'custom') return { dateFrom: analyticsDateFrom || todayS, dateTo: analyticsDateTo || now };
+    return { dateFrom: todayS, dateTo: now };
+}
+
+function calculateMetrics(waiterCalls, queueItems, dateFrom, dateTo) {
+    const completed = waiterCalls.filter(c => c.status === 'completed');
+    const rated     = completed.filter(c => c.satisfaction);
+
+    const avgAttn    = completed.length > 0 ? Math.round(completed.reduce((a,c) => a+(c.responseTime||0),0)/completed.length/60)+' min' : '--';
+    const avgQuality = rated.length > 0 ? (rated.reduce((a,c) => a+c.satisfaction,0)/rated.length).toFixed(1) : '--';
+    const uniqueTbls = new Set(completed.map(c => c.table)).size;
+    const avgOrders  = uniqueTbls > 0 ? (completed.length / uniqueTbls).toFixed(1) : '--';
+    const hrs        = Math.max((dateTo - dateFrom) / 3600, 1);
+    const sph        = hrs > 0 ? (queueItems.length / hrs).toFixed(1) : '--';
+
+    const el = (id) => document.getElementById(id);
+    if (el('analytics-avg-attention'))   el('analytics-avg-attention').innerText   = avgAttn;
+    if (el('analytics-avg-quality'))     el('analytics-avg-quality').innerText     = avgQuality;
+    if (el('analytics-total-tables'))    el('analytics-total-tables').innerText    = uniqueTbls;
+    if (el('analytics-avg-orders'))      el('analytics-avg-orders').innerText      = avgOrders;
+    if (el('analytics-songs-per-hour'))  el('analytics-songs-per-hour').innerText  = sph;
+}
+
+/* ═══════════════════════════════════════
+   BOOT
+═══════════════════════════════════════ */
+try {
+    const syncText = document.getElementById('sync-text');
+    if (syncText) syncText.innerText = `Sincronizando... (${BUILD_ID})`;
+    if (!firebaseConfig) { alert('Configura Firebase.'); }
+    else initFirebase();
+} catch(e) {
+    console.error('Boot error:', e);
+    const syncText = document.getElementById('sync-text');
+    if (syncText) syncText.innerText = `Error: ${e.message}`;
+}
+</script>
+</body>
+</html>
