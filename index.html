@@ -2696,10 +2696,14 @@ function initYouTube(divId) {
 }
 function createPlayer(divId) {
     // CAMBIO 3: Para display-yt-player, auto 1 y mute 1 (requerido para autoplay sin interacción)
+    if (!currentTrack || !currentTrack.videoId) {
+        console.warn('createPlayer: No currentTrack or videoId disponible');
+        return;
+    }
     const isDisplay = divId === 'display-yt-player';
     player = new window.YT.Player(divId, {
         height: '100%', width: '100%',
-        videoId: currentTrack?.videoId || '',
+        videoId: currentTrack.videoId,
         playerVars: { autoplay: 1, controls: 0, modestbranding: 1, rel: 0, enablejsapi: 1, fs: 1, iv_load_policy: 3, mute: isDisplay ? 1 : 0 },
         events: {
             onReady: (e) => {
@@ -2713,7 +2717,7 @@ function createPlayer(divId) {
     });
 }
 function syncVideo() {
-    if (!currentTrack) return;
+    if (!currentTrack || !currentTrack.videoId) return;
     if (!player) {
         if (currentMode === 'display') initYouTube('display-yt-player');
         else if (currentMode === 'admin') initYouTube('yt-player');
