@@ -2689,7 +2689,6 @@ function toggleAdminMute() {
    MODULE: YOUTUBE
 ═══════════════════════════════════════ */
 function initYouTube(divId) {
-    console.log('initYouTube llamado para:', divId, 'currentTrack:', currentTrack?.videoId);
     if (window.YT && window.YT.Player) createPlayer(divId);
     else {
         window.onYouTubeIframeAPIReady = () => createPlayer(divId);
@@ -2697,10 +2696,7 @@ function initYouTube(divId) {
 }
 function createPlayer(divId) {
     // CAMBIO 3: Para display-yt-player, auto 1 y mute 1 (requerido para autoplay sin interacción)
-    if (!currentTrack || !currentTrack.videoId) {
-        console.warn('createPlayer: No currentTrack or videoId disponible');
-        return;
-    }
+    if (!currentTrack || !currentTrack.videoId) return;
     const isDisplay = divId === 'display-yt-player';
     player = new window.YT.Player(divId, {
         height: '100%', width: '100%',
@@ -2769,6 +2765,7 @@ async function adminLogin() {
         if (!profileDoc.exists) throw new Error('Perfil no encontrado. Contacta al administrador.');
         const profile = profileDoc.data();
         document.getElementById('admin-login-screen').classList.add('hidden');
+        currentMode = 'admin';
         startRealtimeSync();
         // Redirigir según rol
         if (profile.role === 'superadmin') showAdminPanel(profile);
