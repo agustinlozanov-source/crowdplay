@@ -1095,6 +1095,20 @@
 </head>
 <body>
 
+<!-- Script para mostrar login de admin inmediatamente si role=admin -->
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('role') === 'admin') {
+        // Mostrar login admin y ocultar loading
+        window.addEventListener('DOMContentLoaded', () => {
+            const loading = document.getElementById('loading-screen');
+            const login = document.getElementById('admin-login-screen');
+            if (loading) loading.classList.add('hidden');
+            if (login) login.classList.remove('hidden');
+        });
+    }
+</script>
+
 <!-- ═══════════════════════════════════════
      TOAST CONTAINER
 ═══════════════════════════════════════ -->
