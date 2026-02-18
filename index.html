@@ -2788,8 +2788,10 @@ function showAdminPanel(profile) {
     document.getElementById('staff-app').classList.remove('hidden');
     const chip = document.getElementById('staff-role-chip');
     if (chip) { chip.innerText = 'SUPER ADMIN'; chip.style.background = 'rgba(232,54,42,0.15)'; chip.style.borderColor = 'rgba(232,54,42,0.3)'; chip.style.color = 'var(--accent-red)'; }
-    switchStaffPanel('manage-staff');
-    loadStaffList();
+    currentMode = 'admin';
+    switchStaffPanel('dashboard');
+    initYouTube('yt-player');
+    startRealtimeSync();
 }
 
 async function createStaffAccount() {
