@@ -1856,6 +1856,7 @@ let firebaseConfig = manualFirebaseConfig;
 try { if (!firebaseConfig && typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config); } catch(e) {}
 
 let app, auth, db;
+const appId = 'rocola-crowdplay2-v1';
 let isAppReady = false;
 let appId = typeof __app_id !== 'undefined' ? __app_id : 'rocola-crowdplay2-v1';
 let player = null;
@@ -2743,7 +2744,10 @@ async function adminLogin() {
         await auth.signInWithEmailAndPassword(email, password);
         const user = auth.currentUser;
         // Leer rol del usuario desde Firestore
+        console.log('UID encontrado:', user.uid);
+        console.log('Buscando en:', `artifacts/${appId}/public/data/staff_profiles`);
         const profileDoc = await db.collection(`artifacts/${appId}/public/data/staff_profiles`).doc(user.uid).get();
+        console.log('Documento existe:', profileDoc.exists);
         if (!profileDoc.exists) throw new Error('Perfil no encontrado. Contacta al administrador.');
         const profile = profileDoc.data();
         document.getElementById('admin-login-screen').classList.add('hidden');
