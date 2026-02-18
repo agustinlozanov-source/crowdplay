@@ -2025,6 +2025,7 @@ function applyLogo() {
     if (sidebarHeader) {
         const logoText = sidebarHeader.querySelector('.sidebar-logo-text');
         if (logoText) {
+            console.log('Reemplazando sidebar logo');
             logoText.outerHTML = `<img src="/logo.png" style="max-height:32px;width:auto;object-fit:contain;" alt="Logo" id="sidebar-logo-img">`;
         }
     }
