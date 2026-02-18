@@ -1423,6 +1423,14 @@
                 <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                 <span class="sidebar-item-label">Copiar enlace</span>
             </div>
+            <div class="sidebar-item" id="sitem-manage-staff" onclick="switchStaffPanel('manage-staff')">
+                <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <span class="sidebar-item-label">Gestionar Staff</span>
+            </div>
             <div class="sidebar-item" onclick="location.href=window.location.origin + window.location.pathname">
                 <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                 <span class="sidebar-item-label">Salir</span>
@@ -1596,6 +1604,30 @@
                                 <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px;">Sin historial</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── PANEL: MANAGE STAFF ── -->
+            <div class="staff-panel" id="panel-manage-staff">
+                <div class="content-card">
+                    <div class="content-card-title">Crear cuenta de staff</div>
+                    <div style="display:flex;flex-direction:column;gap:12px;">
+                        <input id="new-staff-email"    type="email"    placeholder="Correo" class="reg-input">
+                        <input id="new-staff-password" type="password" placeholder="Contraseña (mín. 6 caracteres)" class="reg-input">
+                        <input id="new-staff-name"     type="text"     placeholder="Nombre" class="reg-input">
+                        <select id="new-staff-role" style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:14px 16px;color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:15px;outline:none;width:100%;">
+                            <option value="waiter">Mesero</option>
+                            <option value="dj">DJ</option>
+                            <option value="analytics">Analytics</option>
+                        </select>
+                        <button onclick="createStaffAccount()" class="btn btn-primary">Crear cuenta</button>
+                    </div>
+                </div>
+                <div class="content-card">
+                    <div class="content-card-title">Cuentas activas</div>
+                    <div id="staff-list">
+                        <p style="color:var(--text-muted);font-size:0.8rem;font-weight:600;text-align:center;padding:20px 0;">Cargando...</p>
                     </div>
                 </div>
             </div>
@@ -1889,10 +1921,19 @@ async function initFirebase() {
             updateStatus(true);
             applyLogo();
             const params = new URLSearchParams(window.location.search);
-            const mode = params.get('mode');
-            if (mode) setMode(mode);
-            else document.getElementById('menu-screen').classList.remove('hidden');
-            startRealtimeSync();
+            const urlRole = params.get('role');
+            const mode    = params.get('mode');
+            // CAMBIO 6: Detectar role=admin para mostrar login staff
+            if (urlRole === 'admin') {
+                auth.signOut(); // asegurar que no hay sesión anónima
+                document.getElementById('admin-login-screen').classList.remove('hidden');
+            } else if (mode) {
+                startRealtimeSync();
+                setMode(mode);
+            } else {
+                startRealtimeSync();
+                document.getElementById('menu-screen').classList.remove('hidden');
+            }
         };
 
         await auth.signInAnonymously();
@@ -2660,6 +2701,110 @@ function copyRoleLink(mode) {
 }
 
 /* ═══════════════════════════════════════
+   MODULE: ADMIN AUTH (CAMBIO 6)
+═══════════════════════════════════════ */
+// SETUP: Para crear el superadmin inicial, ejecuta esto UNA VEZ en la consola de Firebase:
+// db.collection(`artifacts/rocola-crowdplay2-v1/public/data/staff_profiles`).doc('UID_DEL_USUARIO').set({ email: 'admin@tucorreo.com', name: 'Admin', role: 'superadmin', createdAt: new Date() });
+
+async function adminLogin() {
+    const email = document.getElementById('admin-email').value.trim();
+    const password = document.getElementById('admin-password').value;
+    const errEl = document.getElementById('admin-login-error');
+    errEl.style.display = 'none';
+    if (!email || !password) { errEl.innerText = 'Completa todos los campos.'; errEl.style.display = 'block'; return; }
+    try {
+        const btn = document.querySelector('#admin-login-screen button');
+        btn.innerText = 'Verificando...'; btn.disabled = true;
+        await auth.signInWithEmailAndPassword(email, password);
+        const user = auth.currentUser;
+        // Leer rol del usuario desde Firestore
+        const profileDoc = await db.collection(`artifacts/${appId}/public/data/staff_profiles`).doc(user.uid).get();
+        if (!profileDoc.exists) throw new Error('Perfil no encontrado. Contacta al administrador.');
+        const profile = profileDoc.data();
+        document.getElementById('admin-login-screen').classList.add('hidden');
+        startRealtimeSync();
+        // Redirigir según rol
+        if (profile.role === 'superadmin') showAdminPanel(profile);
+        else setMode(profile.role === 'dj' ? 'admin' : profile.role);
+    } catch(err) {
+        const msg = err.code === 'auth/wrong-password' ? 'Contraseña incorrecta.' :
+                    err.code === 'auth/user-not-found'  ? 'Usuario no encontrado.' :
+                    err.code === 'auth/invalid-email'   ? 'Email inválido.' : err.message;
+        const errEl = document.getElementById('admin-login-error');
+        errEl.innerText = msg; errEl.style.display = 'block';
+        const btn = document.querySelector('#admin-login-screen button');
+        btn.innerText = 'Ingresar'; btn.disabled = false;
+    }
+}
+
+function showAdminPanel(profile) {
+    document.getElementById('staff-app').classList.remove('hidden');
+    const chip = document.getElementById('staff-role-chip');
+    if (chip) { chip.innerText = 'SUPER ADMIN'; chip.style.background = 'rgba(232,54,42,0.15)'; chip.style.borderColor = 'rgba(232,54,42,0.3)'; chip.style.color = 'var(--accent-red)'; }
+    switchStaffPanel('manage-staff');
+    loadStaffList();
+}
+
+async function createStaffAccount() {
+    const email    = document.getElementById('new-staff-email').value.trim();
+    const password = document.getElementById('new-staff-password').value;
+    const name     = document.getElementById('new-staff-name').value.trim();
+    const role     = document.getElementById('new-staff-role').value;
+    if (!email || !password || !name) { toast('Completa todos los campos.', 'warning'); return; }
+    if (password.length < 6) { toast('La contraseña debe tener al menos 6 caracteres.', 'warning'); return; }
+    try {
+        const secondaryApp = firebase.initializeApp(firebaseConfig, 'secondary_' + Date.now());
+        const secondaryAuth = secondaryApp.auth();
+        const cred = await secondaryAuth.createUserWithEmailAndPassword(email, password);
+        const newUid = cred.user.uid;
+        await secondaryAuth.signOut();
+        secondaryApp.delete();
+        await db.collection(`artifacts/${appId}/public/data/staff_profiles`).doc(newUid).set({
+            email, name, role,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdBy: auth.currentUser.uid
+        });
+        toast(`Cuenta de ${name} (${role}) creada ✓`, 'success');
+        loadStaffList();
+        ['new-staff-email','new-staff-password','new-staff-name'].forEach(id => document.getElementById(id).value = '');
+    } catch(err) {
+        const msg = err.code === 'auth/email-already-in-use' ? 'Este email ya está registrado.' : err.message;
+        toast(msg, 'error');
+    }
+}
+
+async function loadStaffList() {
+    const listEl = document.getElementById('staff-list');
+    if (!listEl) return;
+    try {
+        const snap = await db.collection(`artifacts/${appId}/public/data/staff_profiles`).get();
+        if (snap.empty) { listEl.innerHTML = '<p style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:20px 0;">Sin cuentas creadas</p>'; return; }
+        const roleLabels = { waiter: 'Mesero', dj: 'DJ', analytics: 'Analytics', superadmin: 'Super Admin' };
+        listEl.innerHTML = snap.docs.map(doc => {
+            const d = doc.data();
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);">
+                <div>
+                    <div style="font-weight:700;font-size:0.9rem;color:var(--text-primary);">${d.name}</div>
+                    <div style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">${d.email} · ${roleLabels[d.role] || d.role}</div>
+                </div>
+                <button onclick="deleteStaffAccount('${doc.id}')" style="background:rgba(232,54,42,0.1);border:1px solid rgba(232,54,42,0.2);border-radius:8px;padding:6px 10px;color:var(--accent-red);font-size:0.7rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;">
+                    Eliminar
+                </button>
+            </div>`;
+        }).join('');
+    } catch(err) { listEl.innerHTML = '<p style="color:var(--accent-red);font-size:0.8rem;text-align:center;padding:20px 0;">Error cargando lista</p>'; }
+}
+
+async function deleteStaffAccount(uid) {
+    if (!confirm('¿Eliminar esta cuenta? Esta acción no puede deshacerse.')) return;
+    try {
+        await db.collection(`artifacts/${appId}/public/data/staff_profiles`).doc(uid).delete();
+        toast('Cuenta eliminada (el acceso de Firebase Auth debe borrarse manualmente en la consola).', 'info', 5000);
+        loadStaffList();
+    } catch(err) { toast('Error al eliminar: ' + err.message, 'error'); }
+}
+
+/* ═══════════════════════════════════════
    MODULE: ANALYTICS
 ═══════════════════════════════════════ */
 let analyticsPeriod = 'today';
@@ -2763,5 +2908,28 @@ try {
     if (syncText) syncText.innerText = `Error: ${e.message}`;
 }
 </script>
+<!-- ═══════════════════════════════════════
+     ADMIN LOGIN SCREEN (CAMBIO 6)
+═══════════════════════════════════════ -->
+<div id="admin-login-screen" class="hidden" style="
+  min-height:100dvh; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  background:var(--bg-base); padding:24px;">
+  <div style="width:100%;max-width:400px;background:var(--bg-surface);
+    border:1px solid var(--border);border-radius:24px;padding:36px 28px;">
+    <div style="text-align:center;margin-bottom:28px;">
+      <img src="logo.png" style="max-height:50px;width:auto;margin-bottom:16px;" onerror="this.style.display='none'">
+      <div class="font-display" style="font-size:1.4rem;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:0.02em;">Acceso Staff</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;">Panel de administración</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <input id="admin-email"    type="email"    placeholder="Correo" class="reg-input" autocomplete="email">
+      <input id="admin-password" type="password" placeholder="Contraseña" class="reg-input" autocomplete="current-password">
+      <button onclick="adminLogin()" class="btn btn-primary btn-full btn-lg" style="margin-top:4px;">Ingresar</button>
+    </div>
+    <div id="admin-login-error" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(232,54,42,0.1);border:1px solid rgba(232,54,42,0.2);border-radius:10px;font-size:0.75rem;font-weight:600;color:var(--accent-red);text-align:center;"></div>
+  </div>
+</div>
+
 </body>
 </html>
