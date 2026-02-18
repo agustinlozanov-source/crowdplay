@@ -1521,7 +1521,7 @@
             <div class="staff-panel" id="panel-player">
                 <div class="content-card">
                     <div class="content-card-title">Reproduciendo</div>
-                    <div class="video-container" style="height:300px;padding-bottom:0;">
+                    <div class="video-container" style="height:500px;padding-bottom:0;">
                         <div id="yt-player" style="width:100%;height:100%;"></div>
                     </div>
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
@@ -2689,6 +2689,7 @@ function toggleAdminMute() {
    MODULE: YOUTUBE
 ═══════════════════════════════════════ */
 function initYouTube(divId) {
+    console.log('initYouTube llamado para:', divId, 'currentTrack:', currentTrack?.videoId);
     if (window.YT && window.YT.Player) createPlayer(divId);
     else {
         window.onYouTubeIframeAPIReady = () => createPlayer(divId);
