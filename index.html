@@ -1912,7 +1912,7 @@ async function initFirebase() {
         auth = firebase.auth();
         db = firebase.firestore();
 
-        // CAMBIO 6: Detectar role ANTES de autenticarse
+        // Detectar role ANTES de autenticar
         const urlRole = new URLSearchParams(window.location.search).get('role');
         const isAdminRoute = urlRole === 'admin';
 
@@ -1927,9 +1927,11 @@ async function initFirebase() {
             const params = new URLSearchParams(window.location.search);
             const urlRole = params.get('role');
             const mode    = params.get('mode');
-            // Mostrar login staff si es admin route
+            
             if (urlRole === 'admin') {
-                document.getElementById('admin-login-screen').classList.remove('hidden');
+                // Admin: mostrar login
+                const loginScreen = document.getElementById('admin-login-screen');
+                if (loginScreen) loginScreen.classList.remove('hidden');
             } else if (mode) {
                 startRealtimeSync();
                 setMode(mode);
@@ -1939,11 +1941,11 @@ async function initFirebase() {
             }
         };
 
-        // Si es admin route: solo configurar Firebase, esperar login email/password
         if (isAdminRoute) {
+            // Admin route: no requiere anonymous auth
             proceedApp();
         } else {
-            // Para clientes: autenticación anónima
+            // Cliente: autenticación anónima
             await auth.signInAnonymously();
             if (auth.currentUser) proceedApp();
             auth.onAuthStateChanged(user => {
