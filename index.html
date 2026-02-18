@@ -2909,13 +2909,20 @@ function updateAnalyticsButtons() {
 
 async function loadAnalyticsData() {
     try {
+        if (!db) {
+            console.error('db no inicializado');
+            toast('Firebase no está listo. Intenta de nuevo.', 'error');
+            return;
+        }
         const { dateFrom, dateTo } = getDateRange();
+        console.log('Cargando analytics desde', new Date(dateFrom*1000), 'hasta', new Date(dateTo*1000));
         const tsFrom = firebase.firestore.Timestamp.fromSeconds(dateFrom);
         const tsTo   = firebase.firestore.Timestamp.fromSeconds(dateTo);
         const [waiterSnap, queueSnap] = await Promise.all([
             db.collection(`artifacts/${appId}/public/data/waiter_calls`).where('createdAt','>=',tsFrom).where('createdAt','<',tsTo).get(),
             db.collection(`artifacts/${appId}/public/data/rocola_queue`).where('createdAt','>=',tsFrom).where('createdAt','<',tsTo).get()
         ]);
+        console.log('Waiter calls:', waiterSnap.docs.length, 'Queue items:', queueSnap.docs.length);
         calculateMetrics(
             waiterSnap.docs.map(d => ({ id: d.id, ...d.data() })),
             queueSnap.docs.map(d => ({ id: d.id, ...d.data() })),
@@ -2923,6 +2930,7 @@ async function loadAnalyticsData() {
         );
     } catch(err) {
         console.error('Analytics error:', err);
+        toast('Error al cargar métricas: ' + err.message, 'error');
     }
 }
 
