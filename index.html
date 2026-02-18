@@ -2874,9 +2874,13 @@ let analyticsPeriod = 'today';
 let analyticsDateFrom = null;
 let analyticsDateTo = null;
 
-function initAnalytics() { setAnalyticsPeriod('today'); }
+function initAnalytics() {
+    console.log('initAnalytics llamado');
+    setAnalyticsPeriod('today');
+}
 
 function setAnalyticsPeriod(period) {
+    console.log('setAnalyticsPeriod:', period);
     analyticsPeriod = period;
     analyticsDateFrom = null; analyticsDateTo = null;
     document.getElementById('custom-date-range').classList.add('hidden');
@@ -2916,8 +2920,8 @@ async function loadAnalyticsData() {
         }
         const { dateFrom, dateTo } = getDateRange();
         console.log('Cargando analytics desde', new Date(dateFrom*1000), 'hasta', new Date(dateTo*1000));
-        const tsFrom = firebase.firestore.Timestamp.fromSeconds(dateFrom);
-        const tsTo   = firebase.firestore.Timestamp.fromSeconds(dateTo);
+        const tsFrom = new Date(dateFrom * 1000);
+        const tsTo = new Date(dateTo * 1000);
         const [waiterSnap, queueSnap] = await Promise.all([
             db.collection(`artifacts/${appId}/public/data/waiter_calls`).where('createdAt','>=',tsFrom).where('createdAt','<',tsTo).get(),
             db.collection(`artifacts/${appId}/public/data/rocola_queue`).where('createdAt','>=',tsFrom).where('createdAt','<',tsTo).get()
