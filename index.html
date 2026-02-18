@@ -455,28 +455,33 @@
         .service-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 18px;
-            padding: 20px 16px;
+            border-radius: 20px;
+            padding: 28px 20px;
             display: flex; flex-direction: column; align-items: center; gap: 10px;
             cursor: pointer; transition: all 0.2s;
             text-align: center;
         }
         .service-card:active { transform: scale(0.96); }
         .service-card-icon {
-            width: 48px; height: 48px; border-radius: 14px;
+            width: 56px; height: 56px; border-radius: 16px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.4rem;
+            font-size: 0;
         }
         .service-card-label {
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: 0.8rem; font-weight: 700;
+            font-size: 1rem; font-weight: 700;
             letter-spacing: 0.05em; text-transform: uppercase;
             color: var(--text-primary);
         }
         .service-card-sub {
-            font-size: 0.65rem; color: var(--text-muted);
+            font-size: 0.75rem; color: var(--text-muted);
             font-weight: 600; letter-spacing: 0.03em;
         }
+        /* CAMBIO 5C: Colores activos por card */
+        .service-card:nth-child(1):active { border-color: rgba(31,214,112,0.3); }
+        .service-card:nth-child(2):active { border-color: rgba(240,180,41,0.3); }
+        .service-card:nth-child(3):active { border-color: rgba(232,54,42,0.3); }
+        .service-card:nth-child(4):active { border-color: rgba(91,110,245,0.3); }
 
         /* Status indicators */
         .status-bubble {
@@ -1257,13 +1262,13 @@
         <div id="tab-services" class="client-tab-panel">
             <div style="padding:16px 16px 8px;">
                 <div class="font-display" style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px;">Servicios de mesa</div>
-                <div id="client-user-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                <div id="client-user-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:12px;margin-bottom:16px;">
                     <div style="width:36px;height:36px;border-radius:10px;background:rgba(232,54,42,0.1);display:flex;align-items:center;justify-content:center;">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     </div>
                     <div>
-                        <div id="client-user-name" class="font-display" style="font-size:0.95rem;font-weight:700;font-style:italic;"></div>
-                        <div id="client-table-info" style="font-size:0.65rem;color:var(--text-muted);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;"></div>
+                        <div id="client-user-name" class="font-display" style="font-size:1.1rem;font-weight:700;font-style:italic;"></div>
+                        <div id="client-table-info" style="font-size:0.8rem;color:var(--text-muted);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;"></div>
                     </div>
                     <button onclick="document.getElementById('table-modal').classList.remove('hidden')" style="margin-left:auto;font-size:0.65rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent-indigo);background:none;border:none;cursor:pointer;">Cambiar mesa</button>
                 </div>
@@ -1272,7 +1277,11 @@
             <div class="service-grid">
                 <div class="service-card" onclick="handleCallWaiter()" style="position:relative;">
                     <div id="waiter-status-bubble" class="status-bubble hidden" style="background:var(--accent-green);"></div>
-                    <div class="service-card-icon" style="background:rgba(31,214,112,0.1);">🛎️</div>
+                    <div class="service-card-icon" style="background:rgba(31,214,112,0.12);">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1fd670" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8h.01M6 8h.01M15 8a3 3 0 1 1-6 0"/><path d="M3 8h18v8a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8z"/>
+                        </svg>
+                    </div>
                     <div>
                         <div class="service-card-label">Llamar Mesero</div>
                         <div class="service-card-sub">Solicitar atención</div>
@@ -1280,21 +1289,33 @@
                 </div>
                 <div class="service-card" onclick="handleRequestBill()" style="position:relative;">
                     <div id="bill-status-bubble" class="status-bubble hidden" style="background:var(--accent-amber);"></div>
-                    <div class="service-card-icon" style="background:rgba(240,180,41,0.1);">💳</div>
+                    <div class="service-card-icon" style="background:rgba(240,180,41,0.12);">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f0b429" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                        </svg>
+                    </div>
                     <div>
                         <div class="service-card-label">Pedir Cuenta</div>
                         <div class="service-card-sub">Elegir forma de pago</div>
                     </div>
                 </div>
                 <div class="service-card" onclick="openSearch()">
-                    <div class="service-card-icon" style="background:rgba(232,54,42,0.1);">🎵</div>
+                    <div class="service-card-icon" style="background:rgba(232,54,42,0.12);">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e8362a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                        </svg>
+                    </div>
                     <div>
                         <div class="service-card-label">Pedir Canción</div>
                         <div class="service-card-sub">Agregar a la cola</div>
                     </div>
                 </div>
                 <div class="service-card" onclick="openSearch(); document.querySelector && setSearchType('karaoke')">
-                    <div class="service-card-icon" style="background:rgba(91,110,245,0.1);">🎤</div>
+                    <div class="service-card-icon" style="background:rgba(91,110,245,0.12);">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5b6ef5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/>
+                        </svg>
+                    </div>
                     <div>
                         <div class="service-card-label">Karaoke</div>
                         <div class="service-card-sub">Canta tu favorita</div>
