@@ -1849,7 +1849,7 @@
 /* ═══════════════════════════════════════
    MODULE: CONFIG
 ═══════════════════════════════════════ */
-const LOGO_URL = "logo.png";
+const LOGO_URL = "/logo.png";
 const manualFirebaseConfig = {
     apiKey: "AIzaSyAia_yRHvYg3gGQ60VwPRwcRm3B0aja4cw",
     authDomain: "rocola-crowdplay2.firebaseapp.com",
@@ -2025,7 +2025,7 @@ function applyLogo() {
     if (sidebarHeader) {
         const logoText = sidebarHeader.querySelector('.sidebar-logo-text');
         if (logoText) {
-            logoText.outerHTML = `<img src="${LOGO_URL}" style="max-height:32px;width:auto;object-fit:contain;" alt="Logo" onerror="this.outerHTML='CrowdPlay'" id="sidebar-logo-img">`;
+            logoText.outerHTML = `<img src="/logo.png" style="max-height:32px;width:auto;object-fit:contain;" alt="Logo" id="sidebar-logo-img">`;
         }
     }
     // CAMBIO 4: Reemplazar RocolaPro en menu screen y loading screen
