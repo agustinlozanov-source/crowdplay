@@ -2704,7 +2704,12 @@ function createPlayer(divId) {
     });
 }
 function syncVideo() {
-    if (!player || !currentTrack) return;
+    if (!currentTrack) return;
+    if (!player) {
+        if (currentMode === 'display') initYouTube('display-yt-player');
+        else if (currentMode === 'admin') initYouTube('yt-player');
+        return;
+    }
     try {
         const currentVideoId = player.getVideoData?.()?.video_id;
         if (currentVideoId !== currentTrack.videoId) player.loadVideoById?.(currentTrack.videoId);
