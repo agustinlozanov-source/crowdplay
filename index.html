@@ -20,15 +20,15 @@
            DESIGN TOKENS — NEW PALETTE
         ═══════════════════════════════════════════ */
         :root {
-            --bg-base:    #08090d;
-            --bg-surface: #0f1117;
-            --bg-card:    #151820;
-            --bg-elevated:#1c2030;
-            --border:     rgba(255,255,255,0.07);
-            --border-mid: rgba(255,255,255,0.12);
-            --text-primary:   #f0f2f8;
-            --text-secondary: #7a8099;
-            --text-muted:     #3d4460;
+            --bg-base:    #090b11;
+            --bg-surface: #10131c;
+            --bg-card:    #171b27;
+            --bg-elevated:#1f2435;
+            --border:     rgba(255,255,255,0.09);
+            --border-mid: rgba(255,255,255,0.16);
+            --text-primary:   #eef0f8;
+            --text-secondary: #8b92b0;
+            --text-muted:     #4a5070;
             --accent-red:   #e8362a;
             --accent-red-glow: rgba(232,54,42,0.3);
             --accent-green: #1fd670;
@@ -43,10 +43,13 @@
 
         body {
             font-family: 'Barlow', sans-serif;
+            font-size: 15px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: 0.01em;
             background-color: var(--bg-base);
             color: var(--text-primary);
             overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
         }
 
         /* Barlow Condensed = display/heading font */
@@ -526,7 +529,7 @@
             height: 64px;
             display: flex; align-items: center;
             padding: 0 16px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--border-mid);
             flex-shrink: 0;
             overflow: hidden;
         }
@@ -555,13 +558,16 @@
         .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
 
         .sidebar-section-label {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 0.6rem; font-weight: 700;
-            letter-spacing: 0.1em; text-transform: uppercase;
+            font-family: 'Barlow', sans-serif;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
             color: var(--text-muted);
-            padding: 8px 8px 4px;
+            padding: 12px 10px 6px;
             white-space: nowrap; overflow: hidden;
             transition: opacity 0.2s;
+            opacity: 0.6;
         }
         .sidebar.collapsed .sidebar-section-label { opacity: 0; }
 
@@ -586,9 +592,11 @@
         }
         .sidebar-item.active .sidebar-item-icon { color: var(--accent-red); }
         .sidebar-item-label {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 0.9rem; font-weight: 700;
-            letter-spacing: 0.03em; text-transform: uppercase;
+            font-family: 'Barlow', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: none;
             color: var(--text-secondary);
             overflow: hidden; text-overflow: ellipsis;
             transition: opacity 0.2s, color 0.15s;
@@ -641,30 +649,32 @@
 
         /* Staff Topbar */
         .staff-topbar {
-            height: 64px;
+            height: 60px;
             display: flex; align-items: center; justify-content: space-between;
             padding: 0 24px;
-            border-bottom: 1px solid var(--border);
             background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-mid);
             flex-shrink: 0;
         }
         .staff-page-title {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 1.25rem; font-weight: 900; font-style: italic;
-            letter-spacing: 0.02em; text-transform: uppercase;
+            font-family: 'Barlow', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
             color: var(--text-primary);
         }
         .staff-topbar-right {
             display: flex; align-items: center; gap: 12px;
         }
         .role-chip {
-            background: rgba(91,110,245,0.15);
-            border: 1px solid rgba(91,110,245,0.3);
-            color: #8b9cf5;
-            font-family: 'Barlow Condensed', sans-serif;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-primary);
+            font-family: 'Barlow', sans-serif;
             font-size: 0.65rem; font-weight: 700;
-            letter-spacing: 0.1em; text-transform: uppercase;
-            padding: 4px 10px; border-radius: 100px;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            padding: 5px 12px; border-radius: 100px;
         }
 
         /* Staff Content */
@@ -686,18 +696,20 @@
         }
         .stat-card {
             background: var(--bg-card);
-            border: 1.5px solid var(--border);
-            border-radius: 18px; padding: 24px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
         }
         .stat-label {
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: 0.75rem; font-weight: 800;
+            font-size: 0.7rem; font-weight: 800;
             letter-spacing: 0.12em; text-transform: uppercase;
             color: var(--text-muted); margin-bottom: 8px;
+            opacity: 0.9;
         }
         .stat-value {
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: 3.2rem; font-weight: 900;
+            font-size: 3rem; font-weight: 900;
             line-height: 1; letter-spacing: -0.02em;
             color: var(--text-primary);
         }
@@ -711,13 +723,19 @@
         .content-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 20px; padding: 20px;
+            border-radius: 20px;
+            padding: 24px;
         }
         .content-card-title {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 0.85rem; font-weight: 800;
-            letter-spacing: 0.1em; text-transform: uppercase;
-            color: var(--text-primary); margin-bottom: 18px;
+            font-family: 'Barlow', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
         }
 
         /* ── WAITER CALL CARDS ── */
@@ -743,11 +761,11 @@
         }
         .call-status-badge {
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: 0.65rem; font-weight: 700;
+            font-size: 0.72rem; font-weight: 700;
             letter-spacing: 0.08em; text-transform: uppercase;
-            padding: 4px 10px; border-radius: 100px;
+            padding: 5px 12px; border-radius: 100px;
         }
-        .badge-waiting { background: rgba(232,54,42,0.15); color: var(--accent-red); border: 1px solid rgba(232,54,42,0.3); }
+        .badge-waiting { background: rgba(232,54,42,0.15); color: var(--accent-red); border: 1px solid rgba(232,54,42,0.3); font-weight: 800; }
         .badge-onway   { background: rgba(91,110,245,0.15); color: #8b9cf5; border: 1px solid rgba(91,110,245,0.3); }
 
         .calls-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
@@ -789,27 +807,44 @@
         .sampler-btn:active { background: rgba(232,54,42,0.15); border-color: rgba(232,54,42,0.3); color: var(--accent-red); transform: scale(0.96); }
 
         .transport-bar {
-            display: flex; align-items: center; gap: 10px;
+            display: flex; align-items: center; gap: 8px;
         }
         .transport-btn {
+            width: 44px; height: 44px;
             background: var(--bg-elevated);
-            border: 1px solid var(--border);
-            border-radius: 12px; padding: 12px;
+            border: 1px solid var(--border-mid);
+            border-radius: 50%;
             color: var(--text-secondary);
-            cursor: pointer; transition: all 0.15s;
+            cursor: pointer;
             display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
+            flex-shrink: 0;
         }
-        .transport-btn:hover { background: var(--bg-card); color: var(--text-primary); }
-        .transport-btn:active { transform: scale(0.94); }
+        .transport-btn:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border-color: rgba(255,255,255,0.25);
+            transform: scale(1.05);
+        }
+        .transport-btn:active { transform: scale(0.93); }
         .transport-play {
-            flex: 1; background: var(--text-primary); color: var(--bg-base);
-            border: none; border-radius: 12px; padding: 14px;
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 0.9rem; font-weight: 900;
-            text-transform: uppercase; letter-spacing: 0.05em;
-            cursor: pointer; transition: all 0.15s;
+            flex: 1;
+            height: 48px;
+            background: white;
+            color: #0a0c12;
+            border: none;
+            border-radius: 100px;
+            font-family: 'Barlow', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 4px 20px rgba(255,255,255,0.15);
         }
-        .transport-play:active { transform: scale(0.97); }
+        .transport-play:hover { background: #f0f0f0; box-shadow: 0 6px 28px rgba(255,255,255,0.2); }
+        .transport-play:active { transform: scale(0.97); box-shadow: none; }
 
         /* ── ANALYTICS VIEW ── */
         .period-tabs {
@@ -844,13 +879,13 @@
         }
         .kpi-label {
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: 0.65rem; font-weight: 700;
+            font-size: 0.7rem; font-weight: 700;
             letter-spacing: 0.08em; text-transform: uppercase;
             margin-bottom: 8px;
         }
         .kpi-value {
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: 2.2rem; font-weight: 900;
+            font-size: 2.8rem; font-weight: 900;
             line-height: 1; letter-spacing: -0.02em;
         }
         .kpi-unit {
@@ -904,12 +939,15 @@
             letter-spacing: 0.02em; text-transform: uppercase;
         }
         .modal-close {
-            width: 32px; height: 32px; border-radius: 8px;
+            width: 36px; height: 36px; border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: var(--text-muted);
+            cursor: pointer;
+            color: var(--text-primary);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-mid);
             transition: all 0.15s;
         }
-        .modal-close:hover { background: var(--bg-elevated); color: var(--text-primary); }
+        .modal-close:hover { background: rgba(232,54,42,0.15); border-color: rgba(232,54,42,0.3); color: var(--accent-red); }
         .modal-body { flex: 1; overflow-y: auto; padding: 20px; }
         .modal-footer {
             padding: 16px 20px;
@@ -1024,25 +1062,49 @@
         ══════════════════════════════════════════ */
         .btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-            border-radius: 12px; padding: 13px 20px;
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 0.85rem; font-weight: 700;
-            letter-spacing: 0.06em; text-transform: uppercase;
+            border-radius: 10px; padding: 12px 20px;
+            font-family: 'Barlow', sans-serif;
+            font-size: 0.8rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
             cursor: pointer; transition: all 0.15s;
             border: 1px solid transparent;
+            white-space: nowrap;
         }
         .btn:active { transform: scale(0.97); }
-        .btn-primary   { background: var(--accent-red);    color: white; box-shadow: 0 4px 16px rgba(232,54,42,0.3); }
-        .btn-primary:hover { background: #d42d22; }
-        .btn-secondary { background: var(--bg-elevated);   color: var(--text-secondary); border-color: var(--border); }
-        .btn-secondary:hover { background: var(--bg-card); color: var(--text-primary); }
-        .btn-success   { background: var(--accent-green);  color: var(--bg-base); }
-        .btn-amber     { background: var(--accent-amber);  color: var(--bg-base); }
-        .btn-indigo    { background: var(--accent-indigo); color: white; }
-        .btn-ghost     { background: transparent; color: var(--text-muted); }
-        .btn-ghost:hover { color: var(--text-primary); }
+        .btn-primary {
+            background: var(--accent-red);
+            color: white;
+            box-shadow: 0 2px 12px rgba(232,54,42,0.35), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .btn-primary:hover { background: #d42d22; box-shadow: 0 4px 20px rgba(232,54,42,0.45); }
+        .btn-secondary {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border-color: var(--border-mid);
+        }
+        .btn-secondary:hover { background: #252a3a; border-color: rgba(255,255,255,0.2); }
+        .btn-success {
+            background: #17a85a;
+            color: white;
+            box-shadow: 0 2px 12px rgba(23,168,90,0.3);
+        }
+        .btn-success:hover { background: #14964f; }
+        .btn-amber {
+            background: #c9960f;
+            color: white;
+            box-shadow: 0 2px 12px rgba(201,150,15,0.3);
+        }
+        .btn-amber:hover { background: #b5860e; }
+        .btn-indigo {
+            background: var(--accent-indigo);
+            color: white;
+            box-shadow: 0 2px 12px rgba(91,110,245,0.3);
+        }
+        .btn-indigo:hover { background: #4a5ce0; }
+        .btn-ghost { background: transparent; color: var(--text-secondary); border-color: var(--border); }
+        .btn-ghost:hover { color: var(--text-primary); background: var(--bg-elevated); }
         .btn-full { width: 100%; }
-        .btn-lg { padding: 16px 24px; font-size: 1rem; border-radius: 14px; }
+        .btn-lg { padding: 15px 24px; font-size: 0.85rem; border-radius: 12px; }
 
         /* ══════════════════════════════════════════
            TV / DISPLAY SCREEN
@@ -1548,12 +1610,19 @@
                 <div class="content-card">
                     <div class="content-card-title">Transport</div>
                     <div class="transport-bar">
-                        <button onclick="sendCommand('seek', { offset: -10 })" class="transport-btn">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
+                        <button onclick="sendCommand('seek', { offset: -10 })" class="transport-btn" title="−10s">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/>
+                            </svg>
                         </button>
-                        <button onclick="handleDJToggle()" class="transport-play">▶ / ⏸ Play · Pausa</button>
-                        <button onclick="sendCommand('seek', { offset: 10 })" class="transport-btn">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>
+                        <button onclick="handleDJToggle()" class="transport-play">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:inline;vertical-align:middle;margin-right:6px;"><polygon points="5,3 19,12 5,21"/></svg>
+                            Play · Pausa
+                        </button>
+                        <button onclick="sendCommand('seek', { offset: 10 })" class="transport-btn" title="+10s">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <path d="M13 17l5-5-5-5M6 17l5-5-5-5"/>
+                            </svg>
                         </button>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
@@ -1864,7 +1933,7 @@ const manualFirebaseConfig = {
     appId: "1:519952213703:web:0e0ecb8cb3fc81064240e2"
 };
 const YOUTUBE_API_KEY = "AIzaSyBB32TS0dFywl8N7cV1zWAuJsHWyxO3Pkk";
-const BUILD_ID = '2026-02-18-analytics-fix';
+const BUILD_ID = '2026-02-18-cambio9-typography';
 
 let firebaseConfig = manualFirebaseConfig;
 try { if (!firebaseConfig && typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config); } catch(e) {}
