@@ -5,8 +5,8 @@
   command = "echo 'No build step needed - static files only'"
   publish = "."
 
-[[build.environment]]
-SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
+[build.environment]
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
 
 # Redirects - route client.html for root
 [[redirects]]
