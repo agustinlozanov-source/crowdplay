@@ -208,6 +208,29 @@
         .reg-input:focus { border-color: var(--accent-red); }
         .reg-input::placeholder { color: var(--text-muted); }
 
+        .iti { width: 100%; }
+        .iti__selected-flag {
+            background: transparent !important;
+            border-right: 1px solid var(--border-mid);
+            padding: 0 8px 0 12px;
+            height: 100%;
+            border-radius: 12px 0 0 12px;
+        }
+        .iti__country-list {
+            background: var(--bg-card);
+            border: 1px solid var(--border-mid);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Barlow', sans-serif;
+            font-size: 0.85rem;
+            max-height: 220px;
+            z-index: 9999;
+        }
+        .iti__country.iti__highlight { background: var(--bg-elevated); }
+        .iti__country-name { color: var(--text-primary); }
+        .iti__dial-code { color: var(--text-muted); }
+        #reg-whatsapp { padding-left: 90px !important; }
+
         /* ══════════════════════════════════════════
            MENU SCREEN (Role selector)
         ══════════════════════════════════════════ */
@@ -1256,7 +1279,10 @@
             <input id="reg-surname"  class="reg-input" type="text"     placeholder="Apellido" autocomplete="family-name">
             <input id="reg-email"    class="reg-input" type="email"    placeholder="Email"    autocomplete="email">
             <input id="reg-password" class="reg-input" type="password" placeholder="Contraseña (mín. 6 caracteres)" autocomplete="new-password">
-            <input id="reg-whatsapp" class="reg-input" type="tel"      placeholder="WhatsApp" autocomplete="tel">
+            <div id="whatsapp-wrapper">
+                <input id="reg-whatsapp" class="reg-input" type="tel" placeholder="WhatsApp" autocomplete="tel" style="width:100%;">
+            </div>
+            <div id="whatsapp-error" style="display:none;font-size:0.72rem;font-weight:600;color:var(--accent-red);padding:4px 4px 0;">Número inválido para el país seleccionado</div>
             <label style="display:flex;align-items:center;gap:10px;font-size:0.8rem;font-weight:600;color:var(--text-secondary);cursor:pointer;">
                 <input id="reg-remember" type="checkbox" checked style="width:16px;height:16px;accent-color:var(--accent-red);">
                 Recuérdame en este dispositivo
@@ -2570,12 +2596,20 @@ async function saveUserRegistration() {
     const s = document.getElementById('reg-surname').value.trim();
     const e = document.getElementById('reg-email').value.trim();
     const p = document.getElementById('reg-password').value;
-    const w = document.getElementById('reg-whatsapp').value.trim();
     const remember = document.getElementById('reg-remember').checked;
     const errEl = document.getElementById('reg-error');
     errEl.style.display = 'none';
 
-    if (!n || !s || !e || !p || !w) { errEl.innerText = 'Completa todos los campos.'; errEl.style.display = 'block'; return; }
+    if (!n || !s || !e || !p) { errEl.innerText = 'Completa todos los campos.'; errEl.style.display = 'block'; return; }
+
+    const w = itiInstance ? itiInstance.getNumber() : document.getElementById('reg-whatsapp').value.trim();
+    if (!itiInstance || !itiInstance.isValidNumber()) {
+        const whatsappErr = document.getElementById('whatsapp-error');
+        whatsappErr.innerText = 'Ingresa un número de WhatsApp válido.';
+        whatsappErr.style.display = 'block';
+        document.getElementById('reg-whatsapp').style.borderColor = 'var(--accent-red)';
+        return;
+    }
     if (p.length < 6) { errEl.innerText = 'La contraseña debe tener al menos 6 caracteres.'; errEl.style.display = 'block'; return; }
 
     const btn = document.querySelector('#form-register .btn-primary');
@@ -3369,6 +3403,33 @@ function updateCooldownUI() {
 
 setInterval(updateCooldownUI, 1000);
 updateCooldownUI();
+
+let itiInstance = null;
+function initPhoneInput() {
+    const input = document.getElementById('reg-whatsapp');
+    if (!input || typeof intlTelInput === 'undefined') { setTimeout(initPhoneInput, 500); return; }
+    itiInstance = intlTelInput(input, {
+        initialCountry: 'mx',
+        preferredCountries: ['mx', 'us', 'co', 'ar', 'es', 'gt', 'cr', 'cl', 'pe'],
+        separateDialCode: true,
+        utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js'
+    });
+    input.addEventListener('input', validatePhone);
+    input.addEventListener('countrychange', validatePhone);
+}
+function validatePhone() {
+    const input = document.getElementById('reg-whatsapp');
+    const errEl = document.getElementById('whatsapp-error');
+    if (!itiInstance || !input.value) { errEl.style.display = 'none'; input.style.borderColor = ''; return; }
+    if (itiInstance.isValidNumber()) {
+        errEl.style.display = 'none';
+        input.style.borderColor = 'var(--accent-green)';
+    } else {
+        errEl.style.display = 'block';
+        input.style.borderColor = 'var(--accent-red)';
+    }
+}
+document.addEventListener('DOMContentLoaded', initPhoneInput);
 
 function showAuthTab(tab) {
     const isRegister = tab === 'register';
