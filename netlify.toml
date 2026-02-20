@@ -5,6 +5,10 @@
   command = "echo 'No build step needed - static files only'"
   publish = "."
 
+# Environment - Omit Firebase public API key from secrets scanning
+[build.environment]
+  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyAia_yRHvYg3gGQ60VwPRwcRm3B0aja4cw"
+
 # Redirects - route client.html for root
 [[redirects]]
   from = "/"
