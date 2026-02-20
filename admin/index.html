@@ -3042,8 +3042,18 @@ function calculateMetrics(waiterCalls, queueItems, dateFrom, dateTo) {
 try {
     const syncText = document.getElementById('sync-text');
     if (syncText) syncText.innerText = `Sincronizando... (${BUILD_ID})`;
-    if (!firebaseConfig) { alert('Configura Firebase.'); }
-    else initFirebase();
+    
+    // En modo display, no inicializar Firebase
+    const urlMode = new URLSearchParams(window.location.search).get('mode');
+    if (urlMode === 'display') {
+        // Modo display: solo mostrar reproductor
+        if (syncText) syncText.style.display = 'none';
+        setMode('display');
+    } else {
+        // Modo normal: inicializar Firebase
+        if (!firebaseConfig) { alert('Configura Firebase.'); }
+        else initFirebase();
+    }
 } catch(e) {
     console.error('Boot error:', e);
     const syncText = document.getElementById('sync-text');
