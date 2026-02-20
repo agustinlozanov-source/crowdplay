@@ -39,6 +39,7 @@
             if (playerReady && player) {
                 player.loadVideoById(videoId);
                 player.playVideo();
+                setTimeout(() => fadeInTV(), 500);
             } else {
                 pendingVideoId = videoId;
             }
@@ -62,7 +63,8 @@
                     onReady: function(e) {
                         console.log('Player ready');
                         playerReady = true;
-                        e.target.setVolume(100);
+                        e.target.setVolume(0);
+                        fadeInTV();
                         if (pendingVideoId) {
                             e.target.loadVideoById(pendingVideoId);
                             e.target.playVideo();
@@ -159,9 +161,33 @@
             if (!document.fullscreenElement) el.requestFullscreen?.().catch(() => {});
         });
 
+        function fadeOutTV() {
+            return new Promise(resolve => {
+                if (!player || typeof player.getVolume !== 'function') { resolve(); return; }
+                let vol = player.getVolume();
+                const step = setInterval(() => {
+                    vol = Math.max(0, vol - 8);
+                    try { player.setVolume(vol); } catch(e) {}
+                    if (vol <= 0) { clearInterval(step); resolve(); }
+                }, 50);
+            });
+        }
+
+        function fadeInTV() {
+            if (!player || typeof player.setVolume !== 'function') return;
+            let vol = 0;
+            player.setVolume(0);
+            const step = setInterval(() => {
+                vol = Math.min(100, vol + 8);
+                try { player.setVolume(vol); } catch(e) {}
+                if (vol >= 100) clearInterval(step);
+            }, 50);
+        }
+
         async function skipToNext() {
             if (!firestoreDb) return;
             try {
+                await fadeOutTV();
                 const snap = await firestoreDb
                     .collection(`artifacts/${firestoreAppId}/public/data/rocola_queue`)
                     .get();
