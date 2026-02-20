@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrowdPlay TV</title>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; width: 100vw; height: 100vh; }
+        #player { width: 100%; height: 100%; }
+        .info { position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.8); color: #fff; padding: 15px; border-radius: 8px; font-family: Arial; font-size: 14px; z-index: 1000; }
+    </style>
+</head>
+<body>
+    <div id="player"></div>
+    <div class="info" id="info">Conectando...</div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAia7RLwDKkBHqjLnH-BFVLrr7m7G2xWq0",
+            authDomain: "crowdplay-7cf0c.firebaseapp.com",
+            projectId: "crowdplay-7cf0c",
+            storageBucket: "crowdplay-7cf0c.appspot.com",
+            messagingSenderId: "623433099154",
+            appId: "1:623433099154:web:fef95d36c5c4e7c6a9a7df"
+        };
+
+        let player;
+        let currentVideoId = null;
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Authenticate anonymously
+        auth.signInAnonymously().catch(err => {
+            document.getElementById('info').textContent = 'Error: ' + err.message;
+        });
+
+        // YouTube Player Ready
+        window.onYouTubeIframeAPIReady = () => {
+            console.log('YouTube API ready');
+            player = new YT.Player('player', {
+                height: '100%',
+                width: '100%',
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 1,
+                    'modestbranding': 1,
+                    'fs': 1,
+                    'rel': 0
+                },
+                events: {
+                    'onReady': () => { document.getElementById('info').textContent = 'Listo. Presiona F para fullscreen'; }
+                }
+            });
+        };
+
+        // Listen to queue
+        db.collection('queue')
+            .orderBy('createdAt', 'asc')
+            .limit(1)
+            .onSnapshot(
+                snap => {
+                    if (!snap.empty) {
+                        const doc = snap.docs[0];
+                        const data = doc.data();
+                        const videoId = data.videoId || data.id;
+                        
+                        console.log('Got video:', videoId, data);
+                        
+                        if (videoId && videoId !== currentVideoId && player) {
+                            currentVideoId = videoId;
+                            player.loadVideoById(videoId);
+                            document.getElementById('info').textContent = 'Reproduciendo: ' + (data.title || videoId);
+                        }
+                    } else {
+                        document.getElementById('info').textContent = 'Esperando canciones...';
+                    }
+                },
+                err => {
+                    console.error('Firestore error:', err);
+                    document.getElementById('info').textContent = 'Error: ' + err.message;
+                }
+            );
+
+        // Fullscreen on F key
+        document.addEventListener('keydown', e => {
+            if (e.key === 'f' || e.key === 'F') {
+                const elem = document.documentElement;
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                } else if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
