@@ -90,6 +90,8 @@
                     }
                     const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     const playing = items.find(i => i.status === 'playing');
+                    console.log('PLAYING DATA:', JSON.stringify(playing));
+                    console.log('ALL ITEMS:', items.map(i => ({ id: i.id, status: i.status, videoId: i.videoId, title: i.title })));
                     if (playing && playing.videoId) {
                         loadVideo(playing.videoId);
                         document.getElementById('info').textContent = '▶ ' + (playing.title || playing.videoId);
