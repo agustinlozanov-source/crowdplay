@@ -2809,13 +2809,19 @@ async function toggleDedication() {
 }
 async function skipSong() {
     await fadeOutPlayer();
-    if (currentTrack) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(currentTrack.id).delete();
-    if (queue.length > 0) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(queue[0].id).update({
-        status: 'playing',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        showDedication: false,
-        lastCommand: 'play'
-    });
+    const trackToDelete = currentTrack;
+    const nextTrack = queue.length > 0 ? queue[0] : null;
+    if (nextTrack) {
+        await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(nextTrack.id).update({
+            status: 'playing',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            showDedication: false,
+            lastCommand: 'play'
+        });
+    }
+    if (trackToDelete) {
+        await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(trackToDelete.id).delete();
+    }
 }
 
 function fadeOutPlayer() {
@@ -2908,10 +2914,13 @@ function syncVideo() {
         return;
     }
     try {
-        const currentVideoId = player.getVideoData?.()?.video_id;
+        let currentVideoId = '';
+        try { currentVideoId = player.getVideoData?.()?.video_id || ''; } catch(e) {}
+        
         if (currentVideoId !== currentTrack.videoId) {
             player.loadVideoById?.(currentTrack.videoId);
             setTimeout(() => fadeInPlayer(), 800);
+            return; // salir — el onStateChange y onReady manejan el resto
         }
         setTimeout(() => {
             if (!player || !currentTrack) return;
