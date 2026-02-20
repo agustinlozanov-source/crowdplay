@@ -1238,24 +1238,51 @@
     <noscript><p style="color:var(--accent-red);font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">JavaScript desactivado.</p></noscript>
 </div>
 
-<!-- ═══════════════════════════════════════
-     REGISTRATION SCREEN
-═══════════════════════════════════════ -->
 <div id="registration-screen" class="hidden">
     <div class="reg-card animate-fade-up">
         <div id="reg-logo-container" style="display:flex;justify-content:center;margin-bottom:8px;"></div>
         <h1 id="reg-title-text" class="font-display" style="font-size:2rem;font-weight:900;font-style:italic;letter-spacing:-0.02em;text-align:center;margin-bottom:4px;">Acceso Cliente</h1>
-        <p style="font-size:0.7rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);text-align:center;margin-bottom:28px;">Crea tu perfil para continuar</p>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-            <input id="reg-name"     class="reg-input" type="text" placeholder="Nombre" autocomplete="given-name">
-            <input id="reg-surname"  class="reg-input" type="text" placeholder="Apellido" autocomplete="family-name">
-            <div style="position:relative;">
-                <input id="reg-whatsapp" class="reg-input" type="tel" placeholder="WhatsApp" autocomplete="tel" style="width:100%;padding-left:52px;">
-            </div>
-            <div id="whatsapp-error" style="display:none;font-size:0.72rem;font-weight:600;color:var(--accent-red);padding:4px 4px 0;">Número inválido para el país seleccionado</div>
-            <button onclick="saveUserRegistration()" class="btn btn-primary btn-full btn-lg" style="margin-top:8px;">
+        <p style="font-size:0.7rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);text-align:center;margin-bottom:20px;">Tu perfil para la noche</p>
+
+        <!-- Toggle registro / login -->
+        <div style="display:flex;gap:8px;margin-bottom:20px;background:var(--bg-elevated);border-radius:12px;padding:4px;">
+            <button id="tab-register" onclick="showAuthTab('register')" style="flex:1;padding:10px;border:none;border-radius:9px;font-family:'Barlow',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;background:var(--accent-red);color:white;transition:all 0.15s;">Registro</button>
+            <button id="tab-login"    onclick="showAuthTab('login')"    style="flex:1;padding:10px;border:none;border-radius:9px;font-family:'Barlow',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;background:transparent;color:var(--text-muted);transition:all 0.15s;">Ingresar</button>
+        </div>
+
+        <!-- FORMULARIO REGISTRO -->
+        <div id="form-register" style="display:flex;flex-direction:column;gap:12px;">
+            <input id="reg-name"     class="reg-input" type="text"     placeholder="Nombre"   autocomplete="given-name">
+            <input id="reg-surname"  class="reg-input" type="text"     placeholder="Apellido" autocomplete="family-name">
+            <input id="reg-email"    class="reg-input" type="email"    placeholder="Email"    autocomplete="email">
+            <input id="reg-password" class="reg-input" type="password" placeholder="Contraseña (mín. 6 caracteres)" autocomplete="new-password">
+            <input id="reg-whatsapp" class="reg-input" type="tel"      placeholder="WhatsApp" autocomplete="tel">
+            <label style="display:flex;align-items:center;gap:10px;font-size:0.8rem;font-weight:600;color:var(--text-secondary);cursor:pointer;">
+                <input id="reg-remember" type="checkbox" checked style="width:16px;height:16px;accent-color:var(--accent-red);">
+                Recuérdame en este dispositivo
+            </label>
+            <div id="reg-error" style="display:none;font-size:0.72rem;font-weight:600;color:var(--accent-red);padding:8px 12px;background:rgba(232,54,42,0.1);border:1px solid rgba(232,54,42,0.2);border-radius:10px;"></div>
+            <button onclick="saveUserRegistration()" class="btn btn-primary btn-full btn-lg" style="margin-top:4px;">
+                Crear cuenta
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+
+        <!-- FORMULARIO LOGIN -->
+        <div id="form-login" style="display:none;flex-direction:column;gap:12px;">
+            <input id="login-email"    class="reg-input" type="email"    placeholder="Email"      autocomplete="email">
+            <input id="login-password" class="reg-input" type="password" placeholder="Contraseña" autocomplete="current-password">
+            <label style="display:flex;align-items:center;gap:10px;font-size:0.8rem;font-weight:600;color:var(--text-secondary);cursor:pointer;">
+                <input id="login-remember" type="checkbox" checked style="width:16px;height:16px;accent-color:var(--accent-red);">
+                Recuérdame en este dispositivo
+            </label>
+            <div id="login-error" style="display:none;font-size:0.72rem;font-weight:600;color:var(--accent-red);padding:8px 12px;background:rgba(232,54,42,0.1);border:1px solid rgba(232,54,42,0.2);border-radius:10px;"></div>
+            <button onclick="loginUser()" class="btn btn-primary btn-full btn-lg" style="margin-top:4px;">
                 Ingresar
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <button onclick="showForgotPassword()" style="background:none;border:none;color:var(--text-muted);font-size:0.75rem;font-weight:600;cursor:pointer;text-align:center;padding:4px;">
+                ¿Olvidaste tu contraseña?
             </button>
         </div>
     </div>
@@ -2061,13 +2088,27 @@ async function initFirebase() {
             // Admin route: no requiere anonymous auth
             proceedApp();
         } else {
-            // Cliente: autenticación anónima
-            await auth.signInAnonymously();
-            if (auth.currentUser) proceedApp();
-            auth.onAuthStateChanged(user => {
-                if (user) proceedApp();
-                else setSyncError('No se pudo autenticar. Verifica Firebase Auth.');
-            }, err => { setSyncError('Error de auth. Verifica reglas Firebase.'); });
+            // Cliente: verificar si ya hay sesión activa
+            auth.onAuthStateChanged(async user => {
+                if (user && !user.isAnonymous) {
+                    // Sesión activa — cargar perfil de Firestore
+                    const profile = await db.collection(`artifacts/${appId}/public/data/client_profiles`).doc(user.uid).get();
+                    if (profile.exists) {
+                        localStorage.setItem('rocola_user_v1', JSON.stringify({ ...profile.data(), id: user.uid }));
+                        proceedApp();
+                    } else {
+                        // Tiene auth pero no perfil — mostrar registro
+                        document.getElementById('loading-screen').classList.add('hidden');
+                        applyLogo();
+                        document.getElementById('registration-screen').classList.remove('hidden');
+                    }
+                } else {
+                    // Sin sesión — mostrar pantalla de registro/login
+                    document.getElementById('loading-screen').classList.add('hidden');
+                    applyLogo();
+                    document.getElementById('registration-screen').classList.remove('hidden');
+                }
+            });
         }
 
     } catch(e) {
@@ -2519,41 +2560,51 @@ function setSearchType(t) {
    MODULE: REGISTRATION
 ═══════════════════════════════════════ */
 function checkClientRegistration() {
-    try {
-        const u = JSON.parse(localStorage.getItem('rocola_user_v1'));
-        if (u && u.id) setMode('client');
-        else {
-            document.getElementById('registration-screen').classList.remove('hidden');
-            document.getElementById('menu-screen').classList.add('hidden');
-        }
-    } catch(e) {
-        document.getElementById('registration-screen').classList.remove('hidden');
-        document.getElementById('menu-screen').classList.add('hidden');
-    }
+    const u = JSON.parse(localStorage.getItem('rocola_user_v1') || 'null');
+    if (u && u.id) setMode('client');
+    else document.getElementById('registration-screen').classList.remove('hidden');
 }
 
-function saveUserRegistration() {
+async function saveUserRegistration() {
     const n = document.getElementById('reg-name').value.trim();
     const s = document.getElementById('reg-surname').value.trim();
-    const errEl = document.getElementById('whatsapp-error');
+    const e = document.getElementById('reg-email').value.trim();
+    const p = document.getElementById('reg-password').value;
+    const w = document.getElementById('reg-whatsapp').value.trim();
+    const remember = document.getElementById('reg-remember').checked;
+    const errEl = document.getElementById('reg-error');
+    errEl.style.display = 'none';
 
-    if (!n || !s) { toast('Por favor completa todos los campos.', 'warning'); return; }
+    if (!n || !s || !e || !p || !w) { errEl.innerText = 'Completa todos los campos.'; errEl.style.display = 'block'; return; }
+    if (p.length < 6) { errEl.innerText = 'La contraseña debe tener al menos 6 caracteres.'; errEl.style.display = 'block'; return; }
 
-    if (!itiInstance) { toast('Error al cargar validador de teléfono.', 'error'); return; }
-    if (!itiInstance.isValidNumber()) {
-        errEl.style.display = 'block';
-        errEl.innerText = 'Número de WhatsApp inválido para el país seleccionado.';
-        document.getElementById('reg-whatsapp').style.borderColor = 'var(--accent-red)';
-        toast('Verifica tu número de WhatsApp.', 'warning');
-        return;
+    const btn = document.querySelector('#form-register .btn-primary');
+    btn.disabled = true; btn.innerText = 'Creando cuenta...';
+
+    try {
+        const persistence = remember
+            ? firebase.auth.Auth.Persistence.LOCAL
+            : firebase.auth.Auth.Persistence.SESSION;
+        await auth.setPersistence(persistence);
+
+        const cred = await auth.createUserWithEmailAndPassword(e, p);
+        const uid = cred.user.uid;
+
+        const profile = { name: n, surname: s, email: e, whatsapp: w, id: uid, createdAt: firebase.firestore.FieldValue.serverTimestamp(), credits: 0 };
+        await db.collection(`artifacts/${appId}/public/data/client_profiles`).doc(uid).set(profile);
+        localStorage.setItem('rocola_user_v1', JSON.stringify({ name: n, surname: s, whatsapp: w, id: uid }));
+
+        document.getElementById('registration-screen').classList.add('hidden');
+        startRealtimeSync();
+        setMode('client');
+    } catch(err) {
+        const msg = err.code === 'auth/email-already-in-use' ? 'Este email ya tiene una cuenta. Usa "Ingresar".'
+                  : err.code === 'auth/invalid-email'        ? 'Email inválido.'
+                  : err.code === 'auth/weak-password'        ? 'Contraseña muy débil.'
+                  : err.message;
+        errEl.innerText = msg; errEl.style.display = 'block';
+        btn.disabled = false; btn.innerText = 'Crear cuenta';
     }
-
-    const w = itiInstance.getNumber(); // número completo con lada, ej: +525512345678
-    localStorage.setItem('rocola_user_v1', JSON.stringify({
-        name: n, surname: s, whatsapp: w, id: auth.currentUser.uid
-    }));
-    document.getElementById('registration-screen').classList.add('hidden');
-    setMode('client');
 }
 
 /* ═══════════════════════════════════════
@@ -3318,6 +3369,63 @@ function updateCooldownUI() {
 
 setInterval(updateCooldownUI, 1000);
 updateCooldownUI();
+
+function showAuthTab(tab) {
+    const isRegister = tab === 'register';
+    document.getElementById('form-register').style.display = isRegister ? 'flex' : 'none';
+    document.getElementById('form-login').style.display    = isRegister ? 'none' : 'flex';
+    document.getElementById('tab-register').style.background = isRegister ? 'var(--accent-red)' : 'transparent';
+    document.getElementById('tab-register').style.color      = isRegister ? 'white' : 'var(--text-muted)';
+    document.getElementById('tab-login').style.background    = isRegister ? 'transparent' : 'var(--accent-red)';
+    document.getElementById('tab-login').style.color         = isRegister ? 'var(--text-muted)' : 'white';
+}
+
+async function loginUser() {
+    const e = document.getElementById('login-email').value.trim();
+    const p = document.getElementById('login-password').value;
+    const remember = document.getElementById('login-remember').checked;
+    const errEl = document.getElementById('login-error');
+    errEl.style.display = 'none';
+
+    if (!e || !p) { errEl.innerText = 'Completa todos los campos.'; errEl.style.display = 'block'; return; }
+
+    const btn = document.querySelector('#form-login .btn-primary');
+    btn.disabled = true; btn.innerText = 'Ingresando...';
+
+    try {
+        const persistence = remember
+            ? firebase.auth.Auth.Persistence.LOCAL
+            : firebase.auth.Auth.Persistence.SESSION;
+        await auth.setPersistence(persistence);
+        const cred = await auth.signInWithEmailAndPassword(e, p);
+        const profile = await db.collection(`artifacts/${appId}/public/data/client_profiles`).doc(cred.user.uid).get();
+        if (profile.exists) {
+            localStorage.setItem('rocola_user_v1', JSON.stringify({ ...profile.data(), id: cred.user.uid }));
+        }
+        document.getElementById('registration-screen').classList.add('hidden');
+        startRealtimeSync();
+        setMode('client');
+    } catch(err) {
+        const msg = err.code === 'auth/user-not-found'  ? 'No existe una cuenta con ese email.'
+                  : err.code === 'auth/wrong-password'  ? 'Contraseña incorrecta.'
+                  : err.code === 'auth/invalid-email'   ? 'Email inválido.'
+                  : err.code === 'auth/too-many-requests' ? 'Demasiados intentos. Espera un momento.'
+                  : err.message;
+        errEl.innerText = msg; errEl.style.display = 'block';
+        btn.disabled = false; btn.innerText = 'Ingresar';
+    }
+}
+
+async function showForgotPassword() {
+    const e = document.getElementById('login-email').value.trim();
+    if (!e) { toast('Escribe tu email primero.', 'warning'); return; }
+    try {
+        await auth.sendPasswordResetEmail(e);
+        toast('Correo de recuperación enviado ✓', 'success');
+    } catch(err) {
+        toast('No se encontró una cuenta con ese email.', 'error');
+    }
+}
 </script>
 
 </body>
