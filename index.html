@@ -3376,35 +3376,45 @@ setInterval(updateCooldownUI, 1000);
 updateCooldownUI();
 
 let itiInstance = null;
+
 function initPhoneInput() {
     const input = document.getElementById('reg-whatsapp');
-    if (!input || typeof intlTelInput === 'undefined') { setTimeout(initPhoneInput, 500); return; }
+    if (!input || typeof intlTelInput === 'undefined') {
+        setTimeout(initPhoneInput, 300);
+        return;
+    }
+    if (itiInstance) return; // ya inicializado
     itiInstance = intlTelInput(input, {
         initialCountry: 'mx',
         preferredCountries: ['mx', 'us', 'co', 'ar', 'es', 'gt', 'cr', 'cl', 'pe'],
         separateDialCode: true,
         utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js'
     });
-    input.blur();
     input.addEventListener('input', validatePhone);
     input.addEventListener('countrychange', validatePhone);
 }
+
 function validatePhone() {
     const input = document.getElementById('reg-whatsapp');
     const errEl = document.getElementById('whatsapp-error');
-    if (!itiInstance || !input.value) { errEl.style.display = 'none'; input.style.borderColor = ''; return; }
+    if (!itiInstance || !input.value) {
+        if (errEl) errEl.style.display = 'none';
+        input.style.borderColor = '';
+        return;
+    }
     if (itiInstance.isValidNumber()) {
-        errEl.style.display = 'none';
+        if (errEl) errEl.style.display = 'none';
         input.style.borderColor = 'var(--accent-green)';
     } else {
-        errEl.style.display = 'block';
+        if (errEl) errEl.style.display = 'block';
         input.style.borderColor = 'var(--accent-red)';
     }
 }
-document.addEventListener('DOMContentLoaded', () => setTimeout(initPhoneInput, 300));
+document.addEventListener('DOMContentLoaded', function() {});
 
 function showAuthTab(tab) {
     const isRegister = tab === 'register';
+    if (isRegister) setTimeout(initPhoneInput, 100);
     document.getElementById('form-register').style.display = isRegister ? 'flex' : 'none';
     document.getElementById('form-login').style.display    = isRegister ? 'none' : 'flex';
     document.getElementById('tab-register').style.background = isRegister ? 'var(--accent-red)' : 'transparent';
