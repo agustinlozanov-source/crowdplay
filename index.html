@@ -3383,14 +3383,16 @@ updateCooldownUI();
 let itiInstance = null;
 function initPhoneInput() {
     const input = document.getElementById('reg-whatsapp');
-    if (!input || typeof intlTelInput === 'undefined') { setTimeout(initPhoneInput, 500); return; }
+    if (!input || typeof intlTelInput === 'undefined') { setTimeout(initPhoneInput, 300); return; }
+    if (itiInstance) return;
     itiInstance = intlTelInput(input, {
         initialCountry: 'mx',
         preferredCountries: ['mx', 'us', 'co', 'ar', 'es', 'gt', 'cr', 'cl', 'pe'],
         separateDialCode: true,
+        dropdownContainer: document.body,
         utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js'
     });
-    input.blur();
+    setTimeout(() => { document.activeElement && document.activeElement.blur(); }, 50);
     input.addEventListener('input', validatePhone);
     input.addEventListener('countrychange', validatePhone);
 }
