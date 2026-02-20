@@ -2473,14 +2473,16 @@ async function confirmOrder() {
     
     // CAMBIO 1: Cooldown de 3 minutos
     const lastOrderTs = localStorage.getItem('rocola_last_order_ts');
+    const cooldownMs = 180000; // 3 minutos
     if (lastOrderTs) {
         const elapsed = Date.now() - parseInt(lastOrderTs);
-        const cooldown = 180000; // 3 minutos en ms
-        if (elapsed < cooldown) {
-            const remaining = Math.ceil((cooldown - elapsed) / 1000);
-            const mins = Math.floor(remaining / 60);
-            const secs = remaining % 60;
-            toast(`Espera ${mins} min ${secs} seg para pedir otra canción`, 'warning');
+        if (elapsed < cooldownMs) {
+            const remaining = cooldownMs - elapsed;
+            const mins = Math.floor(remaining / 60000);
+            const secs = Math.floor((remaining % 60000) / 1000);
+            localStorage.setItem('rocola_cooldown_remaining', JSON.stringify({ mins, secs, until: parseInt(lastOrderTs) + cooldownMs }));
+            closeSearch();
+            switchClientTab('request');
             return;
         }
     }
@@ -3086,6 +3088,53 @@ try {
     const syncText = document.getElementById('sync-text');
     if (syncText) syncText.innerText = `Error: ${e.message}`;
 }
+
+function updateCooldownUI() {
+    const navBtn     = document.getElementById('nav-request');
+    const ctaInner   = navBtn ? navBtn.querySelector('.nav-tab-cta') : null;
+
+    const raw = localStorage.getItem('rocola_cooldown_remaining');
+
+    if (!raw) {
+        // Sin cooldown — botón normal
+        if (ctaInner) {
+            ctaInner.style.background = 'var(--accent-red)';
+            ctaInner.style.boxShadow  = '0 4px 20px rgba(232,54,42,0.4)';
+            ctaInner.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>`;
+        }
+        if (navBtn) navBtn.onclick = () => openSearch();
+        return;
+    }
+
+    const { until } = JSON.parse(raw);
+    const remaining = until - Date.now();
+
+    if (remaining <= 0) {
+        localStorage.removeItem('rocola_cooldown_remaining');
+        updateCooldownUI();
+        return;
+    }
+
+    const mins = Math.floor(remaining / 60000);
+    const secs = Math.floor((remaining % 60000) / 1000);
+    const label = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+    // Botón en modo cooldown
+    if (ctaInner) {
+        ctaInner.style.background = 'var(--bg-elevated)';
+        ctaInner.style.boxShadow  = 'none';
+        ctaInner.style.border     = '1px solid var(--border-mid)';
+        ctaInner.innerHTML = `<span style="font-family:'Barlow Condensed',sans-serif;font-size:0.8rem;font-weight:900;color:var(--text-secondary);letter-spacing:-0.01em;line-height:1;">${label}</span>`;
+    }
+
+    // Al tocar el botón en cooldown va al tab de cola
+    if (navBtn) navBtn.onclick = () => switchClientTab('queue');
+}
+
+// Iniciar el ticker del cooldown cada segundo
+setInterval(updateCooldownUI, 1000);
+updateCooldownUI(); // ejecutar inmediatamente al cargar
+
 </script>
 <!-- ═══════════════════════════════════════
      ADMIN LOGIN SCREEN (CAMBIO 6)
