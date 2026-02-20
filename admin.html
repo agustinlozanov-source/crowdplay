@@ -1162,6 +1162,11 @@
             .sampler-grid { grid-template-columns: repeat(2, 1fr); }
             .stats-grid   { grid-template-columns: repeat(2, 1fr); }
         }
+
+        /* ADMIN VERSION - hide client screens */
+        #client-app { display: none !important; }
+        #menu-screen { display: none !important; }
+        #registration-screen { display: none !important; }
     </style>
 </head>
 <body>
@@ -2021,35 +2026,18 @@ async function initFirebase() {
             document.getElementById('loading-screen').classList.add('hidden');
             updateStatus(true);
             applyLogo();
-            const params = new URLSearchParams(window.location.search);
-            const urlRole = params.get('role');
-            const mode    = params.get('mode');
             
-            if (urlRole === 'admin') {
-                // Admin: mostrar login
-                const loginScreen = document.getElementById('admin-login-screen');
-                if (loginScreen) loginScreen.classList.remove('hidden');
-            } else if (mode) {
-                startRealtimeSync();
-                setMode(mode);
-            } else {
-                // Por defecto: mostrar el menu de roles
-                startRealtimeSync();
-                document.getElementById('menu-screen').classList.remove('hidden');
-            }
+            // Admin: mostrar login
+            const loginScreen = document.getElementById('admin-login-screen');
+            if (loginScreen) loginScreen.classList.remove('hidden');
         };
 
         if (isAdminRoute) {
             // Admin route: no requiere anonymous auth
             proceedApp();
         } else {
-            // Cliente: autenticación anónima
-            await auth.signInAnonymously();
-            if (auth.currentUser) proceedApp();
-            auth.onAuthStateChanged(user => {
-                if (user) proceedApp();
-                else setSyncError('No se pudo autenticar. Verifica Firebase Auth.');
-            }, err => { setSyncError('Error de auth. Verifica reglas Firebase.'); });
+            // Admin.html siempre va al login de admin
+            proceedApp();
         }
 
     } catch(e) {

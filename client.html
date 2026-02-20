@@ -1162,6 +1162,12 @@
             .sampler-grid { grid-template-columns: repeat(2, 1fr); }
             .stats-grid   { grid-template-columns: repeat(2, 1fr); }
         }
+
+        /* CLIENT VERSION - hide staff and admin screens */
+        #staff-app { display: none !important; }
+        #admin-login-screen { display: none !important; }
+        #menu-screen { display: none !important; }
+        #display-screen { display: none !important; }
     </style>
 </head>
 <body>
@@ -2021,22 +2027,10 @@ async function initFirebase() {
             document.getElementById('loading-screen').classList.add('hidden');
             updateStatus(true);
             applyLogo();
-            const params = new URLSearchParams(window.location.search);
-            const urlRole = params.get('role');
-            const mode    = params.get('mode');
             
-            if (urlRole === 'admin') {
-                // Admin: mostrar login
-                const loginScreen = document.getElementById('admin-login-screen');
-                if (loginScreen) loginScreen.classList.remove('hidden');
-            } else if (mode) {
-                startRealtimeSync();
-                setMode(mode);
-            } else {
-                // Por defecto: mostrar el menu de roles
-                startRealtimeSync();
-                document.getElementById('menu-screen').classList.remove('hidden');
-            }
+            // Cliente: siempre ir a verificar registro
+            startRealtimeSync();
+            checkClientRegistration();
         };
 
         if (isAdminRoute) {
