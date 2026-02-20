@@ -817,42 +817,147 @@
         .transport-bar {
             display: flex; align-items: center; gap: 8px;
         }
-        .transport-btn {
-            width: 44px; height: 44px;
+
+        /* ── DJ TRANSPORT ── */
+        .dj-deck {
             background: var(--bg-elevated);
+            border: 1px solid var(--border-mid);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .dj-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .dj-title {
+            font-family: 'Barlow', sans-serif;
+            font-size: 1rem;
+            font-weight: 800;
+            font-style: italic;
+            letter-spacing: 0.02em;
+            color: var(--text-primary);
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .dj-progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .dj-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-red), #ff6b5b);
+            border-radius: 4px;
+            transition: width 1s linear;
+        }
+        .dj-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .dj-btn {
+            width: 48px; height: 48px;
+            background: var(--bg-card);
             border: 1px solid var(--border-mid);
             border-radius: 50%;
             color: var(--text-secondary);
             cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            transition: all 0.15s;
+            transition: all 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
             flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
         }
-        .transport-btn:hover {
-            background: var(--bg-card);
+        .dj-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.15) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.1s;
+        }
+        .dj-btn:active::after { opacity: 1; }
+        .dj-btn:hover {
+            background: var(--bg-elevated);
             color: var(--text-primary);
-            border-color: rgba(255,255,255,0.25);
-            transform: scale(1.05);
+            border-color: rgba(255,255,255,0.2);
+            transform: scale(1.08);
         }
-        .transport-btn:active { transform: scale(0.93); }
-        .transport-play {
-            flex: 1;
-            height: 48px;
+        .dj-btn:active { transform: scale(0.92); }
+        .dj-btn-lg {
+            width: 64px; height: 64px;
             background: white;
-            color: #0a0c12;
             border: none;
-            border-radius: 100px;
-            font-family: 'Barlow', sans-serif;
-            font-size: 0.8rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.15s;
-            box-shadow: 0 4px 20px rgba(255,255,255,0.15);
+            color: #0a0c12;
+            box-shadow: 0 4px 24px rgba(255,255,255,0.2);
         }
-        .transport-play:hover { background: #f0f0f0; box-shadow: 0 6px 28px rgba(255,255,255,0.2); }
-        .transport-play:active { transform: scale(0.97); box-shadow: none; }
+        .dj-btn-lg:hover {
+            background: white;
+            transform: scale(1.1);
+            box-shadow: 0 6px 32px rgba(255,255,255,0.3);
+            border: none;
+        }
+        .dj-btn-lg:active { transform: scale(0.94); box-shadow: none; }
+        .dj-btn-skip {
+            background: rgba(232,54,42,0.12);
+            border-color: rgba(232,54,42,0.3);
+            color: var(--accent-red);
+        }
+        .dj-btn-skip:hover {
+            background: rgba(232,54,42,0.2);
+            border-color: rgba(232,54,42,0.5);
+            color: var(--accent-red);
+        }
+        .dj-btn-mute {
+            background: var(--bg-card);
+            border-color: var(--border-mid);
+        }
+        .dj-btn-mute.muted {
+            background: rgba(232,54,42,0.12);
+            border-color: rgba(232,54,42,0.4);
+            color: var(--accent-red);
+        }
+        .dj-vol-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .dj-vol-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 4px;
+            background: var(--border-mid);
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+        }
+        .dj-vol-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .dj-vol-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        .dj-bottom-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
 
         /* ── ANALYTICS VIEW ── */
         .period-tabs {
@@ -1610,39 +1715,86 @@
 
             <!-- ── PANEL: PLAYER (DJ) ── -->
             <div class="staff-panel" id="panel-player">
-                <div class="content-card">
-                    <div class="content-card-title">Reproduciendo</div>
-                    <div class="video-container" style="height:500px;padding-bottom:0;">
+                <!-- Video -->
+                <div class="content-card" style="padding:0;overflow:hidden;border-radius:20px;">
+                    <div style="position:relative;background:#000;aspect-ratio:16/9;">
                         <div id="yt-player" style="width:100%;height:100%;"></div>
-                    </div>
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
-                        <div class="font-display truncate" id="admin-current-title" style="font-size:1.1rem;font-weight:700;font-style:italic;flex:1;min-width:0;margin-right:12px;">Standby...</div>
-                        <button id="admin-mute-btn" onclick="toggleAdminMute()" class="btn btn-secondary" style="flex-shrink:0;padding:10px;">
-                            <svg id="mute-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-                        </button>
+                        <div id="player-overlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);transition:opacity 0.3s;">
+                            <div style="text-align:center;color:white;">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" opacity="0.5"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="white" stroke="none"/></svg>
+                                <p style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-top:8px;">Sin canción</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="content-card">
-                    <div class="content-card-title">Transport</div>
-                    <div class="transport-bar">
-                        <button onclick="sendCommand('seek', { offset: -10 })" class="transport-btn" title="−10s">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+
+                <!-- DJ Deck -->
+                <div class="dj-deck">
+                    <!-- Título + mute -->
+                    <div class="dj-title-row">
+                        <div class="dj-title" id="admin-current-title">Standby...</div>
+                        <button class="dj-btn dj-btn-mute" id="admin-mute-btn" onclick="toggleAdminMute()" title="Mute">
+                            <svg id="mute-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Progress bar -->
+                    <div class="dj-progress-bar">
+                        <div class="dj-progress-fill" id="dj-progress"></div>
+                    </div>
+
+                    <!-- Controles principales -->
+                    <div class="dj-controls">
+                        <button class="dj-btn" onclick="sendCommand('seek', { offset: -30 })" title="−30s">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                                 <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/>
                             </svg>
                         </button>
-                        <button onclick="handleDJToggle()" class="transport-play">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:inline;vertical-align:middle;margin-right:6px;"><polygon points="5,3 19,12 5,21"/></svg>
-                            Play · Pausa
+                        <button class="dj-btn" onclick="sendCommand('seek', { offset: -10 })" title="−10s">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <polyline points="11,17 6,12 11,7"/>
+                                <text x="13" y="16" font-size="6" fill="currentColor" stroke="none" font-weight="700">10</text>
+                            </svg>
                         </button>
-                        <button onclick="sendCommand('seek', { offset: 10 })" class="transport-btn" title="+10s">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <button class="dj-btn dj-btn-lg" id="dj-play-btn" onclick="handleDJToggle()" title="Play/Pause">
+                            <svg id="dj-play-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="5,3 19,12 5,21"/>
+                            </svg>
+                        </button>
+                        <button class="dj-btn" onclick="sendCommand('seek', { offset: 10 })" title="+10s">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <polyline points="13,17 18,12 13,7"/>
+                                <text x="3" y="16" font-size="6" fill="currentColor" stroke="none" font-weight="700">10</text>
+                            </svg>
+                        </button>
+                        <button class="dj-btn" onclick="sendCommand('seek', { offset: 30 })" title="+30s">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                                 <path d="M13 17l5-5-5-5M6 17l5-5-5-5"/>
                             </svg>
                         </button>
+                        <button class="dj-btn dj-btn-skip" onclick="skipSong()" title="Saltar">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                <polygon points="5,4 15,12 5,20" fill="currentColor" stroke="none"/>
+                                <line x1="19" y1="4" x2="19" y2="20"/>
+                            </svg>
+                        </button>
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
-                        <button onclick="skipSong()" class="btn btn-primary">⏭ Saltar</button>
-                        <button id="toggle-dedication-btn" onclick="toggleDedication()" class="btn btn-indigo">✨ Dedicatoria</button>
+
+                    <!-- Volumen -->
+                    <div class="dj-vol-row">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/></svg>
+                        <input type="range" class="dj-vol-slider" id="dj-volume" min="0" max="100" value="100" oninput="setPlayerVolume(this.value)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                        <span id="dj-vol-label" style="font-size:0.7rem;font-weight:700;color:var(--text-muted);min-width:28px;text-align:right;">100</span>
+                    </div>
+
+                    <!-- Bottom row -->
+                    <div class="dj-bottom-row">
+                        <button onclick="toggleDedication()" class="btn btn-indigo" id="toggle-dedication-btn">✨ Dedicatoria</button>
+                        <button onclick="openTVTab()" class="btn btn-secondary">📺 Abrir TV</button>
                     </div>
                 </div>
             </div>
@@ -1958,6 +2110,7 @@ let isAppReady = false;
 let appId = typeof __app_id !== 'undefined' ? __app_id : 'rocola-crowdplay2-v1';
 let player = null;
 let currentTrack = null;
+let currentSongId = null;
 let queue = [];
 let searchTimeout = null;
 let isAdminMuted = true;
@@ -2238,6 +2391,7 @@ function startRealtimeSync() {
         let items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         items.sort((a, b) => ((b.votes || 0) - (a.votes || 0)) || ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0)));
         currentTrack = items.find(i => i.status === 'playing') || null;
+        if (currentTrack) currentSongId = currentTrack.id;
         queue = items.filter(i => i.status === 'pending');
         updateClientUI();
         updateDJQueuePanel();
@@ -2798,8 +2952,61 @@ function sendCommand(cmd, extra = {}) {
     db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(currentTrack.id).update({ lastCommand: cmd, commandId: Math.random(), ...extra });
 }
 function handleDJToggle() {
-    if (currentTrack) sendCommand(currentTrack.lastCommand === 'pause' ? 'play' : 'pause');
+    if (!player) return;
+    const state = player.getPlayerState();
+    if (state === 1) {
+        player.pauseVideo();
+    } else {
+        player.playVideo();
+    }
+    updatePlayIcon();
 }
+
+function updatePlayIcon() {
+    if (!player) return;
+    const state = player.getPlayerState();
+    const icon = document.getElementById('dj-play-icon');
+    if (!icon) return;
+    if (state === 1) {
+        // Playing
+        icon.innerHTML = '<rect x="5" y="4" width="5" height="16" fill="currentColor"/><rect x="14" y="4" width="5" height="16" fill="currentColor"/>';
+    } else {
+        // Paused
+        icon.innerHTML = '<polygon points="5,3 19,12 5,21" fill="currentColor"/>';
+    }
+}
+
+function setPlayerVolume(val) {
+    if (!player) return;
+    player.setVolume(parseInt(val));
+    const label = document.getElementById('dj-vol-label');
+    if (label) label.textContent = val;
+}
+
+function startProgressBar() {
+    if (!player || !currentSongId) return;
+    const progressBar = document.getElementById('dj-progress');
+    if (!progressBar) return;
+    
+    const duration = player.getDuration();
+    if (!duration) return;
+    
+    const updateProgress = () => {
+        if (!player) return;
+        const current = player.getCurrentTime();
+        const state = player.getPlayerState();
+        if (state !== 1) {
+            setTimeout(updateProgress, 500);
+            return;
+        }
+        const pct = (current / duration) * 100;
+        progressBar.style.width = Math.min(pct, 100) + '%';
+        setTimeout(updateProgress, 100);
+    };
+    
+    updateProgress();
+}
+
 async function toggleDedication() {
     if (currentTrack) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(currentTrack.id).update({ showDedication: !currentTrack.showDedication });
 }
@@ -2915,13 +3122,25 @@ function syncVideo() {
         
         if (currentVideoId !== currentTrack.videoId) {
             player.loadVideoById?.(currentTrack.videoId);
+            
+            // Ocultar overlay y actualizar UI
+            const overlay = document.getElementById('player-overlay');
+            if (overlay) overlay.style.opacity = '0';
+            setTimeout(() => overlay && (overlay.style.display = 'none'), 300);
+            
+            const title = document.getElementById('admin-current-title');
+            if (title) title.textContent = currentTrack.songTitle || 'Cargando...';
+            
+            currentSongId = currentTrack.id;
             setTimeout(() => fadeInPlayer(), 800);
+            setTimeout(() => startProgressBar(), 1000);
             return; // salir — el onStateChange y onReady manejan el resto
         }
         setTimeout(() => {
             if (!player || !currentTrack) return;
             if (currentTrack.lastCommand === 'pause') player.pauseVideo?.();
             else if (currentTrack.lastCommand === 'play') player.playVideo?.();
+            updatePlayIcon();
         }, 500);
         if (currentTrack.lastCommand === 'seek' && currentTrack.offset) {
             player.seekTo?.(player.getCurrentTime?.() + currentTrack.offset, true);
