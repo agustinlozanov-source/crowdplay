@@ -1173,12 +1173,22 @@
 
 <!-- Script para mostrar login de admin inmediatamente si role=admin -->
 <script>
-    // Mostrar login admin al cargar la página
+    // Mostrar login admin al cargar la página (solo si no es modo display)
     window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlMode = urlParams.get('mode');
+        const isDisplayMode = urlMode === 'display';
+        
         const loading = document.getElementById('loading-screen');
         const login = document.getElementById('admin-login-screen');
+        
         if (loading) loading.classList.add('hidden');
-        if (login) login.classList.remove('hidden');
+        
+        // Solo mostrar login si NO estamos en modo display
+        if (!isDisplayMode) {
+            if (login) login.classList.remove('hidden');
+        }
+        
         // Cargar logo en sidebar
         const sidebarLogoContainer = document.getElementById('sidebar-logo-container');
         if (sidebarLogoContainer) {
