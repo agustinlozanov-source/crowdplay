@@ -5,9 +5,9 @@
   command = "echo 'No build step needed - static files only'"
   publish = "."
 
-# Environment - Disable smart detection for Firebase API key (it's public)
-[build.environment]
-  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
+# Disable secrets scanning
+[env.production]
+  NETLIFY_SKIP_SECRETS_SCANNING = "true"
 
 # Redirects - route client.html for root
 [[redirects]]

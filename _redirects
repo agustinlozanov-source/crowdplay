@@ -1,9 +1,6 @@
-# Serve client.html for root
-/   /client.html   200
-
-# Serve admin.html for /admin paths
+# Admin redirect
 /admin   /admin.html   200
 /admin/*   /admin.html   200
 
-# Fallback para rutas no encontradas
-/*   /client.html   200
+# Roles/Menu (opcional)
+/roles   /roles-menu.html   200
