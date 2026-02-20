@@ -16,31 +16,6 @@
     <div id="info">Iniciando...</div>
 
     <script>
-        // Load Firebase
-        const script1 = document.createElement('script');
-        script1.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
-        
-        script1.onload = () => {
-            const script2 = document.createElement('script');
-            script2.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js';
-            
-            script2.onload = () => {
-                const script3 = document.createElement('script');
-                script3.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js';
-                
-                script3.onload = () => {
-                    console.log('Firebase loaded');
-                    initFirebase();
-                };
-                
-                document.head.appendChild(script3);
-            };
-            
-            document.head.appendChild(script2);
-        };
-        
-        document.head.appendChild(script1);
-
         const firebaseConfig = {
             apiKey: "AIzaSyAia_yRHvYg3gGQ60VwPRwcRm3B0aja4cw",
             authDomain: "rocola-crowdplay2.firebaseapp.com",
@@ -50,66 +25,132 @@
             appId: "1:519952213703:web:0e0ecb8cb3fc81064240e2"
         };
 
-        let player;
+        let player = null;
+        let playerReady = false;
+        let pendingVideoId = null;
         let currentVideoId = null;
 
-        function initFirebase() {
-            try {
-                firebase.initializeApp(firebaseConfig);
-                const auth = firebase.auth();
-                const db = firebase.firestore();
-
-                auth.signInAnonymously().then(() => {
-                    console.log('Auth OK');
-                    setupQueue(db);
-                }).catch(err => {
-                    document.getElementById('info').textContent = 'Auth error: ' + err.code;
-                });
-            } catch (e) {
-                console.error('Error:', e);
-                document.getElementById('info').textContent = 'Error: ' + e.message;
+        // Intenta cargar video — si el player no está listo, lo guarda pendiente
+        function loadVideo(videoId) {
+            if (!videoId || videoId === currentVideoId) return;
+            currentVideoId = videoId;
+            if (playerReady && player) {
+                player.loadVideoById(videoId);
+                player.playVideo();
+            } else {
+                pendingVideoId = videoId;
             }
         }
 
-        function setupQueue(db) {
-            db.collection('artifacts/rocola-crowdplay2-v1/public/data/rocola_queue')
-                .onSnapshot(snap => {
-                    if (!snap.empty) {
-                        const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                        const playing = items.find(i => i.status === 'playing');
-                        if (playing && playing.videoId && playing.videoId !== currentVideoId) {
-                            currentVideoId = playing.videoId;
-                            if (player && player.loadVideoById) {
-                                player.loadVideoById(playing.videoId);
-                                player.playVideo();
-                            }
-                            document.getElementById('info').textContent = '▶ ' + (playing.title || playing.videoId);
-                        } else if (!playing) {
-                            document.getElementById('info').textContent = 'Esperando canción...';
-                        }
-                    } else {
-                        document.getElementById('info').textContent = 'Cola vacía';
-                    }
-                }, err => {
-                    document.getElementById('info').textContent = 'Error: ' + err.code;
-                });
-        }
-
-        window.onYouTubeIframeAPIReady = () => {
+        window.onYouTubeIframeAPIReady = function() {
             console.log('YouTube ready');
             player = new YT.Player('player', {
                 height: '100%',
                 width: '100%',
-                playerVars: { autoplay: 1, controls: 1, modestbranding: 1, fs: 1 }
+                playerVars: {
+                    autoplay: 1,
+                    controls: 1,
+                    modestbranding: 1,
+                    fs: 1,
+                    rel: 0,
+                    iv_load_policy: 3,
+                    origin: window.location.origin
+                },
+                events: {
+                    onReady: function(e) {
+                        console.log('Player ready');
+                        playerReady = true;
+                        e.target.setVolume(100);
+                        if (pendingVideoId) {
+                            e.target.loadVideoById(pendingVideoId);
+                            e.target.playVideo();
+                            pendingVideoId = null;
+                        }
+                    },
+                    onStateChange: function(e) {
+                        if (e.data === YT.PlayerState.ENDED) {
+                            document.getElementById('info').textContent = 'Esperando siguiente canción...';
+                        }
+                    },
+                    onError: function(e) {
+                        console.error('Player error:', e.data);
+                        document.getElementById('info').textContent = 'Error video: ' + e.data;
+                    }
+                }
             });
         };
 
+        function setupQueue(db) {
+            const appId = 'rocola-crowdplay2-v1';
+            db.collection(`artifacts/${appId}/public/data/rocola_queue`)
+                .onSnapshot(snap => {
+                    if (snap.empty) {
+                        document.getElementById('info').textContent = 'Cola vacía — esperando canciones...';
+                        return;
+                    }
+                    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    const playing = items.find(i => i.status === 'playing');
+                    if (playing && playing.videoId) {
+                        loadVideo(playing.videoId);
+                        document.getElementById('info').textContent = '▶ ' + (playing.title || playing.videoId);
+                    } else {
+                        document.getElementById('info').textContent = 'Esperando canción...';
+                    }
+                }, err => {
+                    console.error('Firestore error:', err);
+                    document.getElementById('info').textContent = 'Error Firestore: ' + err.code;
+                });
+        }
+
+        function initFirebase() {
+            try {
+                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                const auth = firebase.auth();
+                const db = firebase.firestore();
+
+                auth.signInAnonymously()
+                    .then(() => {
+                        console.log('Auth OK');
+                        setupQueue(db);
+                    })
+                    .catch(err => {
+                        document.getElementById('info').textContent = 'Auth error: ' + err.code;
+                    });
+            } catch(e) {
+                console.error('Init error:', e);
+                document.getElementById('info').textContent = 'Error init: ' + e.message;
+            }
+        }
+
+        // Carga Firebase en cascada
+        const s1 = document.createElement('script');
+        s1.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
+        s1.onload = () => {
+            const s2 = document.createElement('script');
+            s2.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js';
+            s2.onload = () => {
+                const s3 = document.createElement('script');
+                s3.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js';
+                s3.onload = initFirebase;
+                document.head.appendChild(s3);
+            };
+            document.head.appendChild(s2);
+        };
+        document.head.appendChild(s1);
+
+        // Fullscreen con tecla F
         document.addEventListener('keydown', e => {
-            if ((e.key === 'f' || e.key === 'F') && player) {
+            if (e.key === 'f' || e.key === 'F') {
                 const el = document.documentElement;
                 if (document.fullscreenElement) document.exitFullscreen();
                 else el.requestFullscreen?.().catch(() => {});
             }
+        });
+
+        // Fullscreen al hacer click
+        document.getElementById('player').addEventListener('click', () => {
+            const el = document.documentElement;
+            if (!document.fullscreenElement) el.requestFullscreen?.().catch(() => {});
         });
     </script>
     <script async src="https://www.youtube.com/iframe_api"></script>
