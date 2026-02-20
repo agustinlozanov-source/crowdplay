@@ -2820,7 +2820,7 @@ function syncVideo() {
         }
     } catch(e) { console.error('syncVideo error:', e); }
 }
-function openTVTab() { window.open(`${window.location.origin}/admin/?mode=display`, '_blank'); }
+function openTVTab() { window.open(`${window.location.origin}/roles?mode=display`, '_blank'); }
 function copyRoleLink(mode) {
     const url = `${window.location.origin}${window.location.pathname}?mode=${mode}`;
     navigator.clipboard.writeText(url).then(() => toast('Enlace copiado al portapapeles', 'info'));
