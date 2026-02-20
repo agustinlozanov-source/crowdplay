@@ -1717,7 +1717,7 @@
             <div class="staff-panel" id="panel-player">
                 <!-- Video -->
                 <div class="content-card" style="padding:0;overflow:hidden;border-radius:20px;">
-                    <div style="position:relative;background:#000;aspect-ratio:16/9;">
+                    <div style="position:relative;background:#000;height:460px;">
                         <div id="yt-player" style="width:100%;height:100%;"></div>
                         <div id="player-overlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);transition:opacity 0.3s;">
                             <div style="text-align:center;color:white;">
@@ -1747,39 +1747,38 @@
                     </div>
 
                     <!-- Controles principales -->
-                    <div class="dj-controls">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:16px;">
                         <button class="dj-btn" onclick="sendCommand('seek', { offset: -30 })" title="−30s">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/>
-                            </svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
                         </button>
                         <button class="dj-btn" onclick="sendCommand('seek', { offset: -10 })" title="−10s">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                <polyline points="11,17 6,12 11,7"/>
-                                <text x="13" y="16" font-size="6" fill="currentColor" stroke="none" font-weight="700">10</text>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="11,17 6,12 11,7"/></svg>
+                        </button>
+
+                        <!-- PAUSE -->
+                        <button class="dj-btn dj-btn-lg" id="dj-pause-btn" onclick="sendCommand('pause')" title="Pausar"
+                            style="background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.15);display:none;">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" style="color:white;">
+                                <rect x="5" y="4" width="5" height="16"/><rect x="14" y="4" width="5" height="16"/>
                             </svg>
                         </button>
-                        <button class="dj-btn dj-btn-lg" id="dj-play-btn" onclick="handleDJToggle()" title="Play/Pause">
-                            <svg id="dj-play-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+
+                        <!-- PLAY -->
+                        <button class="dj-btn dj-btn-lg" id="dj-play-btn" onclick="sendCommand('play')" title="Reproducir"
+                            style="background:white;border:none;">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" style="color:#0a0c12;">
                                 <polygon points="5,3 19,12 5,21"/>
                             </svg>
                         </button>
+
                         <button class="dj-btn" onclick="sendCommand('seek', { offset: 10 })" title="+10s">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                <polyline points="13,17 18,12 13,7"/>
-                                <text x="3" y="16" font-size="6" fill="currentColor" stroke="none" font-weight="700">10</text>
-                            </svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="13,17 18,12 13,7"/></svg>
                         </button>
                         <button class="dj-btn" onclick="sendCommand('seek', { offset: 30 })" title="+30s">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                                <path d="M13 17l5-5-5-5M6 17l5-5-5-5"/>
-                            </svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>
                         </button>
                         <button class="dj-btn dj-btn-skip" onclick="skipSong()" title="Saltar">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                                <polygon points="5,4 15,12 5,20" fill="currentColor" stroke="none"/>
-                                <line x1="19" y1="4" x2="19" y2="20"/>
-                            </svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,4 15,12 5,20"/><line x1="19" y1="4" x2="19" y2="20" stroke="currentColor" stroke-width="2.5"/></svg>
                         </button>
                     </div>
 
@@ -2965,16 +2964,15 @@ function handleDJToggle() {
 
 function updatePlayIcon() {
     if (!player) return;
-    const state = player.getPlayerState();
-    const icon = document.getElementById('dj-play-icon');
-    if (!icon) return;
-    if (state === 1) {
-        // Playing
-        icon.innerHTML = '<rect x="5" y="4" width="5" height="16" fill="currentColor"/><rect x="14" y="4" width="5" height="16" fill="currentColor"/>';
-    } else {
-        // Paused
-        icon.innerHTML = '<polygon points="5,3 19,12 5,21" fill="currentColor"/>';
-    }
+    try {
+        const state = player.getPlayerState();
+        const playBtn  = document.getElementById('dj-play-btn');
+        const pauseBtn = document.getElementById('dj-pause-btn');
+        if (!playBtn || !pauseBtn) return;
+        const isPlaying = state === window.YT?.PlayerState?.PLAYING;
+        playBtn.style.display  = isPlaying ? 'none' : 'flex';
+        pauseBtn.style.display = isPlaying ? 'flex' : 'none';
+    } catch(e) {}
 }
 
 function setPlayerVolume(val) {
