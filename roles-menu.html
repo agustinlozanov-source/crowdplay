@@ -2236,8 +2236,10 @@ function startRealtimeSync() {
     // Escuchar cambios en queue (tanto en collections simples como en subcollections)
     db.collection('queue').onSnapshot(snap => {
         let items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log('Queue items:', items);  // DEBUG
         items.sort((a, b) => ((b.votes || 0) - (a.votes || 0)) || ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0)));
         currentTrack = items.find(i => i.status === 'playing') || items[0] || null;
+        console.log('Current track:', currentTrack);  // DEBUG
         queue = items.filter(i => i.status !== 'playing');
         updateClientUI();
         updateDJQueuePanel();
@@ -2806,15 +2808,22 @@ function createPlayer(divId) {
     });
 }
 function syncVideo() {
-    if (!currentTrack || !currentTrack.videoId) return;
+    // Obtener videoId de diferentes campos posibles
+    const videoId = currentTrack?.videoId || currentTrack?.id || currentTrack?.youtubeId || currentTrack?.youtube_id;
+    if (!videoId) {
+        console.log('No videoId found in currentTrack:', currentTrack);
+        return;
+    }
     if (!player) {
+        console.log('Player not initialized, initializing...');
         if (currentMode === 'display') initYouTube('display-yt-player');
         else if (currentMode === 'admin') initYouTube('yt-player');
         return;
     }
     try {
+        console.log('syncVideo: loading video', videoId);
         const currentVideoId = player.getVideoData?.()?.video_id;
-        if (currentVideoId !== currentTrack.videoId) player.loadVideoById?.(currentTrack.videoId);
+        if (currentVideoId !== videoId) player.loadVideoById?.(videoId);
         setTimeout(() => {
             if (!player || !currentTrack) return;
             if (currentTrack.lastCommand === 'pause') player.pauseVideo?.();
