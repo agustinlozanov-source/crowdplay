@@ -4,20 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CrowdPlay TV</title>
-    <script src="https://www.youtube.com/iframe_api"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; width: 100vw; height: 100vh; }
+        body { background: #000; width: 100vw; height: 100vh; font-family: Arial, sans-serif; }
         #player { width: 100%; height: 100%; }
-        .info { position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.8); color: #fff; padding: 15px; border-radius: 8px; font-family: Arial; font-size: 14px; z-index: 1000; }
+        .info { position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.9); color: #fff; padding: 15px 20px; border-radius: 8px; font-size: 14px; z-index: 1000; border: 1px solid rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
     <div id="player"></div>
-    <div class="info" id="info">Conectando...</div>
+    <div class="info" id="info">Iniciando...</div>
+
+    <!-- Load Firebase scripts first -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
 
     <script>
         const firebaseConfig = {
@@ -31,46 +33,70 @@
 
         let player;
         let currentVideoId = null;
+        let db, auth;
 
-        // Wait for Firebase to load
-        function initApp() {
-            console.log('Initializing app...');
+        // Initialize app when DOM is ready
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('DOM ready, initializing Firebase...');
             
-            // Initialize Firebase
-            firebase.initializeApp(firebaseConfig);
-            const db = firebase.firestore();
-            const auth = firebase.auth();
+            try {
+                // Initialize Firebase
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                db = firebase.firestore();
+                auth = firebase.auth();
+                console.log('Firebase initialized');
+                
+                // Authenticate anonymously
+                await auth.signInAnonymously();
+                console.log('Anonymous auth successful');
+                updateInfo('Conectado. Presiona F para fullscreen');
 
-            // Authenticate anonymously
-            auth.signInAnonymously().catch(err => {
-                document.getElementById('info').textContent = 'Error: ' + err.message;
-            });
+                // Listen to queue
+                setupQueueListener();
+            } catch (err) {
+                console.error('Error:', err);
+                updateInfo('Error: ' + err.message);
+            }
+        });
 
-            // Listen to queue
+        function updateInfo(msg) {
+            const el = document.getElementById('info');
+            if (el) el.textContent = msg;
+        }
+
+        function setupQueueListener() {
+            if (!db) {
+                console.error('DB not initialized');
+                return;
+            }
+
             db.collection('queue')
                 .orderBy('createdAt', 'asc')
                 .limit(1)
                 .onSnapshot(
                     snap => {
+                        console.log('Queue snapshot:', snap.size);
                         if (!snap.empty) {
                             const doc = snap.docs[0];
                             const data = doc.data();
                             const videoId = data.videoId || data.id;
                             
-                            console.log('Got video:', videoId, data);
+                            console.log('Video:', videoId, data);
                             
                             if (videoId && videoId !== currentVideoId && player) {
                                 currentVideoId = videoId;
                                 player.loadVideoById(videoId);
-                                document.getElementById('info').textContent = 'Reproduciendo: ' + (data.title || videoId);
+                                updateInfo('Reproduciendo: ' + (data.title || videoId));
                             }
                         } else {
-                            document.getElementById('info').textContent = 'Esperando canciones...';
+                            updateInfo('Esperando canciones...');
                         }
                     },
                     err => {
                         console.error('Firestore error:', err);
-                        document.getElementById('info').textContent = 'Error: ' + err.message;
+                        updateInfo('Error: ' + err.code);
                     }
                 );
         }
@@ -87,9 +113,6 @@
                     'modestbranding': 1,
                     'fs': 1,
                     'rel': 0
-                },
-                events: {
-                    'onReady': () => { document.getElementById('info').textContent = 'Listo. Presiona F para fullscreen'; }
                 }
             });
         };
@@ -101,20 +124,14 @@
                 if (document.fullscreenElement) {
                     document.exitFullscreen();
                 } else if (elem.requestFullscreen) {
-                    elem.requestFullscreen();
+                    elem.requestFullscreen().catch(err => {
+                        console.log('Fullscreen denied:', err);
+                    });
                 } else if (elem.webkitRequestFullscreen) {
                     elem.webkitRequestFullscreen();
                 }
             }
         });
-
-        // Wait for Firebase SDK to load
-        let checkFirebase = setInterval(() => {
-            if (window.firebase) {
-                clearInterval(checkFirebase);
-                initApp();
-            }
-        }, 100);
     </script>
 </body>
 </html>
