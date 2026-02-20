@@ -2031,6 +2031,7 @@ async function initFirebase() {
                 if (loginScreen) loginScreen.classList.remove('hidden');
             } else if (mode === 'display') {
                 // Display mode: mostrar reproductor sin login
+                startRealtimeSync();
                 setMode('display');
             } else if (mode) {
                 startRealtimeSync();
@@ -2142,12 +2143,7 @@ function setMode(mode) {
     if (mode === 'display') {
         document.getElementById('display-screen').classList.remove('hidden');
         initYouTube('display-yt-player');
-        // CAMBIO 3: Fullscreen después de 1.5s
-        setTimeout(() => {
-            const el = document.getElementById('display-screen');
-            if (el.requestFullscreen) el.requestFullscreen();
-            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-        }, 1500);
+        // Fullscreen se activa presionando 'f' o haciendo click
 
     } else if (mode === 'client') {
         document.getElementById('client-app').classList.remove('hidden');
