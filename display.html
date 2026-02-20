@@ -157,49 +157,53 @@
                     firebase.initializeApp(firebaseConfig);
                 }
                 
+                const auth = firebase.auth();
                 const db = firebase.firestore();
                 
-                updateStatus('connecting', 'Conectando a Firestore...');
+                updateStatus('connecting', 'Autenticando...');
 
-                // Listen to queue changes with better error handling
-                const unsubscribe = db.collection('queue')
-                    .orderBy('createdAt', 'asc')
-                    .limit(1)
-                    .onSnapshot(
-                        snapshot => {
-                            console.log('Queue snapshot received:', snapshot.size);
-                            updateStatus('connected', snapshot.size > 0 ? 'Reproduciendo' : 'Esperando canción...');
-                            
-                            if (!snapshot.empty) {
-                                const doc = snapshot.docs[0];
-                                const data = doc.data();
-                                const videoId = data.videoId || data.id;
+                // Sign in anonymously first
+                auth.signInAnonymously().then(result => {
+                    console.log('Anonymous auth successful:', result.user.uid);
+                    updateStatus('connecting', 'Conectando a Firestore...');
+                    
+                    // Now listen to queue changes
+                    const unsubscribe = db.collection('queue')
+                        .orderBy('createdAt', 'asc')
+                        .limit(1)
+                        .onSnapshot(
+                            snapshot => {
+                                console.log('Queue snapshot received:', snapshot.size);
+                                updateStatus('connected', snapshot.size > 0 ? 'Reproduciendo' : 'Esperando canción...');
                                 
-                                console.log('Got video ID:', videoId, 'Data:', data);
-                                
-                                if (videoId && videoId !== currentSongId) {
-                                    currentSongId = videoId;
-                                    if (player && player.loadVideoById) {
-                                        player.loadVideoById(videoId);
-                                        player.playVideo();
+                                if (!snapshot.empty) {
+                                    const doc = snapshot.docs[0];
+                                    const data = doc.data();
+                                    const videoId = data.videoId || data.id;
+                                    
+                                    console.log('Got video ID:', videoId, 'Data:', data);
+                                    
+                                    if (videoId && videoId !== currentSongId) {
+                                        currentSongId = videoId;
+                                        if (player && player.loadVideoById) {
+                                            player.loadVideoById(videoId);
+                                            player.playVideo();
+                                        }
                                     }
+                                } else {
+                                    console.log('Queue is empty');
+                                    updateStatus('connected', 'Esperando canción...');
                                 }
-                            } else {
-                                console.log('Queue is empty');
-                                updateStatus('connected', 'Esperando canción...');
+                            },
+                            error => {
+                                console.error('Firestore listener error:', error);
+                                updateStatus('error', 'Error Firestore: ' + error.code);
                             }
-                        },
-                        error => {
-                            console.error('Firestore listener error:', error);
-                            // Continue anyway - display can work without realtime updates
-                            updateStatus('error', 'Error: ' + error.message.substring(0, 30));
-                            
-                            // Try anonymous auth as fallback
-                            firebase.auth().signInAnonymously().catch(err => {
-                                console.error('Anonymous auth failed:', err);
-                            });
-                        }
-                    );
+                        );
+                }).catch(error => {
+                    console.error('Anonymous auth failed:', error);
+                    updateStatus('error', 'Error auth: ' + error.message);
+                });
             } catch (e) {
                 console.error('App initialization error:', e);
                 updateStatus('error', 'Error de inicialización');
