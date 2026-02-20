@@ -14,6 +14,9 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/css/intlTelInput.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/intlTelInput.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js"></script>
 
     <style>
         /* ═══════════════════════════════════════════
@@ -1176,6 +1179,27 @@
         #admin-login-screen { display: none !important; }
         #menu-screen { display: none !important; }
         #display-screen { display: none !important; }
+
+        .iti { width: 100%; }
+        .iti__flag-container { height: 100%; }
+        .iti__selected-flag {
+            background: transparent !important;
+            border-right: 1px solid var(--border-mid);
+            padding: 0 8px 0 12px;
+            height: 100%;
+        }
+        .iti__country-list {
+            background: var(--bg-card);
+            border: 1px solid var(--border-mid);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Barlow', sans-serif;
+            font-size: 0.85rem;
+            max-height: 220px;
+        }
+        .iti__country.iti__highlight { background: var(--bg-elevated); }
+        .iti__country-name { color: var(--text-primary); }
+        .iti__dial-code { color: var(--text-muted); }
     </style>
 </head>
 <body>
@@ -1225,7 +1249,10 @@
         <div style="display:flex;flex-direction:column;gap:12px;">
             <input id="reg-name"     class="reg-input" type="text" placeholder="Nombre" autocomplete="given-name">
             <input id="reg-surname"  class="reg-input" type="text" placeholder="Apellido" autocomplete="family-name">
-            <input id="reg-whatsapp" class="reg-input" type="tel"  placeholder="WhatsApp" autocomplete="tel">
+            <div style="position:relative;">
+                <input id="reg-whatsapp" class="reg-input" type="tel" placeholder="WhatsApp" autocomplete="tel" style="width:100%;padding-left:52px;">
+            </div>
+            <div id="whatsapp-error" style="display:none;font-size:0.72rem;font-weight:600;color:var(--accent-red);padding:4px 4px 0;">Número inválido para el país seleccionado</div>
             <button onclick="saveUserRegistration()" class="btn btn-primary btn-full btn-lg" style="margin-top:8px;">
                 Ingresar
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -2508,9 +2535,23 @@ function checkClientRegistration() {
 function saveUserRegistration() {
     const n = document.getElementById('reg-name').value.trim();
     const s = document.getElementById('reg-surname').value.trim();
-    const w = document.getElementById('reg-whatsapp').value.trim();
-    if (!n || !s || !w) { toast('Por favor completa todos los campos.', 'warning'); return; }
-    localStorage.setItem('rocola_user_v1', JSON.stringify({ name: n, surname: s, whatsapp: w, id: auth.currentUser.uid }));
+    const errEl = document.getElementById('whatsapp-error');
+
+    if (!n || !s) { toast('Por favor completa todos los campos.', 'warning'); return; }
+
+    if (!itiInstance) { toast('Error al cargar validador de teléfono.', 'error'); return; }
+    if (!itiInstance.isValidNumber()) {
+        errEl.style.display = 'block';
+        errEl.innerText = 'Número de WhatsApp inválido para el país seleccionado.';
+        document.getElementById('reg-whatsapp').style.borderColor = 'var(--accent-red)';
+        toast('Verifica tu número de WhatsApp.', 'warning');
+        return;
+    }
+
+    const w = itiInstance.getNumber(); // número completo con lada, ej: +525512345678
+    localStorage.setItem('rocola_user_v1', JSON.stringify({
+        name: n, surname: s, whatsapp: w, id: auth.currentUser.uid
+    }));
     document.getElementById('registration-screen').classList.add('hidden');
     setMode('client');
 }
@@ -3192,6 +3233,35 @@ function updateCooldownUI() {
 // Iniciar el ticker del cooldown cada segundo
 setInterval(updateCooldownUI, 1000);
 updateCooldownUI(); // ejecutar inmediatamente al cargar
+
+/* ═══════════════════════════════════════
+   MODULE: PHONE INPUT (intl-tel-input)
+═══════════════════════════════════════ */
+let itiInstance = null;
+function initPhoneInput() {
+    const input = document.getElementById('reg-whatsapp');
+    if (!input || typeof intlTelInput === 'undefined') {
+        setTimeout(initPhoneInput, 500);
+        return;
+    }
+    itiInstance = intlTelInput(input, {
+        initialCountry: 'mx',
+        preferredCountries: ['mx', 'us', 'co', 'ar', 'es'],
+        separateDialCode: true,
+        utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js'
+    });
+    input.addEventListener('input', () => {
+        const errEl = document.getElementById('whatsapp-error');
+        if (itiInstance.isValidNumber()) {
+            errEl.style.display = 'none';
+            input.style.borderColor = 'var(--accent-green)';
+        } else {
+            errEl.style.display = input.value.length > 3 ? 'block' : 'none';
+            input.style.borderColor = input.value.length > 3 ? 'var(--accent-red)' : '';
+        }
+    });
+}
+document.addEventListener('DOMContentLoaded', initPhoneInput);
 
 </script>
 <!-- ═══════════════════════════════════════
