@@ -3319,35 +3319,6 @@ function updateCooldownUI() {
 setInterval(updateCooldownUI, 1000);
 updateCooldownUI(); // ejecutar inmediatamente al cargar
 
-/* ═══════════════════════════════════════
-   MODULE: PHONE INPUT (intl-tel-input)
-═══════════════════════════════════════ */
-let itiInstance = null;
-function initPhoneInput() {
-    const input = document.getElementById('reg-whatsapp');
-    if (!input || typeof intlTelInput === 'undefined') {
-        setTimeout(initPhoneInput, 500);
-        return;
-    }
-    itiInstance = intlTelInput(input, {
-        initialCountry: 'mx',
-        preferredCountries: ['mx', 'us', 'co', 'ar', 'es'],
-        separateDialCode: true,
-        utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js'
-    });
-    input.addEventListener('input', () => {
-        const errEl = document.getElementById('whatsapp-error');
-        if (itiInstance.isValidNumber()) {
-            errEl.style.display = 'none';
-            input.style.borderColor = 'var(--accent-green)';
-        } else {
-            errEl.style.display = input.value.length > 3 ? 'block' : 'none';
-            input.style.borderColor = input.value.length > 3 ? 'var(--accent-red)' : '';
-        }
-    });
-}
-document.addEventListener('DOMContentLoaded', initPhoneInput);
-
 </script>
 <!-- ═══════════════════════════════════════
      ADMIN LOGIN SCREEN (CAMBIO 6)
