@@ -129,6 +129,14 @@
             0%, 100% { transform: scaleY(0.3); }
             50% { transform: scaleY(1); }
         }
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(31,214,112,0.3); }
+            50%       { box-shadow: 0 0 0 8px rgba(31,214,112,0); }
+        }
+        @keyframes pulse-amber {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(240,180,41,0.3); }
+            50%       { box-shadow: 0 0 0 8px rgba(240,180,41,0); }
+        }
 
         .animate-fade-up   { animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
         .animate-fade-in   { animation: fadeIn 0.3s ease forwards; }
@@ -1378,28 +1386,26 @@
             </div>
 
             <div class="service-grid">
-                <div class="service-card" onclick="handleCallWaiter()" style="position:relative;">
-                    <div id="waiter-status-bubble" class="status-bubble hidden" style="background:var(--accent-green);"></div>
-                    <div class="service-card-icon" style="background:rgba(31,214,112,0.12);">
+                <div class="service-card" id="waiter-card" onclick="handleCallWaiter()" style="position:relative;">
+                    <div class="service-card-icon" id="waiter-card-icon" style="background:rgba(31,214,112,0.12);">
                         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1fd670" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M18 8h.01M6 8h.01M15 8a3 3 0 1 1-6 0"/><path d="M3 8h18v8a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8z"/>
                         </svg>
                     </div>
                     <div>
-                        <div class="service-card-label">Llamar Mesero</div>
-                        <div class="service-card-sub">Solicitar atención</div>
+                        <div class="service-card-label" id="waiter-card-label">Llamar Mesero</div>
+                        <div class="service-card-sub" id="waiter-card-sub">Solicitar atención</div>
                     </div>
                 </div>
-                <div class="service-card" onclick="handleRequestBill()" style="position:relative;">
-                    <div id="bill-status-bubble" class="status-bubble hidden" style="background:var(--accent-amber);"></div>
-                    <div class="service-card-icon" style="background:rgba(240,180,41,0.12);">
+                <div class="service-card" id="bill-card" onclick="handleRequestBill()" style="position:relative;">
+                    <div class="service-card-icon" id="bill-card-icon" style="background:rgba(240,180,41,0.12);">
                         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f0b429" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
                         </svg>
                     </div>
                     <div>
-                        <div class="service-card-label">Pedir Cuenta</div>
-                        <div class="service-card-sub">Elegir forma de pago</div>
+                        <div class="service-card-label" id="bill-card-label">Pedir Cuenta</div>
+                        <div class="service-card-sub" id="bill-card-sub">Elegir forma de pago</div>
                     </div>
                 </div>
                 <div class="service-card" onclick="openSearch()">
@@ -2576,13 +2582,67 @@ function updateClientWaiterStatus(calls) {
     const u = JSON.parse(localStorage.getItem('rocola_user_v1'));
     if (!u) return;
     const myCalls = calls.filter(c => c.userId === u.id && c.status !== 'completed');
-    const waiterBubble = document.getElementById('waiter-status-bubble');
-    const billBubble   = document.getElementById('bill-status-bubble');
-    if (waiterBubble) waiterBubble.classList.add('hidden');
-    if (billBubble) billBubble.classList.add('hidden');
+
+    const waiterCard  = document.getElementById('waiter-card');
+    const waiterIcon  = document.getElementById('waiter-card-icon');
+    const waiterLabel = document.getElementById('waiter-card-label');
+    const waiterSub   = document.getElementById('waiter-card-sub');
+    const billCard    = document.getElementById('bill-card');
+    const billIcon    = document.getElementById('bill-card-icon');
+    const billLabel   = document.getElementById('bill-card-label');
+    const billSub     = document.getElementById('bill-card-sub');
+
+    // Reset ambas cards a estado normal
+    if (waiterCard)  { waiterCard.style.background = ''; waiterCard.style.border = ''; waiterCard.style.animation = ''; }
+    if (waiterIcon)  waiterIcon.style.background = 'rgba(31,214,112,0.12)';
+    if (waiterLabel) waiterLabel.innerText = 'Llamar Mesero';
+    if (waiterSub)   waiterSub.innerText   = 'Solicitar atención';
+    if (billCard)    { billCard.style.background = ''; billCard.style.border = ''; billCard.style.animation = ''; }
+    if (billIcon)    billIcon.style.background = 'rgba(240,180,41,0.12)';
+    if (billLabel)   billLabel.innerText = 'Pedir Cuenta';
+    if (billSub)     billSub.innerText   = 'Elegir forma de pago';
+
     myCalls.forEach(call => {
-        if (call.type === 'bill' && billBubble) billBubble.classList.remove('hidden');
-        else if (call.type === 'service' && waiterBubble) waiterBubble.classList.remove('hidden');
+        const isSent   = call.status === 'sent';
+        const isOnWay  = call.status === 'on_way';
+
+        if (call.type === 'service') {
+            if (!waiterCard) return;
+            if (isSent) {
+                waiterCard.style.background  = 'rgba(31,214,112,0.15)';
+                waiterCard.style.border      = '1px solid rgba(31,214,112,0.4)';
+                waiterCard.style.animation   = 'pulse-green 2s ease-in-out infinite';
+                if (waiterIcon)  waiterIcon.style.background  = 'rgba(31,214,112,0.25)';
+                if (waiterLabel) waiterLabel.innerText = 'Mesero notificado ✓';
+                if (waiterSub)   waiterSub.innerText   = 'Esperando respuesta...';
+            } else if (isOnWay) {
+                waiterCard.style.background  = 'rgba(31,214,112,0.25)';
+                waiterCard.style.border      = '1px solid rgba(31,214,112,0.6)';
+                waiterCard.style.animation   = '';
+                if (waiterIcon)  waiterIcon.style.background  = 'rgba(31,214,112,0.35)';
+                if (waiterLabel) waiterLabel.innerText = 'Mesero en camino 🚶';
+                if (waiterSub)   waiterSub.innerText   = 'Ya va para tu mesa';
+            }
+        }
+
+        if (call.type === 'bill') {
+            if (!billCard) return;
+            if (isSent) {
+                billCard.style.background  = 'rgba(240,180,41,0.15)';
+                billCard.style.border      = '1px solid rgba(240,180,41,0.4)';
+                billCard.style.animation   = 'pulse-amber 2s ease-in-out infinite';
+                if (billIcon)  billIcon.style.background  = 'rgba(240,180,41,0.25)';
+                if (billLabel) billLabel.innerText = 'Solicitud enviada ✓';
+                if (billSub)   billSub.innerText   = 'Esperando respuesta...';
+            } else if (isOnWay) {
+                billCard.style.background  = 'rgba(240,180,41,0.25)';
+                billCard.style.border      = '1px solid rgba(240,180,41,0.6)';
+                billCard.style.animation   = '';
+                if (billIcon)  billIcon.style.background  = 'rgba(240,180,41,0.35)';
+                if (billLabel) billLabel.innerText = 'Cuenta en camino 🚶';
+                if (billSub)   billSub.innerText   = 'El mesero ya va';
+            }
+        }
     });
 }
 
