@@ -2011,9 +2011,11 @@ async function initFirebase() {
         auth = firebase.auth();
         db = firebase.firestore();
 
-        // Detectar role ANTES de autenticar
-        const urlRole = new URLSearchParams(window.location.search).get('role');
-        const isAdminRoute = urlRole === 'admin';
+        // Detectar role y mode ANTES de autenticar
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlRole = urlParams.get('role');
+        const urlMode = urlParams.get('mode');
+        const isDisplayMode = urlMode === 'display';
 
         const syncTimeout = setTimeout(() => setSyncError('Tiempo de conexión agotado.'), 12000);
 
@@ -2024,18 +2026,18 @@ async function initFirebase() {
             updateStatus(true);
             applyLogo();
             
-            // Admin: mostrar login
-            const loginScreen = document.getElementById('admin-login-screen');
-            if (loginScreen) loginScreen.classList.remove('hidden');
+            // Si estamos en mode=display, mostrar directamente el reproductor
+            if (isDisplayMode) {
+                setMode('display');
+            } else {
+                // Admin: mostrar login
+                const loginScreen = document.getElementById('admin-login-screen');
+                if (loginScreen) loginScreen.classList.remove('hidden');
+            }
         };
 
-        if (isAdminRoute) {
-            // Admin route: no requiere anonymous auth
-            proceedApp();
-        } else {
-            // Admin.html siempre va al login de admin
-            proceedApp();
-        }
+        // Always proceed for display mode
+        proceedApp();
 
     } catch(e) {
         console.error('Firebase init error:', e);

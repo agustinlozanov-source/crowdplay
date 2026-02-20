@@ -2029,6 +2029,9 @@ async function initFirebase() {
                 // Admin: mostrar login
                 const loginScreen = document.getElementById('admin-login-screen');
                 if (loginScreen) loginScreen.classList.remove('hidden');
+            } else if (mode === 'display') {
+                // Display mode: mostrar reproductor sin login
+                setMode('display');
             } else if (mode) {
                 startRealtimeSync();
                 setMode(mode);
