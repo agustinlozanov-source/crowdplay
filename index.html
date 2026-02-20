@@ -3385,6 +3385,7 @@ function initPhoneInput() {
         separateDialCode: true,
         utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js'
     });
+    input.blur();
     input.addEventListener('input', validatePhone);
     input.addEventListener('countrychange', validatePhone);
 }
@@ -3400,7 +3401,7 @@ function validatePhone() {
         input.style.borderColor = 'var(--accent-red)';
     }
 }
-document.addEventListener('DOMContentLoaded', initPhoneInput);
+document.addEventListener('DOMContentLoaded', () => setTimeout(initPhoneInput, 300));
 
 function showAuthTab(tab) {
     const isRegister = tab === 'register';
