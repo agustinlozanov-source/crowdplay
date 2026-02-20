@@ -3129,6 +3129,14 @@ function updateCooldownUI() {
 
     // Al tocar el botón en cooldown va al tab de cola
     if (navBtn) navBtn.onclick = () => switchClientTab('queue');
+
+    // Mostrar/ocultar vista cooldown
+    const cooldownView = document.getElementById('request-cooldown-view');
+    if (cooldownView) {
+        cooldownView.style.display = 'block';
+        const display = document.getElementById('cooldown-display');
+        if (display) display.innerText = label;
+    }
 }
 
 // Iniciar el ticker del cooldown cada segundo

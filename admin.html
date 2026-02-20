@@ -1349,15 +1349,6 @@
 
         <!-- TAB: PEDIR (search) — opens modal -->
         <div id="tab-request" class="client-tab-panel">
-            <div id="request-search-view" style="padding:24px;text-align:center;">
-                <div style="font-size:3rem;margin-bottom:12px;">🎵</div>
-                <h2 class="font-display" style="font-size:1.5rem;font-weight:900;font-style:italic;">Pide tu canción</h2>
-                <p style="font-size:0.75rem;color:var(--text-muted);font-weight:600;margin:8px 0 20px;">Busca en millones de canciones</p>
-                <button onclick="openSearch()" class="btn btn-primary btn-full btn-lg">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                    Buscar canción
-                </button>
-            </div>
             <div id="request-cooldown-view" style="display:none;padding:32px 24px;text-align:center;">
                 <div style="font-size:3.5rem;margin-bottom:16px;">⏳</div>
                 <h2 class="font-display" style="font-size:1.8rem;font-weight:900;font-style:italic;margin-bottom:8px;">Turno en Espera</h2>
@@ -3115,6 +3106,14 @@ function updateCooldownUI() {
 
     // Al tocar el botón en cooldown va al tab de cola
     if (navBtn) navBtn.onclick = () => switchClientTab('queue');
+
+    // Mostrar/ocultar vista cooldown
+    const cooldownView = document.getElementById('request-cooldown-view');
+    if (cooldownView) {
+        cooldownView.style.display = 'block';
+        const display = document.getElementById('cooldown-display');
+        if (display) display.innerText = label;
+    }
 }
 
 // Iniciar el ticker del cooldown cada segundo
