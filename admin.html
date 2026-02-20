@@ -1918,7 +1918,7 @@
             <span class="modal-title">Tu Mesa</span>
         </div>
         <div class="modal-body" style="text-align:center;">
-            <input id="table-number-input" type="number" class="table-input" placeholder="#">
+            <input id="table-number-input" type="text" class="table-input" placeholder="#">
             <p style="font-size:0.7rem;color:var(--text-muted);font-weight:600;margin-top:12px;text-transform:uppercase;letter-spacing:0.08em;">Ingresa el número de tu mesa</p>
         </div>
         <div class="modal-footer">
@@ -2525,8 +2525,8 @@ function saveUserRegistration() {
    MODULE: TABLE
 ═══════════════════════════════════════ */
 function saveTableNumber() {
-    const table = document.getElementById('table-number-input').value;
-    if (!table) { toast('Ingresa tu número de mesa.', 'warning'); return; }
+    const table = document.getElementById('table-number-input').value.trim();
+    if (!table) { toast('Ingresa el número o código de tu mesa.', 'warning'); return; }
     localStorage.setItem('rocola_table_v1', table);
     document.getElementById('table-modal').classList.add('hidden');
     document.getElementById('table-number-input').value = '';
