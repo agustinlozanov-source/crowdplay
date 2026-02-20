@@ -1,9 +1,9 @@
-# Netlify Redirects Configuration
-# For client.html as default: /   /client.html   200
-# For admin: /admin   /admin.html   200
-
-# Serve client.html for root path
+# Serve client.html for root
 /   /client.html   200
 
-# Serve admin.html for /admin path
+# Serve admin.html for /admin paths
+/admin   /admin.html   200
 /admin/*   /admin.html   200
+
+# Fallback para rutas no encontradas
+/*   /client.html   200

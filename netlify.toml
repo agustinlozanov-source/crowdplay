@@ -1,0 +1,37 @@
+# Netlify Configuration
+
+# Build command and output directory
+[build]
+  command = "echo 'No build step needed - static files only'"
+  publish = "."
+
+# Redirects - route client.html for root
+[[redirects]]
+  from = "/"
+  to = "/client.html"
+  status = 200
+  force = false
+
+# Redirects - admin path
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+  force = false
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin.html"
+  status = 200
+  force = false
+
+# Headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
