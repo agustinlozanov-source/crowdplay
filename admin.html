@@ -1763,12 +1763,13 @@
                             </svg>
                         </button>
 
-                        <!-- PLAY -->
                         <button class="dj-btn dj-btn-lg" id="dj-play-btn" onclick="sendCommand('play')" title="Reproducir"
-                            style="background:white;border:none;">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" style="color:#0a0c12;">
-                                <polygon points="5,3 19,12 5,21"/>
-                            </svg>
+                            style="background:white;border:none;display:flex;">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="#0a0c12"><polygon points="5,3 19,12 5,21"/></svg>
+                        </button>
+                        <button class="dj-btn dj-btn-lg" id="dj-pause-btn" onclick="sendCommand('pause')" title="Pausar"
+                            style="background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.2);display:none;">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><rect x="5" y="4" width="5" height="16"/><rect x="14" y="4" width="5" height="16"/></svg>
                         </button>
 
                         <button class="dj-btn" onclick="sendCommand('seek', { offset: 10 })" title="+10s">
@@ -2969,7 +2970,7 @@ function updatePlayIcon() {
         const playBtn  = document.getElementById('dj-play-btn');
         const pauseBtn = document.getElementById('dj-pause-btn');
         if (!playBtn || !pauseBtn) return;
-        const isPlaying = state === window.YT?.PlayerState?.PLAYING;
+        const isPlaying = state === window.YT.PlayerState.PLAYING;
         playBtn.style.display  = isPlaying ? 'none' : 'flex';
         pauseBtn.style.display = isPlaying ? 'flex' : 'none';
     } catch(e) {}
@@ -3094,7 +3095,13 @@ function createPlayer(divId) {
                 if (currentTrack) syncVideo();
             },
             onStateChange: (e) => {
-                if (e.data === window.YT.PlayerState.ENDED) skipSong();
+                if (e.data === window.YT.PlayerState.ENDED) { skipSong(); return; }
+                updatePlayIcon();
+                if (e.data === window.YT.PlayerState.PLAYING) {
+                    const overlay = document.getElementById('player-overlay');
+                    if (overlay) overlay.style.opacity = '0';
+                    startProgressBar();
+                }
             },
             onError: (e) => {
                 console.error('Player error:', e.data);
@@ -3113,20 +3120,21 @@ function syncVideo() {
     try {
         let currentVideoId = '';
         try { currentVideoId = player.getVideoData?.()?.video_id || ''; } catch(e) {}
-        
+        const overlay = document.getElementById('player-overlay');
         if (currentVideoId !== currentTrack.videoId) {
             player.loadVideoById?.(currentTrack.videoId);
-            startProgressBar();
-            const overlay = document.getElementById('player-overlay');
-            if (overlay) overlay.style.opacity = '0';
-            return; // salir — el onStateChange y onReady manejan el resto
         }
         setTimeout(() => {
             if (!player || !currentTrack) return;
-            if (currentTrack.lastCommand === 'pause') player.pauseVideo?.();
-            else if (currentTrack.lastCommand === 'play') player.playVideo?.();
+            if (currentTrack.lastCommand === 'pause') {
+                player.pauseVideo?.();
+            } else {
+                player.playVideo?.();
+                if (overlay) overlay.style.opacity = '0';
+            }
             updatePlayIcon();
-        }, 500);
+            startProgressBar();
+        }, 800);
         if (currentTrack.lastCommand === 'seek' && currentTrack.offset) {
             player.seekTo?.(player.getCurrentTime?.() + currentTrack.offset, true);
             sendCommand('play');
