@@ -21,6 +21,7 @@
             width: 100%;
             height: 100%;
             position: relative;
+            cursor: pointer;
         }
         #yt-player {
             width: 100%;
@@ -30,8 +31,34 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             color: #fff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            z-index: 1000;
+            max-width: 300px;
+            text-align: right;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .status-connected { background: #1fd670; }
+        .status-connecting { background: #f0b429; animation: pulse 1s infinite; }
+        .status-error { background: #e8362a; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .hint {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            color: #8b92b0;
             padding: 10px 15px;
             border-radius: 8px;
             font-size: 12px;
@@ -43,7 +70,11 @@
     <div id="display-container">
         <div id="yt-player"></div>
     </div>
-    <div class="info" id="info">Modo Display</div>
+    <div class="hint">Haz clic para fullscreen</div>
+    <div class="info" id="info">
+        <div><span class="status-dot status-connecting"></span>Conectando...</div>
+        <div id="info-detail" style="font-size: 11px; margin-top: 5px; color: #8b92b0;"></div>
+    </div>
 
     <script>
         // Firebase Config
@@ -56,89 +87,171 @@
             appId: "1:623433099154:web:fef95d36c5c4e7c6a9a7df"
         };
 
+        let player;
+        let currentSongId = null;
+        let isConnected = false;
+
+        function updateStatus(status, detail = '') {
+            const infoEl = document.getElementById('info');
+            const detailEl = document.getElementById('info-detail');
+            
+            if (status === 'connected') {
+                infoEl.innerHTML = '<div><span class="status-dot status-connected"></span>Conectado</div>';
+                detailEl.innerText = detail || 'Esperando canciones...';
+                isConnected = true;
+            } else if (status === 'connecting') {
+                infoEl.innerHTML = '<div><span class="status-dot status-connecting"></span>Conectando...</div>';
+                detailEl.innerText = detail;
+            } else {
+                infoEl.innerHTML = '<div><span class="status-dot status-error"></span>Error</div>';
+                detailEl.innerText = detail;
+            }
+        }
+
+        function initYouTube() {
+            player = new YT.Player('yt-player', {
+                height: '100%',
+                width: '100%',
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 1,
+                    'modestbranding': 1,
+                    'fs': 1,
+                    'rel': 0,
+                    'showinfo': 0,
+                    'iv_load_policy': 3,
+                    'enablejsapi': 1
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange,
+                    'onError': onPlayerError
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            console.log('YouTube player ready');
+            if (currentSongId) {
+                event.target.loadVideoById(currentSongId);
+                event.target.playVideo();
+            }
+        }
+
+        function onPlayerStateChange(event) {
+            console.log('Player state changed:', event.data);
+            if (event.data == YT.PlayerState.ENDED) {
+                console.log('Video ended, waiting for next');
+            }
+        }
+
+        function onPlayerError(event) {
+            console.error('YouTube player error:', event.data);
+            updateStatus('error', 'Error en reproductor YouTube');
+        }
+
         // Initialize Firebase
-        if (!window.firebase) {
+        function initApp() {
+            try {
+                if (!window.firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                
+                const db = firebase.firestore();
+                
+                updateStatus('connecting', 'Conectando a Firestore...');
+
+                // Listen to queue changes with better error handling
+                const unsubscribe = db.collection('queue')
+                    .orderBy('createdAt', 'asc')
+                    .limit(1)
+                    .onSnapshot(
+                        snapshot => {
+                            console.log('Queue snapshot received:', snapshot.size);
+                            updateStatus('connected', snapshot.size > 0 ? 'Reproduciendo' : 'Esperando canción...');
+                            
+                            if (!snapshot.empty) {
+                                const doc = snapshot.docs[0];
+                                const data = doc.data();
+                                const videoId = data.videoId || data.id;
+                                
+                                console.log('Got video ID:', videoId, 'Data:', data);
+                                
+                                if (videoId && videoId !== currentSongId) {
+                                    currentSongId = videoId;
+                                    if (player && player.loadVideoById) {
+                                        player.loadVideoById(videoId);
+                                        player.playVideo();
+                                    }
+                                }
+                            } else {
+                                console.log('Queue is empty');
+                                updateStatus('connected', 'Esperando canción...');
+                            }
+                        },
+                        error => {
+                            console.error('Firestore listener error:', error);
+                            // Continue anyway - display can work without realtime updates
+                            updateStatus('error', 'Error: ' + error.message.substring(0, 30));
+                            
+                            // Try anonymous auth as fallback
+                            firebase.auth().signInAnonymously().catch(err => {
+                                console.error('Anonymous auth failed:', err);
+                            });
+                        }
+                    );
+            } catch (e) {
+                console.error('App initialization error:', e);
+                updateStatus('error', 'Error de inicialización');
+            }
+        }
+
+        // Load Firebase SDK
+        function loadFirebaseSDK() {
             const script = document.createElement('script');
             script.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
             script.onload = () => {
                 const script2 = document.createElement('script');
                 script2.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js';
-                script2.onload = initApp;
+                script2.onload = () => {
+                    const script3 = document.createElement('script');
+                    script3.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js';
+                    script3.onload = initApp;
+                    document.head.appendChild(script3);
+                };
                 document.head.appendChild(script2);
             };
             document.head.appendChild(script);
-        } else {
-            initApp();
         }
 
-        let player;
-        let currentSongId = null;
+        // YouTube API ready
+        window.onYouTubeIframeAPIReady = function() {
+            console.log('YouTube API ready');
+            initYouTube();
+        };
 
-        function initApp() {
-            if (!window.firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-            }
-            
-            const db = firebase.firestore();
-            
-            // Initialize YouTube player
-            player = new YT.Player('yt-player', {
-                height: '100%',
-                width: '100%',
-                playerVars: {
-                    'autoplay': 1,
-                    'controls': 0,
-                    'modestbranding': 1,
-                    'fs': 1,
-                    'rel': 0,
-                    'showinfo': 0,
-                    'iv_load_policy': 3
-                },
-                events: {
-                    'onReady': onPlayerReady,
-                    'onStateChange': onPlayerStateChange
-                }
-            });
-
-            // Listen to queue changes
-            db.collection('queue').orderBy('createdAt', 'asc').limit(1)
-                .onSnapshot(snapshot => {
-                    if (!snapshot.empty) {
-                        const doc = snapshot.docs[0];
-                        const videoId = doc.data().videoId;
-                        if (videoId !== currentSongId) {
-                            currentSongId = videoId;
-                            if (player && player.loadVideoById) {
-                                player.loadVideoById(videoId);
-                            }
-                        }
-                    }
-                }, error => {
-                    console.error('Error listening to queue:', error);
-                    document.getElementById('info').innerText = 'Error: ' + error.message;
-                });
-        }
-
-        function onPlayerReady(event) {
-            event.target.playVideo();
-        }
-
-        function onPlayerStateChange(event) {
-            // Auto-play next video when current ends
-            if (event.data == YT.PlayerState.ENDED) {
-                // Video ended, queue should handle next video
-            }
-        }
-
-        // Request fullscreen on load
-        setTimeout(() => {
+        // Fullscreen on click
+        document.getElementById('display-container').addEventListener('click', () => {
             const container = document.getElementById('display-container');
             if (container.requestFullscreen) {
                 container.requestFullscreen().catch(err => {
                     console.log('Fullscreen request failed:', err);
                 });
+            } else if (container.webkitRequestFullscreen) {
+                container.webkitRequestFullscreen();
+            } else if (container.mozRequestFullScreen) {
+                container.mozRequestFullScreen();
+            } else if (container.msRequestFullscreen) {
+                container.msRequestFullscreen();
             }
-        }, 1000);
+        });
+
+        // Start loading Firebase when page is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadFirebaseSDK);
+        } else {
+            loadFirebaseSDK();
+        }
     </script>
 </body>
 </html>
