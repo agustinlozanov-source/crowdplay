@@ -95,6 +95,11 @@
             const infoEl = document.getElementById('info');
             const detailEl = document.getElementById('info-detail');
             
+            if (!infoEl || !detailEl) {
+                console.log('Status:', status, detail);
+                return;
+            }
+            
             if (status === 'connected') {
                 infoEl.innerHTML = '<div><span class="status-dot status-connected"></span>Conectado</div>';
                 detailEl.innerText = detail || 'Esperando canciones...';

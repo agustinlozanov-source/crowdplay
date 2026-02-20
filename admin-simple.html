@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - CrowdPlay</title>
+    <style>
+        body {
+            background: #0a0c12;
+            color: #eef0f8;
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            background: #171b27;
+            padding: 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+        h1 { text-align: center; margin: 0 0 30px; }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #10131c;
+            color: #eef0f8;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background: #e8362a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover { background: #d42d22; }
+        .error { color: #e8362a; font-size: 12px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>🔐 Admin Login</h1>
+        <input type="email" id="email" placeholder="Email" autocomplete="email">
+        <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password">
+        <button onclick="handleLogin()">Ingresar</button>
+        <div class="error" id="error"></div>
+    </div>
+
+    <script>
+        function handleLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('error');
+            
+            if (!email || !password) {
+                errorEl.textContent = '⚠️ Completa todos los campos';
+                return;
+            }
+            
+            errorEl.textContent = 'Conectando...';
+            
+            // Aquí iría la autenticación real con Firebase
+            setTimeout(() => {
+                errorEl.textContent = '❌ Credenciales inválidas (implementar Firebase)';
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

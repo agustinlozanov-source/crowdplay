@@ -2820,7 +2820,10 @@ function syncVideo() {
         }
     } catch(e) { console.error('syncVideo error:', e); }
 }
-function openTVTab() { window.open(`${window.location.origin}/tv.html`, '_blank'); }
+function openTVTab() {
+    const tvUrl = window.location.origin + '/tv.html';
+    window.open(tvUrl, '_blank');
+}
 function copyRoleLink(mode) {
     const url = `${window.location.origin}${window.location.pathname}?mode=${mode}`;
     navigator.clipboard.writeText(url).then(() => toast('Enlace copiado al portapapeles', 'info'));

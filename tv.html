@@ -42,12 +42,12 @@
         document.head.appendChild(script1);
 
         const firebaseConfig = {
-            apiKey: "AIzaSyAia7RLwDKkBHqjLnH-BFVLrr7m7G2xWq0",
-            authDomain: "crowdplay-7cf0c.firebaseapp.com",
-            projectId: "crowdplay-7cf0c",
-            storageBucket: "crowdplay-7cf0c.appspot.com",
-            messagingSenderId: "623433099154",
-            appId: "1:623433099154:web:fef95d36c5c4e7c6a9a7df"
+            apiKey: "AIzaSyAia_yRHvYg3gGQ60VwPRwcRm3B0aja4cw",
+            authDomain: "rocola-crowdplay2.firebaseapp.com",
+            projectId: "rocola-crowdplay2",
+            storageBucket: "rocola-crowdplay2.firebasestorage.app",
+            messagingSenderId: "519952213703",
+            appId: "1:519952213703:web:0e0ecb8cb3fc81064240e2"
         };
 
         let player;
@@ -72,24 +72,26 @@
         }
 
         function setupQueue(db) {
-            db.collection('queue')
-                .orderBy('createdAt', 'asc')
-                .limit(1)
+            db.collection('artifacts/rocola-crowdplay2-v1/public/data/rocola_queue')
                 .onSnapshot(snap => {
-                    console.log('Queue:', snap.size);
                     if (!snap.empty) {
-                        const data = snap.docs[0].data();
-                        const vid = data.videoId || data.id;
-                        if (vid && vid !== currentVideoId && player) {
-                            currentVideoId = vid;
-                            player.loadVideoById(vid);
-                            document.getElementById('info').textContent = 'Reproduciendo: ' + (data.title || vid);
+                        const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        const playing = items.find(i => i.status === 'playing');
+                        if (playing && playing.videoId && playing.videoId !== currentVideoId) {
+                            currentVideoId = playing.videoId;
+                            if (player && player.loadVideoById) {
+                                player.loadVideoById(playing.videoId);
+                                player.playVideo();
+                            }
+                            document.getElementById('info').textContent = '▶ ' + (playing.title || playing.videoId);
+                        } else if (!playing) {
+                            document.getElementById('info').textContent = 'Esperando canción...';
                         }
                     } else {
-                        document.getElementById('info').textContent = 'Esperando canción...';
+                        document.getElementById('info').textContent = 'Cola vacía';
                     }
                 }, err => {
-                    document.getElementById('info').textContent = 'Firestore: ' + err.code;
+                    document.getElementById('info').textContent = 'Error: ' + err.code;
                 });
         }
 

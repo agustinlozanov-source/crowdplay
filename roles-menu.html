@@ -2005,13 +2005,20 @@ window.addEventListener('keydown', (e) => {
 
 async function initFirebase() {
     try {
+        console.log('initFirebase: Empezando...');
         const syncText = document.getElementById('sync-text');
-        if (!window.firebase) { setSyncError('Firebase SDK no cargó.'); return; }
+        if (!window.firebase) { 
+            console.error('initFirebase: Firebase SDK no cargó');
+            setSyncError('Firebase SDK no cargó.'); 
+            return; 
+        }
         if (syncText) syncText.innerText = 'Conectando...';
 
         if (!firebase.apps.length) app = firebase.initializeApp(firebaseConfig);
         auth = firebase.auth();
         db = firebase.firestore();
+
+        console.log('initFirebase: Firebase inicializado');
 
         // Detectar role ANTES de autenticar
         const urlRole = new URLSearchParams(window.location.search).get('role');
@@ -3065,12 +3072,17 @@ function calculateMetrics(waiterCalls, queueItems, dateFrom, dateTo) {
    BOOT
 ═══════════════════════════════════════ */
 try {
+    console.log('BOOT: Iniciando...');
     const syncText = document.getElementById('sync-text');
     if (syncText) syncText.innerText = `Sincronizando... (${BUILD_ID})`;
+    console.log('BOOT: firebaseConfig existe?', !!firebaseConfig);
     if (!firebaseConfig) { alert('Configura Firebase.'); }
-    else initFirebase();
+    else {
+        console.log('BOOT: Llamando initFirebase()');
+        initFirebase();
+    }
 } catch(e) {
-    console.error('Boot error:', e);
+    console.error('BOOT error:', e);
     const syncText = document.getElementById('sync-text');
     if (syncText) syncText.innerText = `Error: ${e.message}`;
 }
