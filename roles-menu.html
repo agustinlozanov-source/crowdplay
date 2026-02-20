@@ -1172,10 +1172,14 @@
     if (urlParams.get('role') === 'admin') {
         // Mostrar login admin y ocultar loading
         window.addEventListener('DOMContentLoaded', () => {
-            const loading = document.getElementById('loading-screen');
-            const login = document.getElementById('admin-login-screen');
-            if (loading) loading.classList.add('hidden');
-            if (login) login.classList.remove('hidden');
+            // Solo mostrar login si NO estamos en display mode
+            const urlMode = new URLSearchParams(window.location.search).get('mode');
+            if (urlMode !== 'display') {
+                const loading = document.getElementById('loading-screen');
+                const login = document.getElementById('admin-login-screen');
+                if (loading) loading.classList.add('hidden');
+                if (login) login.classList.remove('hidden');
+            }
             // Cargar logo en sidebar
             const sidebarLogoContainer = document.getElementById('sidebar-logo-container');
             if (sidebarLogoContainer) {
