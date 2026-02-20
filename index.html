@@ -2127,12 +2127,14 @@ async function initFirebase() {
                         document.getElementById('loading-screen').classList.add('hidden');
                         applyLogo();
                         document.getElementById('registration-screen').classList.remove('hidden');
+                        setTimeout(initPhoneInput, 200);
                     }
                 } else {
                     // Sin sesión — mostrar pantalla de registro/login
                     document.getElementById('loading-screen').classList.add('hidden');
                     applyLogo();
                     document.getElementById('registration-screen').classList.remove('hidden');
+                    setTimeout(initPhoneInput, 200);
                 }
             });
         }
@@ -2588,7 +2590,10 @@ function setSearchType(t) {
 function checkClientRegistration() {
     const u = JSON.parse(localStorage.getItem('rocola_user_v1') || 'null');
     if (u && u.id) setMode('client');
-    else document.getElementById('registration-screen').classList.remove('hidden');
+    else {
+        document.getElementById('registration-screen').classList.remove('hidden');
+        setTimeout(initPhoneInput, 200);
+    }
 }
 
 async function saveUserRegistration() {
@@ -3376,45 +3381,35 @@ setInterval(updateCooldownUI, 1000);
 updateCooldownUI();
 
 let itiInstance = null;
-
 function initPhoneInput() {
     const input = document.getElementById('reg-whatsapp');
-    if (!input || typeof intlTelInput === 'undefined') {
-        setTimeout(initPhoneInput, 300);
-        return;
-    }
-    if (itiInstance) return; // ya inicializado
+    if (!input || typeof intlTelInput === 'undefined') { setTimeout(initPhoneInput, 500); return; }
     itiInstance = intlTelInput(input, {
         initialCountry: 'mx',
         preferredCountries: ['mx', 'us', 'co', 'ar', 'es', 'gt', 'cr', 'cl', 'pe'],
         separateDialCode: true,
         utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js'
     });
+    input.blur();
     input.addEventListener('input', validatePhone);
     input.addEventListener('countrychange', validatePhone);
 }
-
 function validatePhone() {
     const input = document.getElementById('reg-whatsapp');
     const errEl = document.getElementById('whatsapp-error');
-    if (!itiInstance || !input.value) {
-        if (errEl) errEl.style.display = 'none';
-        input.style.borderColor = '';
-        return;
-    }
+    if (!itiInstance || !input.value) { errEl.style.display = 'none'; input.style.borderColor = ''; return; }
     if (itiInstance.isValidNumber()) {
-        if (errEl) errEl.style.display = 'none';
+        errEl.style.display = 'none';
         input.style.borderColor = 'var(--accent-green)';
     } else {
-        if (errEl) errEl.style.display = 'block';
+        errEl.style.display = 'block';
         input.style.borderColor = 'var(--accent-red)';
     }
 }
-document.addEventListener('DOMContentLoaded', function() {});
+// initPhoneInput se llama cuando registration-screen se hace visible
 
 function showAuthTab(tab) {
     const isRegister = tab === 'register';
-    if (isRegister) setTimeout(initPhoneInput, 100);
     document.getElementById('form-register').style.display = isRegister ? 'flex' : 'none';
     document.getElementById('form-login').style.display    = isRegister ? 'none' : 'flex';
     document.getElementById('tab-register').style.background = isRegister ? 'var(--accent-red)' : 'transparent';
