@@ -32,15 +32,48 @@
         let player;
         let currentVideoId = null;
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
+        // Wait for Firebase to load
+        function initApp() {
+            console.log('Initializing app...');
+            
+            // Initialize Firebase
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+            const auth = firebase.auth();
 
-        // Authenticate anonymously
-        auth.signInAnonymously().catch(err => {
-            document.getElementById('info').textContent = 'Error: ' + err.message;
-        });
+            // Authenticate anonymously
+            auth.signInAnonymously().catch(err => {
+                document.getElementById('info').textContent = 'Error: ' + err.message;
+            });
+
+            // Listen to queue
+            db.collection('queue')
+                .orderBy('createdAt', 'asc')
+                .limit(1)
+                .onSnapshot(
+                    snap => {
+                        if (!snap.empty) {
+                            const doc = snap.docs[0];
+                            const data = doc.data();
+                            const videoId = data.videoId || data.id;
+                            
+                            console.log('Got video:', videoId, data);
+                            
+                            if (videoId && videoId !== currentVideoId && player) {
+                                currentVideoId = videoId;
+                                player.loadVideoById(videoId);
+                                document.getElementById('info').textContent = 'Reproduciendo: ' + (data.title || videoId);
+                            }
+                        } else {
+                            document.getElementById('info').textContent = 'Esperando canciones...';
+                        }
+                    },
+                    err => {
+                        console.error('Firestore error:', err);
+                        document.getElementById('info').textContent = 'Error: ' + err.message;
+                    }
+                );
+        }
 
         // YouTube Player Ready
         window.onYouTubeIframeAPIReady = () => {
@@ -61,34 +94,6 @@
             });
         };
 
-        // Listen to queue
-        db.collection('queue')
-            .orderBy('createdAt', 'asc')
-            .limit(1)
-            .onSnapshot(
-                snap => {
-                    if (!snap.empty) {
-                        const doc = snap.docs[0];
-                        const data = doc.data();
-                        const videoId = data.videoId || data.id;
-                        
-                        console.log('Got video:', videoId, data);
-                        
-                        if (videoId && videoId !== currentVideoId && player) {
-                            currentVideoId = videoId;
-                            player.loadVideoById(videoId);
-                            document.getElementById('info').textContent = 'Reproduciendo: ' + (data.title || videoId);
-                        }
-                    } else {
-                        document.getElementById('info').textContent = 'Esperando canciones...';
-                    }
-                },
-                err => {
-                    console.error('Firestore error:', err);
-                    document.getElementById('info').textContent = 'Error: ' + err.message;
-                }
-            );
-
         // Fullscreen on F key
         document.addEventListener('keydown', e => {
             if (e.key === 'f' || e.key === 'F') {
@@ -102,6 +107,14 @@
                 }
             }
         });
+
+        // Wait for Firebase SDK to load
+        let checkFirebase = setInterval(() => {
+            if (window.firebase) {
+                clearInterval(checkFirebase);
+                initApp();
+            }
+        }, 100);
     </script>
 </body>
 </html>
