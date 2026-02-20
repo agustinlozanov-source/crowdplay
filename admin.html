@@ -1173,21 +1173,18 @@
 
 <!-- Script para mostrar login de admin inmediatamente si role=admin -->
 <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('role') === 'admin') {
-        // Mostrar login admin y ocultar loading
-        window.addEventListener('DOMContentLoaded', () => {
-            const loading = document.getElementById('loading-screen');
-            const login = document.getElementById('admin-login-screen');
-            if (loading) loading.classList.add('hidden');
-            if (login) login.classList.remove('hidden');
-            // Cargar logo en sidebar
-            const sidebarLogoContainer = document.getElementById('sidebar-logo-container');
-            if (sidebarLogoContainer) {
-                sidebarLogoContainer.innerHTML = '<img src="/logo.png" style="max-height:32px;width:auto;object-fit:contain;" alt="Logo">';
-            }
-        });
-    }
+    // Mostrar login admin al cargar la página
+    window.addEventListener('DOMContentLoaded', () => {
+        const loading = document.getElementById('loading-screen');
+        const login = document.getElementById('admin-login-screen');
+        if (loading) loading.classList.add('hidden');
+        if (login) login.classList.remove('hidden');
+        // Cargar logo en sidebar
+        const sidebarLogoContainer = document.getElementById('sidebar-logo-container');
+        if (sidebarLogoContainer) {
+            sidebarLogoContainer.innerHTML = '<img src="/logo.png" style="max-height:32px;width:auto;object-fit:contain;" alt="Logo">';
+        }
+    });
 </script>
 
 <!-- ═══════════════════════════════════════
