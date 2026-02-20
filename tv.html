@@ -29,6 +29,8 @@
         let playerReady = false;
         let pendingVideoId = null;
         let currentVideoId = null;
+        let firestoreDb = null;
+        const firestoreAppId = 'rocola-crowdplay2-v1';
 
         // Intenta cargar video — si el player no está listo, lo guarda pendiente
         function loadVideo(videoId) {
@@ -69,7 +71,8 @@
                     },
                     onStateChange: function(e) {
                         if (e.data === YT.PlayerState.ENDED) {
-                            document.getElementById('info').textContent = 'Esperando siguiente canción...';
+                            document.getElementById('info').textContent = 'Cambiando canción...';
+                            skipToNext();
                         }
                     },
                     onError: function(e) {
@@ -109,6 +112,7 @@
                 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
                 const auth = firebase.auth();
                 const db = firebase.firestore();
+                firestoreDb = db;
 
                 auth.signInAnonymously()
                     .then(() => {
@@ -154,6 +158,40 @@
             const el = document.documentElement;
             if (!document.fullscreenElement) el.requestFullscreen?.().catch(() => {});
         });
+
+        async function skipToNext() {
+            if (!firestoreDb) return;
+            try {
+                const snap = await firestoreDb
+                    .collection(`artifacts/${firestoreAppId}/public/data/rocola_queue`)
+                    .get();
+                if (snap.empty) {
+                    document.getElementById('info').textContent = 'Cola vacía';
+                    return;
+                }
+                const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const playing = items.find(i => i.status === 'playing');
+                const pending = items
+                    .filter(i => i.status === 'pending')
+                    .sort((a, b) => ((b.votes || 0) - (a.votes || 0)) || ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0)));
+
+                if (pending.length > 0) {
+                    await firestoreDb
+                        .collection(`artifacts/${firestoreAppId}/public/data/rocola_queue`)
+                        .doc(pending[0].id)
+                        .update({ status: 'playing', lastCommand: 'play', showDedication: false });
+                }
+                if (playing) {
+                    await firestoreDb
+                        .collection(`artifacts/${firestoreAppId}/public/data/rocola_queue`)
+                        .doc(playing.id)
+                        .delete();
+                }
+            } catch(e) {
+                console.error('skipToNext error:', e);
+                document.getElementById('info').textContent = 'Error al cambiar canción';
+            }
+        }
     </script>
     <script async src="https://www.youtube.com/iframe_api"></script>
 </body>
