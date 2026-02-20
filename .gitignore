@@ -1,0 +1,5 @@
+# Ignore Firebase API key from secrets scanning
+**/firebaseConfig*
+.env
+.env.local
+node_modules/
