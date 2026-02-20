@@ -2233,11 +2233,12 @@ function switchClientTab(tabName) {
    MODULE: REALTIME SYNC
 ═══════════════════════════════════════ */
 function startRealtimeSync() {
-    db.collection(`artifacts/${appId}/public/data/rocola_queue`).onSnapshot(snap => {
+    // Escuchar cambios en queue (tanto en collections simples como en subcollections)
+    db.collection('queue').onSnapshot(snap => {
         let items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         items.sort((a, b) => ((b.votes || 0) - (a.votes || 0)) || ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0)));
-        currentTrack = items.find(i => i.status === 'playing') || null;
-        queue = items.filter(i => i.status === 'pending');
+        currentTrack = items.find(i => i.status === 'playing') || items[0] || null;
+        queue = items.filter(i => i.status !== 'playing');
         updateClientUI();
         updateDJQueuePanel();
         syncVideo();
@@ -2253,8 +2254,8 @@ function startRealtimeSync() {
         if (currentMode === 'display' && currentTrack) {
             const dTitle = document.getElementById('display-title');
             const dArtist = document.getElementById('display-artist');
-            if (dTitle) dTitle.innerText = currentTrack.title;
-            if (dArtist) dArtist.innerText = currentTrack.artist;
+            if (dTitle) dTitle.innerText = currentTrack.title || '';
+            if (dArtist) dArtist.innerText = currentTrack.artist || '';
         } else if (currentMode === 'display' && !currentTrack) {
             const dTitle = document.getElementById('display-title');
             if (dTitle) dTitle.innerText = 'Esperando canciones...';
@@ -2266,9 +2267,12 @@ function startRealtimeSync() {
             const adminTitle = document.getElementById('admin-current-title');
             if (adminTitle) adminTitle.innerText = currentTrack ? currentTrack.title : 'Standby...';
         }
+    }, err => {
+        console.error('Error escuchando queue:', err);
     });
 
-    db.collection(`artifacts/${appId}/public/data/waiter_calls`).onSnapshot(snap => {
+    // Escuchar waiter_calls
+    db.collection('waiter_calls').onSnapshot(snap => {
         const calls = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         if (currentMode === 'waiter' || currentStaffPanel === 'waiter' || currentStaffPanel === 'history') {
             updateWaiterView(calls);
