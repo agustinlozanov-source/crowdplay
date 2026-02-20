@@ -2808,8 +2808,38 @@ async function toggleDedication() {
     if (currentTrack) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(currentTrack.id).update({ showDedication: !currentTrack.showDedication });
 }
 async function skipSong() {
+    await fadeOutPlayer();
     if (currentTrack) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(currentTrack.id).delete();
-    if (queue.length > 0) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(queue[0].id).update({ status: 'playing', createdAt: firebase.firestore.FieldValue.serverTimestamp(), showDedication: false, lastCommand: 'play' });
+    if (queue.length > 0) await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(queue[0].id).update({
+        status: 'playing',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        showDedication: false,
+        lastCommand: 'play'
+    });
+}
+
+function fadeOutPlayer() {
+    return new Promise(resolve => {
+        if (!player || typeof player.getVolume !== 'function') { resolve(); return; }
+        let vol = player.getVolume();
+        const step = setInterval(() => {
+            vol = Math.max(0, vol - 8);
+            try { player.setVolume(vol); } catch(e) {}
+            if (vol <= 0) { clearInterval(step); resolve(); }
+        }, 50);
+    });
+}
+
+function fadeInPlayer() {
+    if (!player || typeof player.setVolume !== 'function') return;
+    const targetVol = isAdminMuted ? 0 : 100;
+    let vol = 0;
+    player.setVolume(0);
+    const step = setInterval(() => {
+        vol = Math.min(targetVol, vol + 8);
+        try { player.setVolume(vol); } catch(e) {}
+        if (vol >= targetVol) clearInterval(step);
+    }, 50);
 }
 async function voteSong(id, v) {
     // CAMBIO 2: Un voto por canción por usuario
@@ -2844,21 +2874,29 @@ function initYouTube(divId) {
     }
 }
 function createPlayer(divId) {
-    // CAMBIO 3: Para display-yt-player, auto 1 y mute 1 (requerido para autoplay sin interacción)
-    if (!currentTrack || !currentTrack.videoId) return;
     const isDisplay = divId === 'display-yt-player';
     player = new window.YT.Player(divId, {
         height: '100%', width: '100%',
-        videoId: currentTrack.videoId,
-        playerVars: { autoplay: 1, controls: 0, modestbranding: 1, rel: 0, enablejsapi: 1, fs: 1, iv_load_policy: 3, mute: isDisplay ? 1 : 0 },
+        videoId: currentTrack?.videoId || '',
+        playerVars: {
+            autoplay: 1, controls: 0, modestbranding: 1,
+            rel: 0, enablejsapi: 1, fs: 1, iv_load_policy: 3,
+            mute: isDisplay ? 1 : 0,
+            origin: window.location.origin
+        },
         events: {
             onReady: (e) => {
                 if (currentMode === 'admin' && isAdminMuted) e.target.mute();
                 if (isDisplay) { e.target.unMute(); e.target.setVolume(100); }
                 if (currentTrack) syncVideo();
             },
-            onStateChange: (e) => { if (e.data === window.YT.PlayerState.ENDED) skipSong(); },
-            onError: (e) => console.error('Player error:', e.data)
+            onStateChange: (e) => {
+                if (e.data === window.YT.PlayerState.ENDED) skipSong();
+            },
+            onError: (e) => {
+                console.error('Player error:', e.data);
+                setTimeout(() => skipSong(), 2000);
+            }
         }
     });
 }
@@ -2871,7 +2909,10 @@ function syncVideo() {
     }
     try {
         const currentVideoId = player.getVideoData?.()?.video_id;
-        if (currentVideoId !== currentTrack.videoId) player.loadVideoById?.(currentTrack.videoId);
+        if (currentVideoId !== currentTrack.videoId) {
+            player.loadVideoById?.(currentTrack.videoId);
+            setTimeout(() => fadeInPlayer(), 800);
+        }
         setTimeout(() => {
             if (!player || !currentTrack) return;
             if (currentTrack.lastCommand === 'pause') player.pauseVideo?.();
