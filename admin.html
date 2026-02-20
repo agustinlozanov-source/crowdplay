@@ -2952,14 +2952,15 @@ function sendCommand(cmd, extra = {}) {
     db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(currentTrack.id).update({ lastCommand: cmd, commandId: Math.random(), ...extra });
 }
 function handleDJToggle() {
-    if (!player) return;
-    const state = player.getPlayerState();
-    if (state === 1) {
-        player.pauseVideo();
-    } else {
-        player.playVideo();
+    if (!currentTrack) return;
+    const isPaused = currentTrack.lastCommand === 'pause';
+    sendCommand(isPaused ? 'play' : 'pause');
+    const icon = document.getElementById('dj-play-icon');
+    if (icon) {
+        icon.innerHTML = isPaused
+            ? '<polygon points="5,3 19,12 5,21"/>'
+            : '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
     }
-    updatePlayIcon();
 }
 
 function updatePlayIcon() {
@@ -2977,34 +2978,29 @@ function updatePlayIcon() {
 }
 
 function setPlayerVolume(val) {
-    if (!player) return;
-    player.setVolume(parseInt(val));
+    if (player && typeof player.setVolume === 'function') {
+        try { player.setVolume(parseInt(val)); } catch(e) {}
+    }
     const label = document.getElementById('dj-vol-label');
-    if (label) label.textContent = val;
+    if (label) label.innerText = val;
+    isAdminMuted = parseInt(val) === 0;
+    const btn = document.getElementById('admin-mute-btn');
+    if (btn) btn.classList.toggle('muted', isAdminMuted);
 }
 
+let progressInterval = null;
 function startProgressBar() {
-    if (!player || !currentSongId) return;
-    const progressBar = document.getElementById('dj-progress');
-    if (!progressBar) return;
-    
-    const duration = player.getDuration();
-    if (!duration) return;
-    
-    const updateProgress = () => {
-        if (!player) return;
-        const current = player.getCurrentTime();
-        const state = player.getPlayerState();
-        if (state !== 1) {
-            setTimeout(updateProgress, 500);
-            return;
-        }
-        const pct = (current / duration) * 100;
-        progressBar.style.width = Math.min(pct, 100) + '%';
-        setTimeout(updateProgress, 100);
-    };
-    
-    updateProgress();
+    if (progressInterval) clearInterval(progressInterval);
+    const fill = document.getElementById('dj-progress');
+    if (!fill) return;
+    progressInterval = setInterval(() => {
+        if (!player || typeof player.getCurrentTime !== 'function') return;
+        try {
+            const cur = player.getCurrentTime();
+            const dur = player.getDuration();
+            if (dur > 0) fill.style.width = ((cur / dur) * 100) + '%';
+        } catch(e) {}
+    }, 1000);
 }
 
 async function toggleDedication() {
@@ -3122,18 +3118,9 @@ function syncVideo() {
         
         if (currentVideoId !== currentTrack.videoId) {
             player.loadVideoById?.(currentTrack.videoId);
-            
-            // Ocultar overlay y actualizar UI
+            startProgressBar();
             const overlay = document.getElementById('player-overlay');
             if (overlay) overlay.style.opacity = '0';
-            setTimeout(() => overlay && (overlay.style.display = 'none'), 300);
-            
-            const title = document.getElementById('admin-current-title');
-            if (title) title.textContent = currentTrack.songTitle || 'Cargando...';
-            
-            currentSongId = currentTrack.id;
-            setTimeout(() => fadeInPlayer(), 800);
-            setTimeout(() => startProgressBar(), 1000);
             return; // salir — el onStateChange y onReady manejan el resto
         }
         setTimeout(() => {
