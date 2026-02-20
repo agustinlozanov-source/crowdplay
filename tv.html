@@ -6,22 +6,41 @@
     <title>CrowdPlay TV</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; width: 100vw; height: 100vh; font-family: Arial, sans-serif; }
+        body { background: #000; width: 100vw; height: 100vh; font-family: Arial; }
         #player { width: 100%; height: 100%; }
-        .info { position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.9); color: #fff; padding: 15px 20px; border-radius: 8px; font-size: 14px; z-index: 1000; border: 1px solid rgba(255,255,255,0.2); }
+        #info { position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.9); color: #fff; padding: 15px 20px; border-radius: 8px; font-size: 14px; z-index: 1000; }
     </style>
 </head>
 <body>
     <div id="player"></div>
-    <div class="info" id="info">Iniciando...</div>
-
-    <!-- Load Firebase scripts first -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
+    <div id="info">Iniciando...</div>
 
     <script>
+        // Load Firebase
+        const script1 = document.createElement('script');
+        script1.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
+        
+        script1.onload = () => {
+            const script2 = document.createElement('script');
+            script2.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js';
+            
+            script2.onload = () => {
+                const script3 = document.createElement('script');
+                script3.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js';
+                
+                script3.onload = () => {
+                    console.log('Firebase loaded');
+                    initFirebase();
+                };
+                
+                document.head.appendChild(script3);
+            };
+            
+            document.head.appendChild(script2);
+        };
+        
+        document.head.appendChild(script1);
+
         const firebaseConfig = {
             apiKey: "AIzaSyAia7RLwDKkBHqjLnH-BFVLrr7m7G2xWq0",
             authDomain: "crowdplay-7cf0c.firebaseapp.com",
@@ -33,105 +52,64 @@
 
         let player;
         let currentVideoId = null;
-        let db, auth;
 
-        // Initialize app when DOM is ready
-        document.addEventListener('DOMContentLoaded', async () => {
-            console.log('DOM ready, initializing Firebase...');
-            
+        function initFirebase() {
             try {
-                // Initialize Firebase
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
-                }
-                db = firebase.firestore();
-                auth = firebase.auth();
-                console.log('Firebase initialized');
-                
-                // Authenticate anonymously
-                await auth.signInAnonymously();
-                console.log('Anonymous auth successful');
-                updateInfo('Conectado. Presiona F para fullscreen');
+                firebase.initializeApp(firebaseConfig);
+                const auth = firebase.auth();
+                const db = firebase.firestore();
 
-                // Listen to queue
-                setupQueueListener();
-            } catch (err) {
-                console.error('Error:', err);
-                updateInfo('Error: ' + err.message);
+                auth.signInAnonymously().then(() => {
+                    console.log('Auth OK');
+                    setupQueue(db);
+                }).catch(err => {
+                    document.getElementById('info').textContent = 'Auth error: ' + err.code;
+                });
+            } catch (e) {
+                console.error('Error:', e);
+                document.getElementById('info').textContent = 'Error: ' + e.message;
             }
-        });
-
-        function updateInfo(msg) {
-            const el = document.getElementById('info');
-            if (el) el.textContent = msg;
         }
 
-        function setupQueueListener() {
-            if (!db) {
-                console.error('DB not initialized');
-                return;
-            }
-
+        function setupQueue(db) {
             db.collection('queue')
                 .orderBy('createdAt', 'asc')
                 .limit(1)
-                .onSnapshot(
-                    snap => {
-                        console.log('Queue snapshot:', snap.size);
-                        if (!snap.empty) {
-                            const doc = snap.docs[0];
-                            const data = doc.data();
-                            const videoId = data.videoId || data.id;
-                            
-                            console.log('Video:', videoId, data);
-                            
-                            if (videoId && videoId !== currentVideoId && player) {
-                                currentVideoId = videoId;
-                                player.loadVideoById(videoId);
-                                updateInfo('Reproduciendo: ' + (data.title || videoId));
-                            }
-                        } else {
-                            updateInfo('Esperando canciones...');
+                .onSnapshot(snap => {
+                    console.log('Queue:', snap.size);
+                    if (!snap.empty) {
+                        const data = snap.docs[0].data();
+                        const vid = data.videoId || data.id;
+                        if (vid && vid !== currentVideoId && player) {
+                            currentVideoId = vid;
+                            player.loadVideoById(vid);
+                            document.getElementById('info').textContent = 'Reproduciendo: ' + (data.title || vid);
                         }
-                    },
-                    err => {
-                        console.error('Firestore error:', err);
-                        updateInfo('Error: ' + err.code);
+                    } else {
+                        document.getElementById('info').textContent = 'Esperando canción...';
                     }
-                );
+                }, err => {
+                    document.getElementById('info').textContent = 'Firestore: ' + err.code;
+                });
         }
 
-        // YouTube Player Ready
         window.onYouTubeIframeAPIReady = () => {
-            console.log('YouTube API ready');
+            console.log('YouTube ready');
             player = new YT.Player('player', {
                 height: '100%',
                 width: '100%',
-                playerVars: {
-                    'autoplay': 1,
-                    'controls': 1,
-                    'modestbranding': 1,
-                    'fs': 1,
-                    'rel': 0
-                }
+                playerVars: { autoplay: 1, controls: 1, modestbranding: 1, fs: 1 }
             });
         };
 
-        // Fullscreen on F key
         document.addEventListener('keydown', e => {
-            if (e.key === 'f' || e.key === 'F') {
-                const elem = document.documentElement;
-                if (document.fullscreenElement) {
-                    document.exitFullscreen();
-                } else if (elem.requestFullscreen) {
-                    elem.requestFullscreen().catch(err => {
-                        console.log('Fullscreen denied:', err);
-                    });
-                } else if (elem.webkitRequestFullscreen) {
-                    elem.webkitRequestFullscreen();
-                }
+            if ((e.key === 'f' || e.key === 'F') && player) {
+                const el = document.documentElement;
+                if (document.fullscreenElement) document.exitFullscreen();
+                else el.requestFullscreen?.().catch(() => {});
             }
         });
     </script>
+    <script async src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
