@@ -95,11 +95,23 @@
                     }
                     const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     const playing = items.find(i => i.status === 'playing');
-                    console.log('PLAYING DATA:', JSON.stringify(playing));
-                    console.log('ALL ITEMS:', items.map(i => ({ id: i.id, status: i.status, videoId: i.videoId, title: i.title })));
+
                     if (playing && playing.videoId) {
                         loadVideo(playing.videoId);
                         document.getElementById('info').textContent = '▶ ' + (playing.title || playing.videoId);
+
+                        // Sincronizar comandos del DJ
+                        if (playerReady && player) {
+                            try {
+                                if (playing.lastCommand === 'pause') {
+                                    player.pauseVideo();
+                                } else if (playing.lastCommand === 'play') {
+                                    player.playVideo();
+                                } else if (playing.lastCommand === 'seek' && playing.offset) {
+                                    player.seekTo(player.getCurrentTime() + playing.offset, true);
+                                }
+                            } catch(e) { console.error('Command sync error:', e); }
+                        }
                     } else {
                         document.getElementById('info').textContent = 'Esperando canción...';
                     }
