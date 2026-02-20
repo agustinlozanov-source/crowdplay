@@ -2025,12 +2025,15 @@ async function initFirebase() {
             const urlRole = params.get('role');
             const mode    = params.get('mode');
             
+            console.log('proceedApp() called with mode:', mode, 'role:', urlRole);
+            
             if (urlRole === 'admin') {
                 // Admin: mostrar login
                 const loginScreen = document.getElementById('admin-login-screen');
                 if (loginScreen) loginScreen.classList.remove('hidden');
             } else if (mode === 'display') {
                 // Display mode: mostrar reproductor sin login
+                console.log('Display mode detected, calling startRealtimeSync()');
                 startRealtimeSync();
                 setMode('display');
             } else if (mode) {
@@ -2048,9 +2051,12 @@ async function initFirebase() {
             proceedApp();
         } else {
             // Cliente: autenticación anónima
+            console.log('Iniciando autenticación anónima...');
             await auth.signInAnonymously();
+            console.log('Auth anónima completada, usuario:', auth.currentUser?.uid);
             if (auth.currentUser) proceedApp();
             auth.onAuthStateChanged(user => {
+                console.log('Auth state changed, usuario:', user?.uid);
                 if (user) proceedApp();
                 else setSyncError('No se pudo autenticar. Verifica Firebase Auth.');
             }, err => { setSyncError('Error de auth. Verifica reglas Firebase.'); });
