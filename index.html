@@ -1442,6 +1442,7 @@
                     </div>
                     <div>
                         <div id="client-user-name" class="font-display" style="font-size:1.1rem;font-weight:700;font-style:italic;"></div>
+                        <div id="client-riffs-balance" style="font-size:0.72rem;font-weight:700;color:var(--accent-amber);letter-spacing:0.05em;margin-top:2px;">0 Riffs</div>
                         <div id="client-table-info" style="font-size:0.8rem;color:var(--text-muted);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;"></div>
                     </div>
                     <button onclick="document.getElementById('table-modal').classList.remove('hidden')" style="margin-left:auto;font-size:0.65rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent-indigo);background:none;border:none;cursor:pointer;">Cambiar mesa</button>
@@ -2238,6 +2239,8 @@ function setMode(mode) {
         if (u) {
             const nameEl = document.getElementById('client-user-name');
             if (nameEl) nameEl.innerText = u.name + ' ' + (u.surname || '');
+            const balEl = document.getElementById('client-riffs-balance');
+            if (balEl) balEl.innerText = (u.credits || 0) + ' Riffs';
         }
         const tableN = localStorage.getItem('rocola_table_v1');
         const tInfo = document.getElementById('client-table-info');
@@ -2425,9 +2428,16 @@ function updateClientUI() {
                         <div class="queue-title">${s.title}</div>
                         <div class="queue-meta">${s.isKaraoke ? '🎤' : '🎵'} ${s.showName ? s.userName : 'Anónimo'}</div>
                     </div>
-                    <button class="vote-btn" onclick="voteSong('${s.id}', ${s.votes || 0})">
-                        🔥 <span>${s.votes || 0}</span>
-                    </button>
+                    <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0;">
+                        <button class="vote-btn" onclick="voteSong('${s.id}', ${s.votes || 0})">
+                            🔥 <span>${s.votes || 0}</span>
+                        </button>
+                        ${s.userId === (JSON.parse(localStorage.getItem('rocola_user_v1'))||{}).id ? `
+                        <button onclick="boostSong('${s.id}',${idx},'up1')" style="font-size:0.6rem;font-weight:700;background:rgba(240,180,41,0.12);border:1px solid rgba(240,180,41,0.3);border-radius:8px;color:#f0b429;padding:3px 7px;cursor:pointer;">↑1 · 15R</button>
+                        <button onclick="boostSong('${s.id}',${idx},'top3')" style="font-size:0.6rem;font-weight:700;background:rgba(240,180,41,0.12);border:1px solid rgba(240,180,41,0.3);border-radius:8px;color:#f0b429;padding:3px 7px;cursor:pointer;">Top3 · 40R</button>
+                        <button onclick="boostSong('${s.id}',${idx},'next')" style="font-size:0.6rem;font-weight:700;background:rgba(232,54,42,0.12);border:1px solid rgba(232,54,42,0.3);border-radius:8px;color:#e8362a;padding:3px 7px;cursor:pointer;">Next · 70R</button>
+                        ` : ''}
+                    </div>
                 </div>
             `).join('');
         }
@@ -2562,6 +2572,10 @@ async function confirmOrder() {
             isKaraoke: searchType === 'karaoke',
             showDedication: false, lastCommand: 'play',
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        // Regalo: +3 Riffs por pedir canción
+        await db.collection(`artifacts/${appId}/public/data/client_profiles`).doc(u.id).update({
+            credits: firebase.firestore.FieldValue.increment(3)
         });
         // CAMBIO 1: Guardar timestamp del último pedido
         localStorage.setItem('rocola_last_order_ts', Date.now().toString());
@@ -3465,6 +3479,42 @@ async function showForgotPassword() {
     } catch(err) {
         toast('No se encontró una cuenta con ese email.', 'error');
     }
+}
+
+async function boostSong(songId, currentIdx, type) {
+    const u = JSON.parse(localStorage.getItem('rocola_user_v1'));
+    if (!u?.id) return;
+    const costs = { up1: 15, top3: 40, next: 70 };
+    const cost = costs[type];
+    // Check balance from Firestore
+    const profileDoc = await db.collection(`artifacts/${appId}/public/data/client_profiles`).doc(u.id).get();
+    const balance = profileDoc.data()?.credits || 0;
+    if (balance < cost) { toast(`Riffs insuficientes. Tienes ${balance}R, necesitas ${cost}R`, 'warning'); return; }
+    // Calculate new createdAt to reposition
+    const snap = await db.collection(`artifacts/${appId}/public/data/rocola_queue`).where('status','==','pending').orderBy('createdAt','asc').get();
+    const pending = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!pending.length) return;
+    let targetTime;
+    if (type === 'next') {
+        // Place right after current song - earliest createdAt minus 1ms
+        targetTime = new Date(pending[0].createdAt.toDate().getTime() - 1000);
+    } else if (type === 'top3') {
+        // Place at position 3 or front if less than 3
+        const pos = Math.min(2, pending.length - 1);
+        targetTime = new Date(pending[pos].createdAt.toDate().getTime() - 1000);
+    } else {
+        // up1 - move one position up
+        if (currentIdx <= 0) { toast('Ya estás en primera posición', 'info'); return; }
+        targetTime = new Date(pending[currentIdx - 1].createdAt.toDate().getTime() - 1000);
+    }
+    // Deduct Riffs and reposition
+    await db.collection(`artifacts/${appId}/public/data/client_profiles`).doc(u.id).update({ credits: balance - cost });
+    await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(songId).update({ createdAt: firebase.firestore.Timestamp.fromDate(targetTime) });
+    // Update local display
+    const balEl = document.getElementById('client-riffs-balance');
+    if (balEl) balEl.innerText = (balance - cost) + ' Riffs';
+    const labels = { up1: '↑ Subiste 1 lugar', top3: '🎯 Top 3', next: '⚡ Siguiente canción' };
+    toast(`${labels[type]} — ${cost} Riffs usados`, 'success');
 }
 </script>
 
