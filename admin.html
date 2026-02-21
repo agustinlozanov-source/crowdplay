@@ -1387,6 +1387,111 @@
             sidebarLogoContainer.innerHTML = '<img src="/logo.png" style="max-height:32px;width:auto;object-fit:contain;" alt="Logo">';
         }
     });
+
+    function updateDedicationCard() {
+        const emptyEl  = document.getElementById('dj-dedication-empty');
+        const bodyEl   = document.getElementById('dj-dedication-body');
+        const textEl   = document.getElementById('dj-dedication-text');
+        const fromEl   = document.getElementById('dj-dedication-from');
+        const metaEl   = document.getElementById('dj-song-meta');
+        const btn      = document.getElementById('toggle-dedication-btn');
+        if (!emptyEl || !bodyEl) return;
+        const hasDedic = currentTrack && currentTrack.dedication && currentTrack.dedication.trim();
+        if (hasDedic) {
+            emptyEl.style.display = 'none';
+            bodyEl.style.display  = 'block';
+            if (textEl) textEl.innerText = currentTrack.dedication;
+            if (fromEl) fromEl.innerText = currentTrack.showName && currentTrack.userName ? 'De: ' + currentTrack.userName : '';
+        } else {
+            emptyEl.style.display = 'block';
+            bodyEl.style.display  = 'none';
+        }
+        if (btn) {
+            const active = currentTrack && !!currentTrack.showDedication;
+            btn.style.background  = active ? 'rgba(91,110,245,0.2)' : '';
+            btn.style.borderColor = active ? 'rgba(91,110,245,0.5)' : '';
+            btn.style.color       = active ? 'var(--accent-indigo)' : '';
+        }
+        if (metaEl) {
+            const parts = [];
+            if (currentTrack && currentTrack.isKaraoke) parts.push('Karaoke');
+            if (currentTrack && currentTrack.showName && currentTrack.userName) parts.push(currentTrack.userName);
+            metaEl.innerText = parts.join(' · ') || '—';
+        }
+    }
+
+    let dragSrcId = null;
+    function renderDJPanelQueue() {
+        const container = document.getElementById('dj-panel-queue');
+        if (!container) return;
+        const pending = queue.slice(0, 5);
+        if (!currentTrack && !pending.length) {
+            container.innerHTML = '<div style="font-size:0.78rem;font-weight:600;color:var(--text-muted);text-align:center;padding:14px 0;">Cola vacía</div>';
+            return;
+        }
+        container.innerHTML = '';
+        if (currentTrack) {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(31,214,112,0.08);border:1px solid rgba(31,214,112,0.25);border-radius:12px;margin-bottom:5px;';
+            row.innerHTML = `
+                <div style="width:20px;font-size:0.7rem;font-weight:800;color:var(--accent-green);text-align:center;">▶</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${currentTrack.title || 'Sin título'}</div>
+                    <div style="font-size:0.62rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-top:1px;">${currentTrack.showName && currentTrack.userName ? currentTrack.userName : 'Anónimo'} · ${currentTrack.votes || 0} votos</div>
+                </div>
+                <button onclick="skipSong()" style="width:28px;height:28px;background:rgba(232,54,42,0.1);border:1px solid rgba(232,54,42,0.25);border-radius:8px;color:var(--accent-red);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,4 13,12 5,20"/><rect x="15" y="4" width="3" height="16" rx="1"/></svg>
+                </button>`;
+            container.appendChild(row);
+        }
+        pending.forEach((s, i) => {
+            const row = document.createElement('div');
+            row.setAttribute('draggable', 'true');
+            row.setAttribute('data-id', s.id);
+            row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;cursor:grab;transition:all 0.15s;margin-bottom:5px;';
+            row.innerHTML = `
+                <div style="width:20px;font-size:0.65rem;font-weight:700;color:var(--text-muted);text-align:center;">${i + 1}</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.title || 'Sin título'}</div>
+                    <div style="font-size:0.62rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-top:1px;">${s.showName && s.userName ? s.userName : 'Anónimo'} · ${s.votes || 0} votos</div>
+                </div>
+                <div style="display:flex;gap:4px;flex-shrink:0;">
+                    ${i > 0 ? `<button onclick="moveQueueItem('${s.id}',-1)" style="width:26px;height:26px;background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:7px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18,15 12,9 6,15"/></svg></button>` : '<div style="width:26px;"></div>'}
+                    ${i < pending.length - 1 ? `<button onclick="moveQueueItem('${s.id}',1)" style="width:26px;height:26px;background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:7px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg></button>` : '<div style="width:26px;"></div>'}
+                    <button onclick="removeQueueItem('${s.id}')" style="width:26px;height:26px;background:rgba(232,54,42,0.08);border:1px solid rgba(232,54,42,0.2);border-radius:7px;color:var(--accent-red);cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </div>`;
+            row.addEventListener('dragstart', e => { dragSrcId = s.id; row.style.opacity='0.4'; e.dataTransfer.effectAllowed='move'; });
+            row.addEventListener('dragend',   () => { row.style.opacity='1'; });
+            row.addEventListener('dragover',  e => { e.preventDefault(); row.style.borderColor='var(--accent-indigo)'; });
+            row.addEventListener('dragleave', () => { row.style.borderColor='var(--border)'; });
+            row.addEventListener('drop', async e => {
+                e.preventDefault(); row.style.borderColor='var(--border)';
+                if (dragSrcId === s.id) return;
+                const src = queue.find(x => x.id === dragSrcId);
+                if (!src) return;
+                await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(src.id).update({ createdAt: s.createdAt });
+                await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(s.id).update({ createdAt: src.createdAt });
+            });
+            container.appendChild(row);
+        });
+        if (queue.length > 5) {
+            const more = document.createElement('div');
+            more.style.cssText = 'font-size:0.65rem;font-weight:600;color:var(--text-muted);text-align:center;padding:6px 0;';
+            more.innerText = '+' + (queue.length - 5) + ' más en cola';
+            container.appendChild(more);
+        }
+    }
+    async function moveQueueItem(id, direction) {
+        const idx = queue.findIndex(s => s.id === id);
+        const targetIdx = idx + direction;
+        if (targetIdx < 0 || targetIdx >= queue.length) return;
+        const a = queue[idx], b = queue[targetIdx];
+        await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(a.id).update({ createdAt: b.createdAt });
+        await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(b.id).update({ createdAt: a.createdAt });
+    }
+    async function removeQueueItem(id) {
+        await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(id).delete();
+    }
 </script>
 
 <!-- ═══════════════════════════════════════
@@ -3574,149 +3679,5 @@ updateCooldownUI(); // ejecutar inmediatamente al cargar
   </div>
 </div>
 
-    function updateDedicationCard() {
-        const emptyEl  = document.getElementById('dj-dedication-empty');
-        const bodyEl   = document.getElementById('dj-dedication-body');
-        const textEl   = document.getElementById('dj-dedication-text');
-        const fromEl   = document.getElementById('dj-dedication-from');
-        const metaEl   = document.getElementById('dj-song-meta');
-        const btn      = document.getElementById('toggle-dedication-btn');
-        if (!emptyEl || !bodyEl) return;
-        const hasDedic = currentTrack && currentTrack.dedication && currentTrack.dedication.trim();
-        if (hasDedic) {
-            emptyEl.style.display = 'none';
-            bodyEl.style.display  = 'block';
-            if (textEl) textEl.innerText = currentTrack.dedication;
-            if (fromEl) fromEl.innerText = currentTrack.showName && currentTrack.userName ? 'De: ' + currentTrack.userName : '';
-        } else {
-            emptyEl.style.display = 'block';
-            bodyEl.style.display  = 'none';
-        }
-        if (btn) {
-            const active = currentTrack && !!currentTrack.showDedication;
-            btn.style.background  = active ? 'rgba(91,110,245,0.2)' : '';
-            btn.style.borderColor = active ? 'rgba(91,110,245,0.5)' : '';
-            btn.style.color       = active ? 'var(--accent-indigo)' : '';
-        }
-        if (metaEl) {
-            const parts = [];
-            if (currentTrack && currentTrack.isKaraoke) parts.push('Karaoke');
-            if (currentTrack && currentTrack.showName && currentTrack.userName) parts.push(currentTrack.userName);
-            metaEl.innerText = parts.join(' · ') || '—';
-        }
-    }
-
-    // Banner TV
-    let bannerDataUrl = null;
-    function handleBannerUpload(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = ev => {
-            bannerDataUrl = ev.target.result;
-            const preview = document.getElementById('banner-preview');
-            const hint    = document.getElementById('banner-upload-hint');
-            const sendBtn = document.getElementById('banner-send-btn');
-            const clearBtn= document.getElementById('banner-clear-btn');
-            preview.src   = bannerDataUrl;
-            preview.style.display = 'block';
-            hint.style.display    = 'none';
-            sendBtn.style.display = 'flex';
-            clearBtn.style.display= 'flex';
-        };
-        reader.readAsDataURL(file);
-    }
-
-    async function sendBannerToTV() {
-        if (!bannerDataUrl || !db) return;
-        await db.collection(`artifacts/${appId}/public/data/rocola_settings`).doc('banner').set({
-            url: bannerDataUrl,
-            active: true,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        toast('Banner enviado a TV', 'success');
-    }
-
-    async function clearBannerTV() {
-        if (!db) return;
-        await db.collection(`artifacts/${appId}/public/data/rocola_settings`).doc('banner').set({
-            active: false,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        toast('Banner ocultado', 'info');
-    }
-
-    let dragSrcId = null;
-    function renderDJPanelQueue() {
-        const container = document.getElementById('dj-panel-queue');
-        if (!container) return;
-        const pending = queue.slice(0, 5);
-        if (!currentTrack && !pending.length) {
-            container.innerHTML = '<div style="font-size:0.78rem;font-weight:600;color:var(--text-muted);text-align:center;padding:14px 0;">Cola vacía</div>';
-            return;
-        }
-        container.innerHTML = '';
-        if (currentTrack) {
-            const row = document.createElement('div');
-            row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(31,214,112,0.08);border:1px solid rgba(31,214,112,0.25);border-radius:12px;margin-bottom:5px;';
-            row.innerHTML = `
-                <div style="width:20px;font-size:0.7rem;font-weight:800;color:var(--accent-green);text-align:center;">▶</div>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${currentTrack.title || 'Sin título'}</div>
-                    <div style="font-size:0.62rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-top:1px;">${currentTrack.showName && currentTrack.userName ? currentTrack.userName : 'Anónimo'} · ${currentTrack.votes || 0} votos</div>
-                </div>
-                <button onclick="skipSong()" style="width:28px;height:28px;background:rgba(232,54,42,0.1);border:1px solid rgba(232,54,42,0.25);border-radius:8px;color:var(--accent-red);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,4 13,12 5,20"/><rect x="15" y="4" width="3" height="16" rx="1"/></svg>
-                </button>`;
-            container.appendChild(row);
-        }
-        pending.forEach((s, i) => {
-            const row = document.createElement('div');
-            row.setAttribute('draggable', 'true');
-            row.setAttribute('data-id', s.id);
-            row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;cursor:grab;transition:all 0.15s;margin-bottom:5px;';
-            row.innerHTML = `
-                <div style="width:20px;font-size:0.65rem;font-weight:700;color:var(--text-muted);text-align:center;">${i + 1}</div>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.title || 'Sin título'}</div>
-                    <div style="font-size:0.62rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-top:1px;">${s.showName && s.userName ? s.userName : 'Anónimo'} · ${s.votes || 0} votos</div>
-                </div>
-                <div style="display:flex;gap:4px;flex-shrink:0;">
-                    ${i > 0 ? `<button onclick="moveQueueItem('${s.id}',-1)" style="width:26px;height:26px;background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:7px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18,15 12,9 6,15"/></svg></button>` : '<div style="width:26px;"></div>'}
-                    ${i < pending.length - 1 ? `<button onclick="moveQueueItem('${s.id}',1)" style="width:26px;height:26px;background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:7px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg></button>` : '<div style="width:26px;"></div>'}
-                    <button onclick="removeQueueItem('${s.id}')" style="width:26px;height:26px;background:rgba(232,54,42,0.08);border:1px solid rgba(232,54,42,0.2);border-radius:7px;color:var(--accent-red);cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-                </div>`;
-            row.addEventListener('dragstart', e => { dragSrcId = s.id; row.style.opacity='0.4'; e.dataTransfer.effectAllowed='move'; });
-            row.addEventListener('dragend',   () => { row.style.opacity='1'; });
-            row.addEventListener('dragover',  e => { e.preventDefault(); row.style.borderColor='var(--accent-indigo)'; });
-            row.addEventListener('dragleave', () => { row.style.borderColor='var(--border)'; });
-            row.addEventListener('drop', async e => {
-                e.preventDefault(); row.style.borderColor='var(--border)';
-                if (dragSrcId === s.id) return;
-                const src = queue.find(x => x.id === dragSrcId);
-                if (!src) return;
-                await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(src.id).update({ createdAt: s.createdAt });
-                await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(s.id).update({ createdAt: src.createdAt });
-            });
-            container.appendChild(row);
-        });
-        if (queue.length > 5) {
-            const more = document.createElement('div');
-            more.style.cssText = 'font-size:0.65rem;font-weight:600;color:var(--text-muted);text-align:center;padding:6px 0;';
-            more.innerText = '+' + (queue.length - 5) + ' más en cola';
-            container.appendChild(more);
-        }
-    }
-    async function moveQueueItem(id, direction) {
-        const idx = queue.findIndex(s => s.id === id);
-        const targetIdx = idx + direction;
-        if (targetIdx < 0 || targetIdx >= queue.length) return;
-        const a = queue[idx], b = queue[targetIdx];
-        await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(a.id).update({ createdAt: b.createdAt });
-        await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(b.id).update({ createdAt: a.createdAt });
-    }
-    async function removeQueueItem(id) {
-        await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(id).delete();
-    }
 </body>
 </html>
