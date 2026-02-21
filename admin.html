@@ -818,41 +818,60 @@
             display: flex; align-items: center; gap: 8px;
         }
 
-        /* ── DJ TRANSPORT ── */
-        .dj-deck {
-            background: var(--bg-elevated);
-            border: 1px solid var(--border-mid);
-            border-radius: 20px;
-            padding: 20px;
+        /* ── DJ PANEL ── */
+        .dj-panel {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 1px;
+            border: 1px solid var(--border-mid);
+            border-radius: 20px;
+            overflow: hidden;
+            background: var(--border);
         }
-        .dj-title-row {
+        .dj-section {
+            background: var(--bg-elevated);
+            padding: 20px 24px;
+        }
+        .dj-section-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        /* Now playing */
+        .dj-now-playing {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
+            flex-direction: column;
+            gap: 10px;
         }
-        .dj-title {
-            font-family: 'Barlow', sans-serif;
-            font-size: 1rem;
-            font-weight: 800;
+        .dj-song-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 900;
             font-style: italic;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.01em;
             color: var(--text-primary);
-            flex: 1;
-            min-width: 0;
+            line-height: 1.1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        .dj-song-meta {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
         .dj-progress-bar {
             width: 100%;
-            height: 4px;
+            height: 3px;
             background: var(--border);
             border-radius: 4px;
             overflow: hidden;
+            cursor: pointer;
         }
         .dj-progress-fill {
             height: 100%;
@@ -861,14 +880,15 @@
             border-radius: 4px;
             transition: width 1s linear;
         }
-        .dj-controls {
+        /* Transport */
+        .dj-transport {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 10px;
         }
         .dj-btn {
-            width: 48px; height: 48px;
+            width: 44px; height: 44px;
             background: var(--bg-card);
             border: 1px solid var(--border-mid);
             border-radius: 50%;
@@ -878,66 +898,47 @@
             transition: all 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
             flex-shrink: 0;
             position: relative;
-            overflow: hidden;
         }
-        .dj-btn::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at center, rgba(255,255,255,0.15) 0%, transparent 70%);
-            opacity: 0;
-            transition: opacity 0.1s;
-        }
-        .dj-btn:active::after { opacity: 1; }
-        .dj-btn:hover {
-            background: var(--bg-elevated);
-            color: var(--text-primary);
-            border-color: rgba(255,255,255,0.2);
-            transform: scale(1.08);
-        }
-        .dj-btn:active { transform: scale(0.92); }
-        .dj-btn-lg {
-            width: 64px; height: 64px;
-            background: white;
+        .dj-btn:hover { background: var(--bg-card); color: var(--text-primary); border-color: rgba(255,255,255,0.25); transform: scale(1.1); }
+        .dj-btn:active { transform: scale(0.9); }
+        .dj-btn-play {
+            width: 60px; height: 60px;
+            background: #1fd670;
             border: none;
-            color: #0a0c12;
-            box-shadow: 0 4px 24px rgba(255,255,255,0.2);
+            box-shadow: 0 0 24px rgba(31,214,112,0.35);
         }
-        .dj-btn-lg:hover {
-            background: white;
-            transform: scale(1.1);
-            box-shadow: 0 6px 32px rgba(255,255,255,0.3);
+        .dj-btn-play:hover { background: #22e878; transform: scale(1.08); box-shadow: 0 0 32px rgba(31,214,112,0.5); border: none; }
+        .dj-btn-pause {
+            width: 60px; height: 60px;
+            background: var(--accent-red);
             border: none;
+            box-shadow: 0 0 24px rgba(232,54,42,0.35);
         }
-        .dj-btn-lg:active { transform: scale(0.94); box-shadow: none; }
+        .dj-btn-pause:hover { background: #f03d31; transform: scale(1.08); box-shadow: 0 0 32px rgba(232,54,42,0.5); border: none; }
         .dj-btn-skip {
-            background: rgba(232,54,42,0.12);
-            border-color: rgba(232,54,42,0.3);
+            background: rgba(232,54,42,0.1);
+            border-color: rgba(232,54,42,0.25);
             color: var(--accent-red);
         }
-        .dj-btn-skip:hover {
-            background: rgba(232,54,42,0.2);
-            border-color: rgba(232,54,42,0.5);
-            color: var(--accent-red);
-        }
-        .dj-btn-mute {
-            background: var(--bg-card);
-            border-color: var(--border-mid);
-        }
-        .dj-btn-mute.muted {
-            background: rgba(232,54,42,0.12);
-            border-color: rgba(232,54,42,0.4);
-            color: var(--accent-red);
-        }
+        .dj-btn-skip:hover { background: rgba(232,54,42,0.2); border-color: rgba(232,54,42,0.4); color: var(--accent-red); }
+        /* Volume */
         .dj-vol-row {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+        }
+        .dj-vol-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            min-width: 30px;
+            text-align: right;
+            letter-spacing: 0.05em;
         }
         .dj-vol-slider {
             flex: 1;
             -webkit-appearance: none;
-            height: 4px;
+            height: 3px;
             background: var(--border-mid);
             border-radius: 4px;
             outline: none;
@@ -945,18 +946,96 @@
         }
         .dj-vol-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 16px; height: 16px;
+            width: 14px; height: 14px;
             border-radius: 50%;
             background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
             cursor: pointer;
             transition: transform 0.1s;
         }
-        .dj-vol-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
-        .dj-bottom-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+        .dj-vol-slider::-webkit-slider-thumb:hover { transform: scale(1.3); }
+        /* Dedication card */
+        .dj-dedication-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .dj-dedication-text {
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-style: italic;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+        .dj-dedication-from {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .dj-dedication-empty {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 8px 0;
+        }
+        .dj-action-btn {
+            flex: 1;
+            height: 42px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-mid);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-family: 'Barlow', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .dj-action-btn:hover { background: var(--bg-elevated); color: var(--text-primary); border-color: rgba(255,255,255,0.2); }
+        .dj-action-btn:active { transform: scale(0.97); }
+        .dj-action-btn.active {
+            background: rgba(91,110,245,0.15);
+            border-color: rgba(91,110,245,0.4);
+            color: var(--accent-indigo);
+        }
+        .dj-action-btn.tv-active {
+            background: rgba(31,214,112,0.1);
+            border-color: rgba(31,214,112,0.3);
+            color: var(--accent-green);
+        }
+        /* Banner upload */
+        .dj-banner-upload {
+            border: 1.5px dashed var(--border-mid);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .dj-banner-upload:hover { border-color: var(--accent-indigo); background: rgba(91,110,245,0.05); }
+        .dj-banner-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+        .dj-banner-preview {
+            width: 100%;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            display: none;
+            margin-bottom: 8px;
         }
 
         /* ── ANALYTICS VIEW ── */
@@ -1715,88 +1794,108 @@
 
             <!-- ── PANEL: PLAYER (DJ) ── -->
             <div class="staff-panel" id="panel-player">
-                <!-- Video -->
-                <div class="content-card" style="padding:0;overflow:hidden;border-radius:20px;">
-                    <div style="position:relative;background:#000;height:460px;">
-                        <div id="yt-player" style="width:100%;height:100%;"></div>
-                        <div id="player-overlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);transition:opacity 0.3s;">
-                            <div style="text-align:center;color:white;">
-                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" opacity="0.5"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="white" stroke="none"/></svg>
-                                <p style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-top:8px;">Sin canción</p>
-                            </div>
+
+                <!-- NOW PLAYING -->
+                <div class="dj-panel">
+                    <div class="dj-section dj-now-playing">
+                        <div class="dj-section-label">Ahora suena</div>
+                        <div class="dj-song-title" id="admin-current-title">Standby</div>
+                        <div class="dj-song-meta" id="dj-song-meta">—</div>
+                        <div class="dj-progress-bar"><div class="dj-progress-fill" id="dj-progress"></div></div>
+                    </div>
+
+                    <!-- TRANSPORT -->
+                    <div class="dj-section">
+                        <div class="dj-transport">
+                            <button class="dj-btn" onclick="sendCommand('seek',{offset:-30})" title="−30s">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
+                            </button>
+                            <button class="dj-btn" onclick="sendCommand('seek',{offset:-10})" title="−10s">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="15,18 9,12 15,6"/></svg>
+                            </button>
+                            <button class="dj-btn dj-btn-play" id="dj-play-btn" onclick="sendCommand('play')" title="Play" style="display:flex;">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
+                            </button>
+                            <button class="dj-btn dj-btn-pause" id="dj-pause-btn" onclick="sendCommand('pause')" title="Pausa" style="display:none;">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><rect x="5" y="4" width="5" height="16"/><rect x="14" y="4" width="5" height="16"/></svg>
+                            </button>
+                            <button class="dj-btn" onclick="sendCommand('seek',{offset:10})" title="+10s">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="9,18 15,12 9,6"/></svg>
+                            </button>
+                            <button class="dj-btn" onclick="sendCommand('seek',{offset:30})" title="+30s">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>
+                            </button>
+                            <button class="dj-btn dj-btn-skip" onclick="skipSong()" title="Saltar canción">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,4 15,12 5,20"/><rect x="17" y="4" width="3" height="16" rx="1"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- VOLUME -->
+                    <div class="dj-section">
+                        <div class="dj-section-label">Volumen monitor</div>
+                        <div class="dj-vol-row">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/></svg>
+                            <input type="range" class="dj-vol-slider" id="dj-volume" min="0" max="100" value="100" oninput="setPlayerVolume(this.value)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                            <span class="dj-vol-label" id="dj-vol-label">100</span>
+                            <button class="dj-btn dj-btn-mute" id="admin-mute-btn" onclick="toggleAdminMute()" title="Mute monitor" style="width:36px;height:36px;">
+                                <svg id="mute-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- DJ Deck -->
-                <div class="dj-deck">
-                    <!-- Título + mute -->
-                    <div class="dj-title-row">
-                        <div class="dj-title" id="admin-current-title">Standby...</div>
-                        <button class="dj-btn dj-btn-mute" id="admin-mute-btn" onclick="toggleAdminMute()" title="Mute">
-                            <svg id="mute-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M11 5L6 9H2v6h4l5 4V5z"/>
-                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <!-- Progress bar -->
-                    <div class="dj-progress-bar">
-                        <div class="dj-progress-fill" id="dj-progress"></div>
-                    </div>
-
-                    <!-- Controles principales -->
-                    <div style="display:flex;align-items:center;justify-content:center;gap:16px;">
-                        <button class="dj-btn" onclick="sendCommand('seek', { offset: -30 })" title="−30s">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
-                        </button>
-                        <button class="dj-btn" onclick="sendCommand('seek', { offset: -10 })" title="−10s">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="11,17 6,12 11,7"/></svg>
-                        </button>
-
-                        <!-- PAUSE -->
-                        <button class="dj-btn dj-btn-lg" id="dj-pause-btn" onclick="sendCommand('pause')" title="Pausar"
-                            style="background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.15);display:none;">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" style="color:white;">
-                                <rect x="5" y="4" width="5" height="16"/><rect x="14" y="4" width="5" height="16"/>
-                            </svg>
-                        </button>
-
-                        <button class="dj-btn dj-btn-lg" id="dj-play-btn" onclick="sendCommand('play')" title="Reproducir"
-                            style="background:white;border:none;display:flex;">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="#0a0c12"><polygon points="5,3 19,12 5,21"/></svg>
-                        </button>
-                        <button class="dj-btn dj-btn-lg" id="dj-pause-btn" onclick="sendCommand('pause')" title="Pausar"
-                            style="background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.2);display:none;">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><rect x="5" y="4" width="5" height="16"/><rect x="14" y="4" width="5" height="16"/></svg>
-                        </button>
-
-                        <button class="dj-btn" onclick="sendCommand('seek', { offset: 10 })" title="+10s">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="13,17 18,12 13,7"/></svg>
-                        </button>
-                        <button class="dj-btn" onclick="sendCommand('seek', { offset: 30 })" title="+30s">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>
-                        </button>
-                        <button class="dj-btn dj-btn-skip" onclick="skipSong()" title="Saltar">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,4 15,12 5,20"/><line x1="19" y1="4" x2="19" y2="20" stroke="currentColor" stroke-width="2.5"/></svg>
-                        </button>
-                    </div>
-
-                    <!-- Volumen -->
-                    <div class="dj-vol-row">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/></svg>
-                        <input type="range" class="dj-vol-slider" id="dj-volume" min="0" max="100" value="100" oninput="setPlayerVolume(this.value)">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                        <span id="dj-vol-label" style="font-size:0.7rem;font-weight:700;color:var(--text-muted);min-width:28px;text-align:right;">100</span>
-                    </div>
-
-                    <!-- Bottom row -->
-                    <div class="dj-bottom-row">
-                        <button onclick="toggleDedication()" class="btn btn-indigo" id="toggle-dedication-btn">✨ Dedicatoria</button>
-                        <button onclick="openTVTab()" class="btn btn-secondary">📺 Abrir TV</button>
+                <!-- DEDICATORIA -->
+                <div class="dj-panel" style="margin-top:12px;">
+                    <div class="dj-section">
+                        <div class="dj-section-label">Dedicatoria de esta canción</div>
+                        <div class="dj-dedication-card" id="dj-dedication-card">
+                            <div class="dj-dedication-empty" id="dj-dedication-empty">Sin dedicatoria</div>
+                            <div id="dj-dedication-body" style="display:none;">
+                                <div class="dj-dedication-text" id="dj-dedication-text"></div>
+                                <div class="dj-dedication-from" id="dj-dedication-from"></div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:10px;">
+                            <button class="dj-action-btn" id="toggle-dedication-btn" onclick="toggleDedication()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                Mostrar en TV
+                            </button>
+                            <button class="dj-action-btn tv-active" onclick="openTVTab()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                                Abrir TV
+                            </button>
+                        </div>
                     </div>
                 </div>
+
+                <!-- BANNER TV -->
+                <div class="dj-panel" style="margin-top:12px;">
+                    <div class="dj-section">
+                        <div class="dj-section-label">Banner TV — 1920 × 200 px</div>
+                        <div class="dj-banner-upload" id="banner-drop" onclick="document.getElementById('banner-file-input').click()">
+                            <input type="file" id="banner-file-input" accept="image/*" onchange="handleBannerUpload(event)" style="display:none;">
+                            <img id="banner-preview" class="dj-banner-preview">
+                            <div id="banner-upload-hint">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="margin-bottom:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                <div style="font-size:0.75rem;font-weight:700;color:var(--text-muted);">Subir imagen de banner</div>
+                                <div style="font-size:0.65rem;color:var(--text-muted);margin-top:2px;letter-spacing:0.05em;">1920 × 200 px · PNG o JPG</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:10px;">
+                            <button class="dj-action-btn" id="banner-send-btn" onclick="sendBannerToTV()" style="display:none;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                Enviar a TV
+                            </button>
+                            <button class="dj-action-btn" id="banner-clear-btn" onclick="clearBannerTV()" style="display:none;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                Quitar de TV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- ── PANEL: QUEUE DJ ── -->
@@ -2420,6 +2519,7 @@ function startRealtimeSync() {
             // Actualizar título en admin
             const adminTitle = document.getElementById('admin-current-title');
             if (adminTitle) adminTitle.innerText = currentTrack ? currentTrack.title : 'Standby...';
+            updateDedicationCard();
         }
     });
 
@@ -3462,5 +3562,80 @@ updateCooldownUI(); // ejecutar inmediatamente al cargar
   </div>
 </div>
 
+    // Actualiza el card de dedicatoria en el panel DJ
+    function updateDedicationCard() {
+        if (!currentTrack) return;
+        const hasDedic  = currentTrack.dedication && currentTrack.dedication.trim();
+        const emptyEl   = document.getElementById('dj-dedication-empty');
+        const bodyEl    = document.getElementById('dj-dedication-body');
+        const textEl    = document.getElementById('dj-dedication-text');
+        const fromEl    = document.getElementById('dj-dedication-from');
+        const toggleBtn = document.getElementById('toggle-dedication-btn');
+        if (!emptyEl || !bodyEl) return;
+        if (hasDedic) {
+            emptyEl.style.display = 'none';
+            bodyEl.style.display  = 'block';
+            textEl.innerText      = currentTrack.dedication;
+            fromEl.innerText      = currentTrack.showName && currentTrack.userName
+                ? `De: ${currentTrack.userName}`
+                : '';
+        } else {
+            emptyEl.style.display = 'block';
+            bodyEl.style.display  = 'none';
+        }
+        if (toggleBtn) {
+            toggleBtn.classList.toggle('active', !!currentTrack.showDedication);
+            toggleBtn.querySelector('span') && (toggleBtn.querySelector('span').innerText =
+                currentTrack.showDedication ? 'Ocultar de TV' : 'Mostrar en TV');
+        }
+        // Actualizar meta
+        const metaEl = document.getElementById('dj-song-meta');
+        if (metaEl) {
+            const parts = [];
+            if (currentTrack.isKaraoke) parts.push('Karaoke');
+            if (currentTrack.showName && currentTrack.userName) parts.push(currentTrack.userName);
+            metaEl.innerText = parts.join(' · ') || '—';
+        }
+    }
+
+    // Banner TV
+    let bannerDataUrl = null;
+    function handleBannerUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            bannerDataUrl = ev.target.result;
+            const preview = document.getElementById('banner-preview');
+            const hint    = document.getElementById('banner-upload-hint');
+            const sendBtn = document.getElementById('banner-send-btn');
+            const clearBtn= document.getElementById('banner-clear-btn');
+            preview.src   = bannerDataUrl;
+            preview.style.display = 'block';
+            hint.style.display    = 'none';
+            sendBtn.style.display = 'flex';
+            clearBtn.style.display= 'flex';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function sendBannerToTV() {
+        if (!bannerDataUrl || !db) return;
+        await db.collection(`artifacts/${appId}/public/data/rocola_settings`).doc('banner').set({
+            url: bannerDataUrl,
+            active: true,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        toast('Banner enviado a TV', 'success');
+    }
+
+    async function clearBannerTV() {
+        if (!db) return;
+        await db.collection(`artifacts/${appId}/public/data/rocola_settings`).doc('banner').set({
+            active: false,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        toast('Banner ocultado', 'info');
+    }
 </body>
 </html>
