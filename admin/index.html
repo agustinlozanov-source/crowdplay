@@ -1441,9 +1441,12 @@
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     </div>
                     <div>
-                        <div id="client-user-name" class="font-display" style="font-size:1.1rem;font-weight:700;font-style:italic;"></div>
-                        <div id="client-riffs-balance" style="font-size:0.72rem;font-weight:700;color:var(--accent-amber);letter-spacing:0.05em;margin-top:2px;">0 Riffs</div>
-                        <div id="client-table-info" style="font-size:0.8rem;color:var(--text-muted);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;"></div>
+                        <div id="client-user-name" class="font-display" style="font-size:1.1rem;font-weight:700;font-style:italic;color:var(--text-primary);line-height:1.2;"></div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap;">
+                            <div id="client-table-info" style="font-size:0.7rem;font-weight:700;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;"></div>
+                            <div style="width:3px;height:3px;border-radius:50%;background:var(--text-muted);flex-shrink:0;"></div>
+                            <div id="client-riffs-balance" style="font-size:0.7rem;font-weight:800;color:var(--accent-amber);letter-spacing:0.05em;">0 Riffs</div>
+                        </div>
                     </div>
                     <button onclick="document.getElementById('table-modal').classList.remove('hidden')" style="margin-left:auto;font-size:0.65rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent-indigo);background:none;border:none;cursor:pointer;">Cambiar mesa</button>
                 </div>
@@ -2420,24 +2423,38 @@ function updateClientUI() {
                 <p style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;opacity:0.5;">Cola vacía — ¡Pide la primera!</p>
             </div>`;
         } else {
-            qList.innerHTML = queue.map((s, idx) => `
-                <div class="queue-item" style="animation-delay:${idx * 0.04}s;">
-                    <span class="queue-rank">${idx + 1}</span>
-                    <img class="queue-thumb" src="https://img.youtube.com/vi/${s.videoId}/default.jpg" onerror="this.style.display='none'">
-                    <div class="queue-info">
-                        <div class="queue-title">${s.title}</div>
-                        <div class="queue-meta">${s.isKaraoke ? '🎤' : '🎵'} ${s.showName ? s.userName : 'Anónimo'}</div>
+            const _me = (JSON.parse(localStorage.getItem('rocola_user_v1'))||{}).id;
+        qList.innerHTML = queue.map((s, idx) => `
+                <div class="queue-item" style="animation-delay:${idx * 0.04}s;flex-direction:column;align-items:stretch;gap:0;padding:0;overflow:hidden;">
+                    <div style="display:flex;align-items:center;gap:14px;padding:14px 14px;">
+                        <span class="queue-rank">${idx + 1}</span>
+                        <img class="queue-thumb" src="https://img.youtube.com/vi/${s.videoId}/default.jpg" onerror="this.style.display='none'">
+                        <div class="queue-info" style="flex:1;min-width:0;">
+                            <div class="queue-title">${s.title}</div>
+                            <div class="queue-meta">${s.isKaraoke ? '🎤' : '🎵'} ${s.showName ? s.userName : 'Anónimo'}</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                            <button class="vote-btn" onclick="voteSong('${s.id}', ${s.votes || 0})">🔥 <span>${s.votes || 0}</span></button>
+                            ${s.userId === _me ? `<button onclick="toggleBoostPanel('boost-${s.id}')" style="width:32px;height:32px;border-radius:50%;background:rgba(240,180,41,0.15);border:1px solid rgba(240,180,41,0.35);color:#f0b429;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:900;">R</button>` : ''}
+                        </div>
                     </div>
-                    <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0;">
-                        <button class="vote-btn" onclick="voteSong('${s.id}', ${s.votes || 0})">
-                            🔥 <span>${s.votes || 0}</span>
-                        </button>
-                        ${s.userId === (JSON.parse(localStorage.getItem('rocola_user_v1'))||{}).id ? `
-                        <button onclick="boostSong('${s.id}',${idx},'up1')" style="font-size:0.6rem;font-weight:700;background:rgba(240,180,41,0.12);border:1px solid rgba(240,180,41,0.3);border-radius:8px;color:#f0b429;padding:3px 7px;cursor:pointer;">↑1 · 15R</button>
-                        <button onclick="boostSong('${s.id}',${idx},'top3')" style="font-size:0.6rem;font-weight:700;background:rgba(240,180,41,0.12);border:1px solid rgba(240,180,41,0.3);border-radius:8px;color:#f0b429;padding:3px 7px;cursor:pointer;">Top3 · 40R</button>
-                        <button onclick="boostSong('${s.id}',${idx},'next')" style="font-size:0.6rem;font-weight:700;background:rgba(232,54,42,0.12);border:1px solid rgba(232,54,42,0.3);border-radius:8px;color:#e8362a;padding:3px 7px;cursor:pointer;">Next · 70R</button>
-                        ` : ''}
-                    </div>
+                    ${s.userId === _me ? `
+                    <div id="boost-${s.id}" style="display:none;padding:0 14px 14px;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                            <button onclick="boostSong('${s.id}',${idx},'up1')" style="padding:12px 6px;background:rgba(240,180,41,0.1);border:1px solid rgba(240,180,41,0.35);border-radius:12px;cursor:pointer;text-align:center;">
+                                <div style="font-size:1.1rem;font-weight:900;color:#f0b429;">↑1</div>
+                                <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);margin-top:2px;">15 Riffs</div>
+                            </button>
+                            <button onclick="boostSong('${s.id}',${idx},'top3')" style="padding:12px 6px;background:rgba(240,180,41,0.1);border:1px solid rgba(240,180,41,0.35);border-radius:12px;cursor:pointer;text-align:center;">
+                                <div style="font-size:1.1rem;font-weight:900;color:#f0b429;">Top 3</div>
+                                <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);margin-top:2px;">40 Riffs</div>
+                            </button>
+                            <button onclick="boostSong('${s.id}',${idx},'next')" style="padding:12px 6px;background:rgba(232,54,42,0.1);border:1px solid rgba(232,54,42,0.3);border-radius:12px;cursor:pointer;text-align:center;">
+                                <div style="font-size:1.1rem;font-weight:900;color:#e8362a;">Next</div>
+                                <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);margin-top:2px;">70 Riffs</div>
+                            </button>
+                        </div>
+                    </div>` : ''}
                 </div>
             `).join('');
         }
@@ -3516,6 +3533,15 @@ async function boostSong(songId, currentIdx, type) {
     const labels = { up1: '↑ Subiste 1 lugar', top3: '🎯 Top 3', next: '⚡ Siguiente canción' };
     toast(`${labels[type]} — ${cost} Riffs usados`, 'success');
 }
+
+function toggleBoostPanel(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const isOpen = el.style.display === 'block';
+    document.querySelectorAll('[id^="boost-"]').forEach(p => p.style.display = 'none');
+    if (!isOpen) el.style.display = 'block';
+}
+
 </script>
 
 </body>
