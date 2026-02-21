@@ -2566,6 +2566,7 @@ function switchStaffPanel(panelName) {
     if (panel) panel.classList.add('active');
     const sitem = document.getElementById(`sitem-${panelName}`);
     if (sitem) sitem.classList.add('active');
+    if (panelName === 'player') { updatePlayIcon(); updateDedicationCard(); renderDJPanelQueue(); }
     // Update topbar title
     const titles = {
         'dashboard': 'Dashboard',
@@ -2743,6 +2744,7 @@ function updateDJQueuePanel() {
     if (currentTrack) {
         const adminTitle = document.getElementById('admin-current-title');
         if (adminTitle) adminTitle.innerText = currentTrack.title;
+        updatePlayIcon(); updateDedicationCard(); renderDJPanelQueue();
     }
 }
 
@@ -3163,6 +3165,8 @@ function updateAdminDashboard(items) {
 function sendCommand(cmd, extra = {}) {
     if (!currentTrack) return;
     db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(currentTrack.id).update({ lastCommand: cmd, commandId: Math.random(), ...extra });
+    currentTrack.lastCommand = cmd;
+    updatePlayIcon();
 }
 function handleDJToggle() {
     if (!currentTrack) return;
