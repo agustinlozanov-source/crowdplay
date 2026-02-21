@@ -2053,6 +2053,39 @@
                     </div>
                 </div>
                 <div class="content-card">
+                    <div class="content-card-title">Cargar Riffs a usuario</div>
+                    <div style="display:flex;flex-direction:column;gap:12px;">
+                        <input id="riffs-search" type="text" placeholder="Nombre del usuario..." class="reg-input" oninput="searchRiffsUser(this.value)">
+                        <div id="riffs-search-results" style="display:flex;flex-direction:column;gap:6px;"></div>
+                        <div id="riffs-selected-user" style="display:none;background:var(--bg-card);border:1px solid var(--border-mid);border-radius:12px;padding:14px 16px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                                <div>
+                                    <div style="font-size:0.85rem;font-weight:700;color:var(--text-primary);" id="riffs-user-name">—</div>
+                                    <div style="font-size:0.68rem;font-weight:600;color:var(--text-muted);margin-top:2px;">Saldo actual: <span id="riffs-user-balance" style="color:var(--accent-amber);">0</span> Riffs</div>
+                                </div>
+                                <button onclick="clearRiffsUser()" style="font-size:0.65rem;font-weight:700;color:var(--text-muted);background:none;border:none;cursor:pointer;letter-spacing:0.1em;text-transform:uppercase;">Cambiar</button>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                                <button onclick="chargeRiffs('chico')" style="background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:12px;padding:12px 8px;cursor:pointer;transition:all 0.15s;text-align:center;">
+                                    <div style="font-size:0.7rem;font-weight:800;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.05em;">Pack Chico</div>
+                                    <div style="font-size:1.1rem;font-weight:900;color:var(--accent-amber);margin:4px 0;">80 Riffs</div>
+                                    <div style="font-size:0.65rem;font-weight:600;color:var(--text-muted);">$100 MXN</div>
+                                </button>
+                                <button onclick="chargeRiffs('medio')" style="background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:12px;padding:12px 8px;cursor:pointer;transition:all 0.15s;text-align:center;">
+                                    <div style="font-size:0.7rem;font-weight:800;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.05em;">Pack Medio</div>
+                                    <div style="font-size:1.1rem;font-weight:900;color:var(--accent-amber);margin:4px 0;">180 Riffs</div>
+                                    <div style="font-size:0.65rem;font-weight:600;color:var(--text-muted);">$200 MXN</div>
+                                </button>
+                                <button onclick="chargeRiffs('grande')" style="background:rgba(232,54,42,0.08);border:1px solid rgba(232,54,42,0.2);border-radius:12px;padding:12px 8px;cursor:pointer;transition:all 0.15s;text-align:center;">
+                                    <div style="font-size:0.7rem;font-weight:800;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.05em;">Pack Grande</div>
+                                    <div style="font-size:1.1rem;font-weight:900;color:var(--accent-amber);margin:4px 0;">300 Riffs</div>
+                                    <div style="font-size:0.65rem;font-weight:600;color:var(--text-muted);">$300 MXN</div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="content-card">
                     <div class="content-card-title">Solicitudes activas</div>
                     <div class="calls-grid" id="waiter-calls-list">
                         <p style="text-align:center;color:var(--text-muted);font-size:0.8rem;padding:24px 0;font-weight:600;grid-column:1/-1;">Sin solicitudes</p>
@@ -3658,6 +3691,54 @@ function updateCooldownUI() {
 // Iniciar el ticker del cooldown cada segundo
 setInterval(updateCooldownUI, 1000);
 updateCooldownUI(); // ejecutar inmediatamente al cargar
+
+// ── RIFFS ──
+let riffsSelectedUser = null;
+
+async function searchRiffsUser(query) {
+    const container = document.getElementById('riffs-search-results');
+    if (!query || query.length < 2) { container.innerHTML = ''; return; }
+    const snap = await db.collection(`artifacts/${appId}/public/data/client_profiles`).get();
+    const results = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(u => (u.name + ' ' + (u.surname||'')).toLowerCase().includes(query.toLowerCase()));
+    if (!results.length) {
+        container.innerHTML = '<div style="font-size:0.78rem;color:var(--text-muted);padding:8px 0;">Sin resultados</div>';
+        return;
+    }
+    container.innerHTML = results.slice(0,5).map(u => `
+        <div onclick="selectRiffsUser('${u.id}','${u.name} ${u.surname||''}',${u.credits||0})"
+             style="padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);">${u.name} ${u.surname||''}</div>
+            <div style="font-size:0.68rem;font-weight:600;color:var(--accent-amber);">${u.credits||0} Riffs</div>
+        </div>`).join('');
+}
+
+function selectRiffsUser(id, name, balance) {
+    riffsSelectedUser = { id, name, balance };
+    document.getElementById('riffs-search-results').innerHTML = '';
+    document.getElementById('riffs-search').value = '';
+    document.getElementById('riffs-user-name').innerText = name;
+    document.getElementById('riffs-user-balance').innerText = balance;
+    document.getElementById('riffs-selected-user').style.display = 'block';
+}
+
+function clearRiffsUser() {
+    riffsSelectedUser = null;
+    document.getElementById('riffs-selected-user').style.display = 'none';
+    document.getElementById('riffs-search').value = '';
+}
+
+async function chargeRiffs(pack) {
+    if (!riffsSelectedUser) return;
+    const packs = { chico: 80, medio: 180, grande: 300 };
+    const amount = packs[pack];
+    const newBalance = (riffsSelectedUser.balance || 0) + amount;
+    await db.collection(`artifacts/${appId}/public/data/client_profiles`).doc(riffsSelectedUser.id).update({ credits: newBalance });
+    riffsSelectedUser.balance = newBalance;
+    document.getElementById('riffs-user-balance').innerText = newBalance;
+    toast(`+${amount} Riffs cargados a ${riffsSelectedUser.name}`, 'success');
+}
 
 </script>
 <!-- ═══════════════════════════════════════
