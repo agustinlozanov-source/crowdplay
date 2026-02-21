@@ -6,14 +6,272 @@
     <title>CrowdPlay TV</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; width: 100vw; height: 100vh; font-family: Arial; }
-        #player { width: 100%; height: 100%; }
-        #info { position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.9); color: #fff; padding: 15px 20px; border-radius: 8px; font-size: 14px; z-index: 1000; }
+
+        body {
+            background: #000;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+
+        /* ── VIDEO FULLSCREEN ── */
+        #player {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* ── STANDBY SCREEN ── */
+        #standby {
+            position: fixed;
+            inset: 0;
+            z-index: 5;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            transition: opacity 0.6s ease;
+        }
+        #standby.hidden { opacity: 0; pointer-events: none; }
+        .standby-logo {
+            font-size: 4rem;
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: -0.03em;
+            color: white;
+        }
+        .standby-logo span { color: #e8362a; }
+        .standby-sub {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.3);
+        }
+        .standby-pulse {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #e8362a;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.4); }
+        }
+
+        /* ── NOW PLAYING PILL (top left, subtle) ── */
+        #now-playing-pill {
+            position: fixed;
+            top: 28px;
+            left: 32px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 100px;
+            padding: 10px 18px;
+            opacity: 0;
+            transform: translateY(-8px);
+            transition: all 0.4s ease;
+            max-width: 520px;
+        }
+        #now-playing-pill.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .pill-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #1fd670;
+            flex-shrink: 0;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        .pill-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+            flex-shrink: 0;
+        }
+        .pill-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ── BANNER OVERLAY (bottom) ── */
+        /*
+            MEDIDAS DE REFERENCIA PARA DISEÑO:
+            Ancho: 1920px
+            Alto: 200px
+            Proporción: 9.6:1
+            Aparece sobre el video, no lo desplaza.
+            El banner sube desde abajo con animación.
+        */
+        #banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            height: 200px;
+            transform: translateY(100%);
+            transition: transform 0.5s cubic-bezier(0.34, 1.20, 0.64, 1);
+        }
+        #banner.visible { transform: translateY(0); }
+
+        /* Fondo del banner */
+        .banner-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                180deg,
+                rgba(0,0,0,0) 0%,
+                rgba(0,0,0,0.85) 30%,
+                rgba(0,0,0,0.95) 100%
+            );
+        }
+
+        /* Contenido del banner */
+        .banner-content {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 0 60px 32px;
+        }
+
+        /* ── MODO DEDICATORIA ── */
+        #banner-dedication {
+            display: none;
+        }
+        #banner-dedication.active { display: flex; flex-direction: column; gap: 6px; }
+
+        .dedication-from {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.45);
+        }
+        .dedication-text {
+            font-size: 2.4rem;
+            font-weight: 900;
+            font-style: italic;
+            color: white;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+        }
+        .dedication-song {
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+            margin-top: 4px;
+        }
+
+        /* ── MODO PUBLICIDAD ── */
+        #banner-ad {
+            display: none;
+        }
+        #banner-ad.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        #banner-ad img {
+            max-height: 180px;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        /* ── STATUS DOT (esquina inferior derecha, muy sutil) ── */
+        #status {
+            position: fixed;
+            bottom: 20px;
+            right: 24px;
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            opacity: 0.25;
+            transition: opacity 0.3s;
+        }
+        #status:hover { opacity: 0.8; }
+        .status-dot-tv {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: #1fd670;
+        }
+        .status-dot-tv.error { background: #e8362a; }
+        .status-dot-tv.connecting { background: #f0b429; animation: pulse-dot 1s infinite; }
+        #status-text {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: white;
+        }
     </style>
 </head>
 <body>
+
+    <!-- Video fullscreen -->
     <div id="player"></div>
-    <div id="info">Iniciando...</div>
+
+    <!-- Standby screen -->
+    <div id="standby">
+        <div class="standby-logo">Crowd<span>Play</span></div>
+        <div class="standby-sub">Esperando canciones</div>
+        <div class="standby-pulse"></div>
+    </div>
+
+    <!-- Now playing pill -->
+    <div id="now-playing-pill">
+        <div class="pill-dot"></div>
+        <div class="pill-label">Ahora</div>
+        <div class="pill-title" id="pill-title">—</div>
+    </div>
+
+    <!-- Banner overlay -->
+    <div id="banner">
+        <div class="banner-bg"></div>
+        <div class="banner-content">
+            <!-- Dedicatoria -->
+            <div id="banner-dedication">
+                <div class="dedication-from" id="dedication-from">Para ti</div>
+                <div class="dedication-text" id="dedication-text">—</div>
+                <div class="dedication-song" id="dedication-song"></div>
+            </div>
+            <!-- Publicidad -->
+            <div id="banner-ad">
+                <img id="banner-ad-img" src="" alt="">
+            </div>
+        </div>
+    </div>
+
+    <!-- Status -->
+    <div id="status">
+        <div class="status-dot-tv connecting" id="status-dot"></div>
+        <span id="status-text">Conectando</span>
+    </div>
 
     <script>
         const firebaseConfig = {
@@ -25,43 +283,101 @@
             appId: "1:519952213703:web:0e0ecb8cb3fc81064240e2"
         };
 
-        let player = null;
-        let playerReady = false;
+        let player         = null;
+        let playerReady    = false;
         let pendingVideoId = null;
         let currentVideoId = null;
-        let firestoreDb = null;
+        let firestoreDb    = null;
+        let bannerTimeout  = null;
         const firestoreAppId = 'rocola-crowdplay2-v1';
 
-        // Intenta cargar video — si el player no está listo, lo guarda pendiente
+        /* ── STATUS ── */
+        function setStatus(state, text) {
+            const dot  = document.getElementById('status-dot');
+            const span = document.getElementById('status-text');
+            dot.className  = 'status-dot-tv ' + state;
+            span.innerText = text;
+        }
+
+        /* ── STANDBY ── */
+        function showStandby(show) {
+            const el = document.getElementById('standby');
+            if (show) el.classList.remove('hidden');
+            else      el.classList.add('hidden');
+            document.getElementById('now-playing-pill').classList.toggle('visible', !show);
+        }
+
+        /* ── NOW PLAYING PILL ── */
+        function setNowPlaying(title) {
+            document.getElementById('pill-title').innerText = title || '—';
+        }
+
+        /* ── BANNER ── */
+        function showBanner(mode, data, duration = 8000) {
+            const banner   = document.getElementById('banner');
+            const dedic    = document.getElementById('banner-dedication');
+            const ad       = document.getElementById('banner-ad');
+
+            // Reset
+            dedic.classList.remove('active');
+            ad.classList.remove('active');
+            if (bannerTimeout) clearTimeout(bannerTimeout);
+
+            if (mode === 'dedication') {
+                document.getElementById('dedication-from').innerText = data.from
+                    ? `✉ Para: ${data.from}`
+                    : '✉ Dedicatoria';
+                document.getElementById('dedication-text').innerText = data.text || '';
+                document.getElementById('dedication-song').innerText = data.song
+                    ? `🎵 ${data.song}`
+                    : '';
+                dedic.classList.add('active');
+            } else if (mode === 'ad') {
+                const img = document.getElementById('banner-ad-img');
+                img.src = data.url;
+                ad.classList.add('active');
+                duration = data.duration || 12000;
+            }
+
+            banner.classList.add('visible');
+            bannerTimeout = setTimeout(() => hideBanner(), duration);
+        }
+
+        function hideBanner() {
+            document.getElementById('banner').classList.remove('visible');
+            if (bannerTimeout) clearTimeout(bannerTimeout);
+        }
+
+        /* ── VIDEO ── */
         function loadVideo(videoId) {
             if (!videoId || videoId === currentVideoId) return;
             currentVideoId = videoId;
             if (playerReady && player) {
                 player.loadVideoById(videoId);
                 player.playVideo();
-                setTimeout(() => fadeInTV(), 500);
+                setTimeout(() => fadeInTV(), 300);
             } else {
                 pendingVideoId = videoId;
             }
         }
 
+        /* ── YOUTUBE ── */
         window.onYouTubeIframeAPIReady = function() {
-            console.log('YouTube ready');
             player = new YT.Player('player', {
                 height: '100%',
                 width: '100%',
                 playerVars: {
                     autoplay: 1,
-                    controls: 1,
+                    controls: 0,
                     modestbranding: 1,
-                    fs: 1,
+                    fs: 0,
                     rel: 0,
                     iv_load_policy: 3,
+                    disablekb: 1,
                     origin: window.location.origin
                 },
                 events: {
                     onReady: function(e) {
-                        console.log('Player ready');
                         playerReady = true;
                         e.target.setVolume(0);
                         fadeInTV();
@@ -72,35 +388,40 @@
                         }
                     },
                     onStateChange: function(e) {
+                        if (e.data === YT.PlayerState.PLAYING) {
+                            showStandby(false);
+                        }
                         if (e.data === YT.PlayerState.ENDED) {
-                            document.getElementById('info').textContent = 'Cambiando canción...';
                             skipToNext();
                         }
                     },
                     onError: function(e) {
                         console.error('Player error:', e.data);
-                        document.getElementById('info').textContent = 'Error video: ' + e.data;
+                        setTimeout(() => skipToNext(), 3000);
                     }
                 }
             });
         };
 
+        /* ── FIRESTORE LISTENER ── */
         function setupQueue(db) {
-            const appId = 'rocola-crowdplay2-v1';
-            db.collection(`artifacts/${appId}/public/data/rocola_queue`)
+            db.collection(`artifacts/${firestoreAppId}/public/data/rocola_queue`)
                 .onSnapshot(snap => {
+                    setStatus('connected', 'En vivo');
                     if (snap.empty) {
-                        document.getElementById('info').textContent = 'Cola vacía — esperando canciones...';
+                        showStandby(true);
+                        hideBanner();
                         return;
                     }
-                    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                    const items   = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     const playing = items.find(i => i.status === 'playing');
 
                     if (playing && playing.videoId) {
                         loadVideo(playing.videoId);
-                        document.getElementById('info').textContent = '▶ ' + (playing.title || playing.videoId);
+                        setNowPlaying(playing.title || playing.videoId);
 
-                        // Sincronizar comandos del DJ
+                        // Sincronizar comando del DJ
                         if (playerReady && player) {
                             try {
                                 if (playing.lastCommand === 'pause') {
@@ -110,69 +431,29 @@
                                 } else if (playing.lastCommand === 'seek' && playing.offset) {
                                     player.seekTo(player.getCurrentTime() + playing.offset, true);
                                 }
-                            } catch(e) { console.error('Command sync error:', e); }
+                            } catch(e) {}
+                        }
+
+                        // Mostrar dedicatoria si está activa
+                        if (playing.showDedication && playing.dedication) {
+                            showBanner('dedication', {
+                                text: playing.dedication,
+                                from: playing.userName || null,
+                                song: playing.title || null
+                            }, 10000);
+                        } else if (!playing.showDedication) {
+                            hideBanner();
                         }
                     } else {
-                        document.getElementById('info').textContent = 'Esperando canción...';
+                        showStandby(true);
                     }
                 }, err => {
+                    setStatus('error', 'Error');
                     console.error('Firestore error:', err);
-                    document.getElementById('info').textContent = 'Error Firestore: ' + err.code;
                 });
         }
 
-        function initFirebase() {
-            try {
-                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-                const auth = firebase.auth();
-                const db = firebase.firestore();
-                firestoreDb = db;
-
-                auth.signInAnonymously()
-                    .then(() => {
-                        console.log('Auth OK');
-                        setupQueue(db);
-                    })
-                    .catch(err => {
-                        document.getElementById('info').textContent = 'Auth error: ' + err.code;
-                    });
-            } catch(e) {
-                console.error('Init error:', e);
-                document.getElementById('info').textContent = 'Error init: ' + e.message;
-            }
-        }
-
-        // Carga Firebase en cascada
-        const s1 = document.createElement('script');
-        s1.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
-        s1.onload = () => {
-            const s2 = document.createElement('script');
-            s2.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js';
-            s2.onload = () => {
-                const s3 = document.createElement('script');
-                s3.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js';
-                s3.onload = initFirebase;
-                document.head.appendChild(s3);
-            };
-            document.head.appendChild(s2);
-        };
-        document.head.appendChild(s1);
-
-        // Fullscreen con tecla F
-        document.addEventListener('keydown', e => {
-            if (e.key === 'f' || e.key === 'F') {
-                const el = document.documentElement;
-                if (document.fullscreenElement) document.exitFullscreen();
-                else el.requestFullscreen?.().catch(() => {});
-            }
-        });
-
-        // Fullscreen al hacer click
-        document.getElementById('player').addEventListener('click', () => {
-            const el = document.documentElement;
-            if (!document.fullscreenElement) el.requestFullscreen?.().catch(() => {});
-        });
-
+        /* ── FADE ── */
         function fadeOutTV() {
             return new Promise(resolve => {
                 if (!player || typeof player.getVolume !== 'function') { resolve(); return; }
@@ -196,6 +477,7 @@
             }, 50);
         }
 
+        /* ── SKIP TO NEXT ── */
         async function skipToNext() {
             if (!firestoreDb) return;
             try {
@@ -203,21 +485,24 @@
                 const snap = await firestoreDb
                     .collection(`artifacts/${firestoreAppId}/public/data/rocola_queue`)
                     .get();
-                if (snap.empty) {
-                    document.getElementById('info').textContent = 'Cola vacía';
-                    return;
-                }
-                const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                if (snap.empty) { showStandby(true); return; }
+
+                const items   = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 const playing = items.find(i => i.status === 'playing');
                 const pending = items
                     .filter(i => i.status === 'pending')
-                    .sort((a, b) => ((b.votes || 0) - (a.votes || 0)) || ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0)));
+                    .sort((a, b) =>
+                        ((b.votes || 0) - (a.votes || 0)) ||
+                        ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0))
+                    );
 
                 if (pending.length > 0) {
                     await firestoreDb
                         .collection(`artifacts/${firestoreAppId}/public/data/rocola_queue`)
                         .doc(pending[0].id)
                         .update({ status: 'playing', lastCommand: 'play', showDedication: false });
+                } else {
+                    showStandby(true);
                 }
                 if (playing) {
                     await firestoreDb
@@ -227,9 +512,56 @@
                 }
             } catch(e) {
                 console.error('skipToNext error:', e);
-                document.getElementById('info').textContent = 'Error al cambiar canción';
             }
         }
+
+        /* ── INIT FIREBASE ── */
+        function initFirebase() {
+            try {
+                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                const auth = firebase.auth();
+                const db   = firebase.firestore();
+                firestoreDb = db;
+                setStatus('connecting', 'Autenticando');
+
+                auth.signInAnonymously()
+                    .then(() => {
+                        setStatus('connected', 'En vivo');
+                        setupQueue(db);
+                    })
+                    .catch(err => setStatus('error', 'Auth error'));
+            } catch(e) {
+                setStatus('error', 'Error init');
+            }
+        }
+
+        /* ── LOAD FIREBASE ── */
+        const s1 = document.createElement('script');
+        s1.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
+        s1.onload = () => {
+            const s2 = document.createElement('script');
+            s2.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js';
+            s2.onload = () => {
+                const s3 = document.createElement('script');
+                s3.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js';
+                s3.onload = initFirebase;
+                document.head.appendChild(s3);
+            };
+            document.head.appendChild(s2);
+        };
+        document.head.appendChild(s1);
+
+        /* ── FULLSCREEN ── */
+        document.addEventListener('keydown', e => {
+            if (e.key === 'f' || e.key === 'F') {
+                if (document.fullscreenElement) document.exitFullscreen();
+                else document.documentElement.requestFullscreen?.().catch(() => {});
+            }
+        });
+        document.addEventListener('dblclick', () => {
+            if (document.fullscreenElement) document.exitFullscreen();
+            else document.documentElement.requestFullscreen?.().catch(() => {});
+        });
     </script>
     <script async src="https://www.youtube.com/iframe_api"></script>
 </body>
