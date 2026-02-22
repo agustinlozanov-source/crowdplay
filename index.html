@@ -2457,7 +2457,10 @@ function updateClientUI() {
                         </div>
                         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                             <button class="vote-btn" onclick="voteSong('${s.id}', ${s.votes || 0})">🔥 <span>${s.votes || 0}</span></button>
-                            ${s.userId === _me ? `<button onclick="toggleBoostPanel('boost-${s.id}')" style="width:32px;height:32px;border-radius:50%;background:rgba(240,180,41,0.15);border:1px solid rgba(240,180,41,0.35);color:#f0b429;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:900;">R</button>` : ''}
+                            ${s.userId === _me ? `
+    <button onclick="toggleBoostPanel('boost-${s.id}')" style="width:32px;height:32px;border-radius:50%;background:rgba(240,180,41,0.15);border:1px solid rgba(240,180,41,0.35);color:#f0b429;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:900;">R</button>
+    <button onclick="deleteMyQueue('${s.id}')" style="width:32px;height:32px;border-radius:50%;background:rgba(232,54,42,0.12);border:1px solid rgba(232,54,42,0.25);color:#e8362a;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="Eliminar">✕</button>
+` : ''}
                         </div>
                     </div>
                     ${s.userId === _me ? `
@@ -3527,6 +3530,14 @@ async function showForgotPassword() {
     } catch(err) {
         toast('No se encontró una cuenta con ese email.', 'error');
     }
+}
+
+async function deleteMyQueue(songId) {
+    if (!confirm('¿Eliminar tu canción de la cola?')) return;
+    try {
+        await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(songId).delete();
+        toast('Canción eliminada', 'info');
+    } catch(e) { toast('Error al eliminar', 'error'); }
 }
 
 async function boostSong(songId, currentIdx, type) {

@@ -1424,7 +1424,7 @@
     function renderDJPanelQueue() {
         const container = document.getElementById('dj-panel-queue');
         if (!container) return;
-        const pending = queue.slice(0, 5);
+        const pending = queue;
         if (!currentTrack && !pending.length) {
             container.innerHTML = '<div style="font-size:0.78rem;font-weight:600;color:var(--text-muted);text-align:center;padding:14px 0;">Cola vacía</div>';
             return;
@@ -1977,7 +1977,7 @@
 
                 <!-- COLA DJ -->
                 <div class="dj-section" style="border-top:1px solid var(--border);">
-                    <div class="dj-section-label">Cola — máx. 5</div>
+                    <div class="dj-section-label">Cola completa</div>
                     <div id="dj-panel-queue"></div>
                 </div>
 
