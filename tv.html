@@ -544,12 +544,7 @@
                         setupQueue(db);
                         setupBannerListener(db);
                     })
-                    .catch(() => {
-                        // Anonymous desactivado — continuar sin auth (lectura pública)
-                        setStatus('connected', 'En vivo');
-                        setupQueue(db);
-                        setupBannerListener(db);
-                    });
+                    .catch(err => setStatus('error', 'Auth error'));
             } catch(e) {
                 setStatus('error', 'Error init');
             }
