@@ -2672,7 +2672,6 @@ async function saveUserRegistration() {
         const profile = { name: n, surname: s, email: e, whatsapp: w, id: uid, createdAt: firebase.firestore.FieldValue.serverTimestamp(), credits: 0 };
         await db.collection(`artifacts/${appId}/public/data/client_profiles`).doc(uid).set(profile);
         localStorage.setItem('rocola_user_v1', JSON.stringify({ name: n, surname: s, whatsapp: w, id: uid }));
-        window._isRegistering = false;
 
         document.getElementById('registration-screen').classList.add('hidden');
         startRealtimeSync();
@@ -3485,7 +3484,6 @@ async function loginUser() {
         if (profile.exists) {
             localStorage.setItem('rocola_user_v1', JSON.stringify({ ...profile.data(), id: cred.user.uid }));
         }
-        window._isRegistering = false;
         document.getElementById('registration-screen').classList.add('hidden');
         startRealtimeSync();
         setMode('client');
