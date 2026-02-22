@@ -4031,15 +4031,23 @@ async function testSampler(id) {
     playSamplerAudio(snap.data().audioData);
 }
 
-function playSamplerAudio(audioData) {
-    if (samplerAudioCache[audioData]) {
-        samplerAudioCache[audioData].currentTime = 0;
-        samplerAudioCache[audioData].play();
-        return;
+const _samplerAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+async function playSamplerAudio(audioData) {
+    try {
+        const base64 = audioData.split(',')[1];
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const buffer = await _samplerAudioCtx.decodeAudioData(bytes.buffer);
+        const source = _samplerAudioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(_samplerAudioCtx.destination);
+        source.start(0);
+    } catch(e) {
+        console.error('Sampler error:', e);
+        toast('Error al reproducir: ' + e.message, 'error');
     }
-    const audio = new Audio(audioData);
-    samplerAudioCache[audioData] = audio;
-    audio.play();
 }
 
 async function deleteSampler(id) {
