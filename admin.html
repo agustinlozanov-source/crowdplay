@@ -1981,6 +1981,16 @@
                     <div id="dj-panel-queue"></div>
                 </div>
 
+                <!-- SAMPLER PAD -->
+                <div class="dj-panel" style="margin-top:12px;">
+                    <div class="dj-section">
+                        <div class="dj-section-label">Sampler en vivo</div>
+                        <div id="sampler-pad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;">
+                            <div style="text-align:center;color:var(--text-muted);font-size:0.72rem;padding:16px;grid-column:1/-1;">Sin samplers — créalos en el panel Sampler</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- BANNER TV -->
                 <div class="dj-panel" style="margin-top:12px;">
                     <div class="dj-section">
@@ -2026,12 +2036,60 @@
             <!-- ── PANEL: SAMPLER ── -->
             <div class="staff-panel" id="panel-sampler">
                 <div class="content-card">
-                    <div class="content-card-title">Sampler DJ</div>
-                    <div class="sampler-grid">
-                        <button class="sampler-btn"><span style="font-size:1.5rem;">👏</span>Aplausos</button>
-                        <button class="sampler-btn"><span style="font-size:1.5rem;">🥳</span>Ovación</button>
-                        <button class="sampler-btn"><span style="font-size:1.5rem;">😂</span>Risas</button>
-                        <button class="sampler-btn"><span style="font-size:1.5rem;">🎺</span>Corneta</button>
+                    <div class="content-card-title">Gestionar Samplers</div>
+
+                    <!-- Crear nuevo sampler -->
+                    <div style="background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:14px;padding:16px;margin-bottom:16px;">
+                        <div style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:12px;">Nuevo Sampler</div>
+                        <div style="display:flex;flex-direction:column;gap:10px;">
+                            <input id="sampler-name" type="text" placeholder="Nombre del botón (ej: Aplausos)" style="background:var(--bg-card);border:1px solid var(--border-mid);border-radius:10px;padding:9px 12px;color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:0.82rem;outline:none;width:100%;">
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;flex-shrink:0;">Color:</div>
+                                <div style="display:flex;gap:6px;">
+                                    <div onclick="selectSamplerColor('#e8362a')" style="width:22px;height:22px;border-radius:50%;background:#e8362a;cursor:pointer;border:2px solid transparent;" class="sampler-color-opt"></div>
+                                    <div onclick="selectSamplerColor('#f0b429')" style="width:22px;height:22px;border-radius:50%;background:#f0b429;cursor:pointer;border:2px solid transparent;" class="sampler-color-opt"></div>
+                                    <div onclick="selectSamplerColor('#1fd670')" style="width:22px;height:22px;border-radius:50%;background:#1fd670;cursor:pointer;border:2px solid transparent;" class="sampler-color-opt"></div>
+                                    <div onclick="selectSamplerColor('#5b6ef5')" style="width:22px;height:22px;border-radius:50%;background:#5b6ef5;cursor:pointer;border:2px solid transparent;" class="sampler-color-opt"></div>
+                                    <div onclick="selectSamplerColor('#8b5cf6')" style="width:22px;height:22px;border-radius:50%;background:#8b5cf6;cursor:pointer;border:2px solid transparent;" class="sampler-color-opt"></div>
+                                </div>
+                                <div id="sampler-color-preview" style="width:22px;height:22px;border-radius:50%;background:#e8362a;border:2px solid white;margin-left:4px;"></div>
+                            </div>
+                            <!-- Audio source selector -->
+                            <div style="display:flex;gap:8px;">
+                                <button onclick="setSamplerSource('file')" id="sampler-src-file" style="flex:1;padding:8px;border-radius:10px;border:1px solid var(--accent-indigo);background:rgba(91,110,245,0.12);color:var(--accent-indigo);font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-transform:uppercase;letter-spacing:0.08em;">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    Subir archivo
+                                </button>
+                                <button onclick="setSamplerSource('record')" id="sampler-src-record" style="flex:1;padding:8px;border-radius:10px;border:1px solid var(--border-mid);background:transparent;color:var(--text-muted);font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-transform:uppercase;letter-spacing:0.08em;">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                                    Grabar
+                                </button>
+                            </div>
+                            <!-- File upload -->
+                            <div id="sampler-file-area">
+                                <label for="sampler-file-input" style="display:flex;align-items:center;justify-content:center;gap:8px;height:40px;background:var(--bg-card);border:1px dashed var(--border-mid);border-radius:10px;cursor:pointer;font-size:0.72rem;font-weight:700;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                                    Seleccionar audio
+                                </label>
+                                <input type="file" id="sampler-file-input" accept="audio/*" onchange="handleSamplerFile(event)" style="display:none;">
+                                <div id="sampler-file-name" style="font-size:0.7rem;color:var(--accent-green);margin-top:6px;display:none;"></div>
+                            </div>
+                            <!-- Record area -->
+                            <div id="sampler-record-area" style="display:none;">
+                                <button id="sampler-record-btn" onclick="toggleSamplerRecording()" style="width:100%;padding:10px;border-radius:10px;border:none;background:rgba(232,54,42,0.12);color:var(--accent-red);font-family:'Barlow',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-transform:uppercase;letter-spacing:0.08em;">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
+                                    Grabar audio
+                                </button>
+                                <div id="sampler-record-status" style="font-size:0.7rem;color:var(--text-muted);text-align:center;margin-top:6px;display:none;"></div>
+                            </div>
+                            <button onclick="saveSampler()" style="width:100%;padding:10px;background:var(--accent-red);border:none;border-radius:10px;color:white;font-family:'Barlow',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em;">Guardar Sampler</button>
+                        </div>
+                    </div>
+
+                    <!-- Lista de samplers guardados -->
+                    <div style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:10px;">Samplers guardados</div>
+                    <div id="sampler-list" style="display:flex;flex-direction:column;gap:8px;">
+                        <div style="text-align:center;color:var(--text-muted);font-size:0.72rem;padding:12px;">Sin samplers guardados</div>
                     </div>
                 </div>
             </div>
@@ -2604,6 +2662,7 @@ function switchStaffPanel(panelName) {
     const sitem = document.getElementById(`sitem-${panelName}`);
     if (sitem) sitem.classList.add('active');
     if (panelName === 'player') { updatePlayIcon(); updateDedicationCard(); renderDJPanelQueue(); loadBanners(); }
+    if (panelName === 'sampler' || panelName === 'player') loadSamplers();
     // Update topbar title
     const titles = {
         'dashboard': 'Dashboard',
@@ -3847,6 +3906,179 @@ async function deleteBanner(id) {
         loadBanners();
         toast('Banner eliminado', 'info');
     } catch(e) { toast('Error al eliminar: ' + e.message, 'error'); console.error(e); }
+}
+
+// ── SAMPLER MANAGER ──
+let samplerColor = '#e8362a';
+let samplerSource = 'file';
+let samplerAudioData = null;
+let samplerMediaRecorder = null;
+let samplerRecording = false;
+let samplerRecordChunks = [];
+
+function selectSamplerColor(color) {
+    samplerColor = color;
+    document.getElementById('sampler-color-preview').style.background = color;
+    document.querySelectorAll('.sampler-color-opt').forEach(el => {
+        el.style.border = el.style.background === color || el.getAttribute('onclick').includes(color)
+            ? '2px solid white' : '2px solid transparent';
+    });
+}
+
+function setSamplerSource(src) {
+    samplerSource = src;
+    document.getElementById('sampler-file-area').style.display = src === 'file' ? 'block' : 'none';
+    document.getElementById('sampler-record-area').style.display = src === 'record' ? 'block' : 'none';
+    const fileBtn = document.getElementById('sampler-src-file');
+    const recBtn  = document.getElementById('sampler-src-record');
+    if (src === 'file') {
+        fileBtn.style.background = 'rgba(91,110,245,0.12)'; fileBtn.style.color = 'var(--accent-indigo)'; fileBtn.style.borderColor = 'var(--accent-indigo)';
+        recBtn.style.background  = 'transparent'; recBtn.style.color = 'var(--text-muted)'; recBtn.style.borderColor = 'var(--border-mid)';
+    } else {
+        recBtn.style.background  = 'rgba(232,54,42,0.12)'; recBtn.style.color = 'var(--accent-red)'; recBtn.style.borderColor = 'var(--accent-red)';
+        fileBtn.style.background = 'transparent'; fileBtn.style.color = 'var(--text-muted)'; fileBtn.style.borderColor = 'var(--border-mid)';
+    }
+}
+
+function handleSamplerFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        samplerAudioData = ev.target.result;
+        const nameEl = document.getElementById('sampler-file-name');
+        nameEl.innerText = '✓ ' + file.name;
+        nameEl.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
+async function toggleSamplerRecording() {
+    const btn = document.getElementById('sampler-record-btn');
+    const status = document.getElementById('sampler-record-status');
+    if (!samplerRecording) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            samplerRecordChunks = [];
+            samplerMediaRecorder = new MediaRecorder(stream);
+            samplerMediaRecorder.ondataavailable = e => samplerRecordChunks.push(e.data);
+            samplerMediaRecorder.onstop = () => {
+                const blob = new Blob(samplerRecordChunks, { type: 'audio/webm' });
+                const reader = new FileReader();
+                reader.onload = ev => { samplerAudioData = ev.target.result; };
+                reader.readAsDataURL(blob);
+                stream.getTracks().forEach(t => t.stop());
+                status.innerText = '✓ Audio grabado';
+                status.style.color = 'var(--accent-green)';
+                status.style.display = 'block';
+            };
+            samplerMediaRecorder.start();
+            samplerRecording = true;
+            btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg> Detener grabación';
+            btn.style.background = 'rgba(232,54,42,0.25)';
+        } catch(e) { toast('No se pudo acceder al micrófono', 'error'); }
+    } else {
+        samplerMediaRecorder.stop();
+        samplerRecording = false;
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg> Grabar audio';
+        btn.style.background = 'rgba(232,54,42,0.12)';
+    }
+}
+
+async function saveSampler() {
+    const name = document.getElementById('sampler-name').value.trim();
+    if (!name) { toast('Ponle nombre al sampler', 'warning'); return; }
+    if (!samplerAudioData) { toast('Selecciona o graba un audio', 'warning'); return; }
+    try {
+        await db.collection(`artifacts/${appId}/public/data/samplers`).add({
+            name, color: samplerColor, audioData: samplerAudioData,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById('sampler-name').value = '';
+        document.getElementById('sampler-file-name').style.display = 'none';
+        document.getElementById('sampler-file-input').value = '';
+        samplerAudioData = null;
+        loadSamplers();
+        toast('Sampler guardado', 'success');
+    } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
+}
+
+async function loadSamplers() {
+    const container = document.getElementById('sampler-list');
+    if (!container) return;
+    const snap = await db.collection(`artifacts/${appId}/public/data/samplers`).get();
+    if (snap.empty) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:0.72rem;padding:12px;">Sin samplers guardados</div>';
+        return;
+    }
+    const samplers = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a,b) => (a.createdAt?.seconds||0) - (b.createdAt?.seconds||0));
+    container.innerHTML = samplers.map(s => `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;">
+            <div style="width:12px;height:12px;border-radius:50%;background:${s.color};flex-shrink:0;"></div>
+            <div style="flex:1;font-size:0.82rem;font-weight:700;color:var(--text-primary);">${s.name}</div>
+            <button onclick="testSampler('${s.id}')" style="padding:5px 10px;background:rgba(31,214,112,0.1);border:1px solid rgba(31,214,112,0.25);border-radius:8px;color:var(--accent-green);font-family:'Barlow',sans-serif;font-size:0.65rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em;">▶ Test</button>
+            <button onclick="deleteSampler('${s.id}')" style="padding:5px 10px;background:rgba(232,54,42,0.08);border:1px solid rgba(232,54,42,0.2);border-radius:8px;color:var(--accent-red);font-family:'Barlow',sans-serif;font-size:0.65rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em;">✕</button>
+        </div>`).join('');
+    // Also refresh sampler pad in player panel
+    renderSamplerPad(samplers);
+}
+
+let samplerAudioCache = {};
+async function testSampler(id) {
+    const snap = await db.collection(`artifacts/${appId}/public/data/samplers`).doc(id).get();
+    if (!snap.exists) return;
+    playSamplerAudio(snap.data().audioData);
+}
+
+function playSamplerAudio(audioData) {
+    if (samplerAudioCache[audioData]) {
+        samplerAudioCache[audioData].currentTime = 0;
+        samplerAudioCache[audioData].play();
+        return;
+    }
+    const audio = new Audio(audioData);
+    samplerAudioCache[audioData] = audio;
+    audio.play();
+}
+
+async function deleteSampler(id) {
+    if (!confirm('¿Eliminar este sampler?')) return;
+    await db.collection(`artifacts/${appId}/public/data/samplers`).doc(id).delete();
+    loadSamplers();
+    toast('Sampler eliminado', 'info');
+}
+
+function renderSamplerPad(samplers) {
+    const pad = document.getElementById('sampler-pad');
+    if (!pad) return;
+    if (!samplers || samplers.length === 0) {
+        pad.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:0.72rem;padding:16px;">Sin samplers — créalos en el panel Sampler</div>';
+        return;
+    }
+    pad.innerHTML = samplers.map(s => `
+        <button onclick="fireSampler('${s.id}')" data-sampler-id="${s.id}"
+            style="padding:14px 8px;border-radius:12px;border:1px solid ${s.color}33;background:${s.color}15;
+            color:${s.color};font-family:'Barlow',sans-serif;font-size:0.78rem;font-weight:800;
+            cursor:pointer;text-align:center;text-transform:uppercase;letter-spacing:0.06em;
+            transition:all 0.1s;" 
+            onmousedown="this.style.transform='scale(0.94)';this.style.background='${s.color}30'"
+            onmouseup="this.style.transform='';this.style.background='${s.color}15'"
+            title="${s.name}">
+            ${s.name}
+        </button>`).join('');
+}
+
+let samplerCache = {};
+async function fireSampler(id) {
+    if (samplerCache[id]) {
+        playSamplerAudio(samplerCache[id]);
+        return;
+    }
+    const snap = await db.collection(`artifacts/${appId}/public/data/samplers`).doc(id).get();
+    if (!snap.exists) return;
+    samplerCache[id] = snap.data().audioData;
+    playSamplerAudio(samplerCache[id]);
 }
 
 </script>
