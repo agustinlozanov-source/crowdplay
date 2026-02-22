@@ -2427,7 +2427,6 @@ function setMode(mode) {
         const tableN = localStorage.getItem('rocola_table_v1');
         const tInfo = document.getElementById('client-table-info');
         if (tInfo) tInfo.innerText = tableN ? `Mesa ${tableN}` : 'Mesa no asignada';
-        if (!tableN) setTimeout(() => document.getElementById('table-modal').classList.remove('hidden'), 800);
 
     } else {
         // Staff modes: admin (DJ), waiter, analytics
@@ -2883,8 +2882,8 @@ async function saveUserRegistration() {
 /* ═══════════════════════════════════════
    MODULE: TABLE
 ═══════════════════════════════════════ */
-function saveTableNumber() {
-    const table = document.getElementById('table-number-input').value;
+async function saveTableNumber() {
+    const table = document.getElementById('table-number-input').value.trim().toUpperCase();
     if (!table) { toast('Ingresa tu número de mesa.', 'warning'); return; }
     localStorage.setItem('rocola_table_v1', table);
     document.getElementById('table-modal').classList.add('hidden');
@@ -2892,6 +2891,15 @@ function saveTableNumber() {
     const tInfo = document.getElementById('client-table-info');
     if (tInfo) tInfo.innerText = `Mesa ${table}`;
     toast(`Mesa ${table} guardada ✓`, 'success');
+    const u = JSON.parse(localStorage.getItem('rocola_user_v1') || 'null');
+    if (u && db) {
+        try {
+            await db.collection(`artifacts/${appId}/public/data/active_tables`).doc(`mesa_${table}`).set({
+                table, userId: u.id, name: u.name,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        } catch(e) { console.warn('active_tables:', e.message); }
+    }
 }
 
 /* ═══════════════════════════════════════
@@ -3789,13 +3797,43 @@ function scrollChatToBottom() {
 async function sendChatTrigger(type, text, subtext) {
     const table = localStorage.getItem('rocola_table_v1');
     const u = JSON.parse(localStorage.getItem('rocola_user_v1') || 'null');
-    if (!table || !u) return;
+    if (!table || !u) { toast('Primero asigna tu mesa', 'warning'); return; }
+    try {
+        const snap = await db.collection(`artifacts/${appId}/public/data/active_tables`).get();
+        const others = snap.docs.map(d => d.data()).filter(t => t.table !== table);
+        showChatTargetPicker(type, text, subtext, table, others);
+    } catch(e) { toast('Error al cargar mesas', 'error'); }
+}
+
+function showChatTargetPicker(type, text, subtext, myTable, others) {
+    const existing = document.getElementById('chat-target-picker');
+    if (existing) existing.remove();
+    const opts = [
+        `<button onclick="confirmSendChat('${type}','${text}','${subtext}',null)" style="width:100%;padding:10px 14px;background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:10px;color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:0.8rem;font-weight:700;cursor:pointer;text-align:left;margin-bottom:6px;">📢 Toda la sala</button>`,
+        ...others.map(t => `<button onclick="confirmSendChat('${type}','${text}','${subtext}','${t.table}')" style="width:100%;padding:10px 14px;background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:10px;color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:0.8rem;font-weight:700;cursor:pointer;text-align:left;margin-bottom:6px;">🪑 Mesa ${t.table} — ${t.name}</button>`)
+    ].join('');
+    const picker = document.createElement('div');
+    picker.id = 'chat-target-picker';
+    picker.style.cssText = 'position:fixed;inset:0;z-index:300;display:flex;align-items:flex-end;background:rgba(0,0,0,0.6);';
+    picker.innerHTML = `
+        <div style="width:100%;background:var(--bg-surface);border-radius:20px 20px 0 0;padding:20px 16px 32px;">
+            <div style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:14px;">¿A quién va dirigido?</div>
+            ${opts}
+            <button onclick="document.getElementById('chat-target-picker').remove()" style="width:100%;padding:10px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--text-muted);font-family:'Barlow',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;margin-top:4px;">Cancelar</button>
+        </div>`;
+    document.body.appendChild(picker);
+}
+
+async function confirmSendChat(type, text, subtext, toTable) {
+    document.getElementById('chat-target-picker')?.remove();
+    const table = localStorage.getItem('rocola_table_v1');
+    const u = JSON.parse(localStorage.getItem('rocola_user_v1') || 'null');
     const msg = text.replace('{me}', table);
     try {
         await db.collection(`artifacts/${appId}/public/data/chat_messages`).add({
             type, text: msg, subtext,
-            fromTable: table, fromName: u.name,
-            fromUserId: u.id,
+            fromTable: table, fromName: u.name, fromUserId: u.id,
+            toTable: toTable || null,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             replies: []
         });
@@ -3850,6 +3888,7 @@ function renderChatMessages(msgs, myId) {
     const typeColors = { join_tables:'#5b6ef5', karaoke_challenge:'#e8362a', dedication:'#f0b429', applause:'#1fd670', birthday:'#8b5cf6', louder:'#e8362a' };
     container.innerHTML = msgs.map(m => {
         const isMine = m.fromUserId === myId;
+        const isForMe = m.toTable && m.toTable === localStorage.getItem('rocola_table_v1') && !isMine;
         const color = typeColors[m.type] || '#5b6ef5';
         const time = m.createdAt?.seconds ? new Date(m.createdAt.seconds*1000).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'}) : '';
         const repliesHTML = m.replies?.length ? m.replies.map(r =>
@@ -3861,7 +3900,7 @@ function renderChatMessages(msgs, myId) {
                 <button class="chat-reply-btn" onclick="replyChatMessage('${m.id}','😂 Paso')">Paso</button>
                 <button class="chat-reply-btn" onclick="replyChatMessage('${m.id}','🔥 ¡Estuvo!')">🔥 ¡Estuvo!</button>
             </div>` : '';
-        return `<div class="chat-msg ${isMine ? 'mine' : 'incoming'}">
+        return `<div class="chat-msg ${isMine ? 'mine' : 'incoming'}" style="${isForMe ? 'border-color:rgba(240,180,41,0.5);background:rgba(240,180,41,0.08);' : ''}">
             <div class="chat-msg-header">
                 <div style="width:8px;height:8px;border-radius:50%;background:${color};"></div>
                 <div class="chat-msg-from">${m.fromTable ? 'Mesa '+m.fromTable : m.fromName}</div>
