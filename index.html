@@ -2815,6 +2815,7 @@ function checkClientRegistration() {
     const u = JSON.parse(localStorage.getItem('rocola_user_v1') || 'null');
     if (u && u.id) {
         const table = localStorage.getItem('rocola_table_v1');
+        startChatListener();
         if (!table) {
             setMode('client');
             setTimeout(() => document.getElementById('table-modal').classList.remove('hidden'), 300);
