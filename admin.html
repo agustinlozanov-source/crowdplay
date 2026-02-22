@@ -1981,6 +1981,14 @@
                     <div id="dj-panel-queue"></div>
                 </div>
 
+                <!-- CHAT FEED DJ -->
+                <div class="dj-panel" style="margin-top:12px;">
+                    <div class="dj-section">
+                        <div class="dj-section-label">Chat en vivo</div>
+                        <div id="dj-chat-feed" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;margin-top:6px;"></div>
+                    </div>
+                </div>
+
                 <!-- SAMPLER PAD -->
                 <div class="dj-panel" style="margin-top:12px;">
                     <div class="dj-section">
@@ -2661,7 +2669,7 @@ function switchStaffPanel(panelName) {
     if (panel) panel.classList.add('active');
     const sitem = document.getElementById(`sitem-${panelName}`);
     if (sitem) sitem.classList.add('active');
-    if (panelName === 'player') { updatePlayIcon(); updateDedicationCard(); renderDJPanelQueue(); loadBanners(); }
+    if (panelName === 'player') { updatePlayIcon(); updateDedicationCard(); renderDJPanelQueue(); loadBanners(); startAdminChatListener(); }
     if (panelName === 'sampler' || panelName === 'player') loadSamplers();
     // Update topbar title
     const titles = {
@@ -4087,6 +4095,51 @@ async function fireSampler(id) {
     if (!snap.exists) return;
     samplerCache[id] = snap.data().audioData;
     playSamplerAudio(samplerCache[id]);
+}
+
+// ── ADMIN CHAT ──
+function startAdminChatListener() {
+    db.collection(`artifacts/${appId}/public/data/chat_messages`)
+        .limit(50)
+        .onSnapshot(snap => {
+            const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                .sort((a,b) => (a.createdAt?.seconds||0) - (b.createdAt?.seconds||0));
+            renderAdminChat(msgs);
+            const unread = msgs.filter(m => !m._seen).length;
+            const badge = document.getElementById('sb-chat-count');
+            if (badge) { badge.style.display = unread > 0 ? 'flex' : 'none'; badge.innerText = unread; }
+        }, err => console.warn('admin chat:', err.message));
+}
+
+function renderAdminChat(msgs) {
+    const typeColors = { join_tables:'#5b6ef5', karaoke_challenge:'#e8362a', dedication:'#f0b429', applause:'#1fd670', birthday:'#8b5cf6', louder:'#e8362a' };
+    const html = msgs.length === 0 ? '<div style="text-align:center;color:var(--text-muted);font-size:0.72rem;padding:12px;">Sin mensajes</div>' :
+        msgs.map(m => {
+            const color = typeColors[m.type] || '#5b6ef5';
+            const time = m.createdAt?.seconds ? new Date(m.createdAt.seconds*1000).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'}) : '';
+            const repliesHTML = m.replies?.length ? `<div style="font-size:0.65rem;color:var(--text-muted);margin-top:2px;">↩ ${m.replies.map(r=>`Mesa ${r.fromTable}: ${r.text}`).join(' · ')}</div>` : '';
+            return `<div style="padding:8px 10px;background:var(--bg-card);border:1px solid var(--border);border-left:3px solid ${color};border-radius:8px;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+                    <span style="font-size:0.65rem;font-weight:800;color:${color};text-transform:uppercase;">${m.fromTable ? 'Mesa '+m.fromTable : m.fromName}</span>
+                    <span style="font-size:0.6rem;color:var(--text-muted);margin-left:auto;">${time}</span>
+                </div>
+                <div style="font-size:0.75rem;font-weight:600;color:var(--text-primary);">${m.text}</div>
+                ${repliesHTML}
+            </div>`;
+        }).join('');
+    const feed1 = document.getElementById('admin-chat-feed');
+    const feed2 = document.getElementById('dj-chat-feed');
+    if (feed1) { feed1.innerHTML = html; feed1.scrollTop = feed1.scrollHeight; }
+    if (feed2) { feed2.innerHTML = html; feed2.scrollTop = feed2.scrollHeight; }
+}
+
+async function clearChatMessages() {
+    if (!confirm('¿Limpiar todos los mensajes del chat?')) return;
+    const snap = await db.collection(`artifacts/${appId}/public/data/chat_messages`).get();
+    const batch = db.batch();
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    toast('Chat limpiado', 'info');
 }
 
 </script>
