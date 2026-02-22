@@ -3789,14 +3789,14 @@ async function saveBanner() {
 async function loadBanners() {
     const container = document.getElementById('banner-list');
     if (!container) return;
-    const snap = await db.collection(`artifacts/${appId}/public/data/banners`).orderBy('createdAt','asc').get();
+    const snap = await db.collection(`artifacts/${appId}/public/data/banners`).get();
     if (snap.empty) {
         container.innerHTML = '<div style="font-size:0.72rem;color:var(--text-muted);text-align:center;padding:12px 0;">Sin banners guardados</div>';
         return;
     }
     container.innerHTML = '';
-    snap.docs.forEach(doc => {
-        const b = doc.data();
+    const sortedDocs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (a.createdAt?.seconds||0) - (b.createdAt?.seconds||0));
+    sortedDocs.forEach(b => {
         const row = document.createElement('div');
         row.style.cssText = `display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg-card);border:1px solid ${b.active ? 'rgba(31,214,112,0.3)' : 'var(--border)'};border-radius:12px;`;
         row.innerHTML = `
@@ -3817,35 +3817,36 @@ async function loadBanners() {
 }
 
 async function toggleBanner(id, activate) {
-    const batch = db.batch();
-    // Deactivate all first
-    const snap = await db.collection(`artifacts/${appId}/public/data/banners`).get();
-    snap.docs.forEach(doc => batch.update(doc.ref, { active: false }));
-    // Activate selected if turning on
-    if (activate) {
-        batch.update(db.collection(`artifacts/${appId}/public/data/banners`).doc(id), { active: true });
-    }
-    await batch.commit();
-    // Update tv banner setting
-    const bannerDoc = activate ? await db.collection(`artifacts/${appId}/public/data/banners`).doc(id).get() : null;
-    await db.collection(`artifacts/${appId}/public/data/rocola_settings`).doc('banner').set({
-        active: activate,
-        url: activate && bannerDoc ? bannerDoc.data().url : '',
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    loadBanners();
-    toast(activate ? 'Banner activado en TV' : 'Banner desactivado', activate ? 'success' : 'info');
+    try {
+        const batch = db.batch();
+        const snap = await db.collection(`artifacts/${appId}/public/data/banners`).get();
+        snap.docs.forEach(doc => batch.update(doc.ref, { active: false }));
+        if (activate) {
+            batch.update(db.collection(`artifacts/${appId}/public/data/banners`).doc(id), { active: true });
+        }
+        await batch.commit();
+        const bannerDoc = activate ? await db.collection(`artifacts/${appId}/public/data/banners`).doc(id).get() : null;
+        await db.collection(`artifacts/${appId}/public/data/rocola_settings`).doc('banner').set({
+            active: activate,
+            url: activate && bannerDoc ? bannerDoc.data().url : '',
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        loadBanners();
+        toast(activate ? 'Banner activado en TV' : 'Banner desactivado', activate ? 'success' : 'info');
+    } catch(e) { toast('Error al cambiar banner: ' + e.message, 'error'); console.error(e); }
 }
 
 async function deleteBanner(id) {
-    await db.collection(`artifacts/${appId}/public/data/banners`).doc(id).delete();
-    // If it was active, clear TV
-    const setting = await db.collection(`artifacts/${appId}/public/data/rocola_settings`).doc('banner').get();
-    if (setting.exists && setting.data().active) {
-        await db.collection(`artifacts/${appId}/public/data/rocola_settings`).doc('banner').set({ active: false, url: '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
-    }
-    loadBanners();
-    toast('Banner eliminado', 'info');
+    if (!confirm('¿Eliminar este banner?')) return;
+    try {
+        await db.collection(`artifacts/${appId}/public/data/banners`).doc(id).delete();
+        const setting = await db.collection(`artifacts/${appId}/public/data/rocola_settings`).doc('banner').get();
+        if (setting.exists && setting.data().active) {
+            await db.collection(`artifacts/${appId}/public/data/rocola_settings`).doc('banner').set({ active: false, url: '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+        }
+        loadBanners();
+        toast('Banner eliminado', 'info');
+    } catch(e) { toast('Error al eliminar: ' + e.message, 'error'); console.error(e); }
 }
 
 </script>

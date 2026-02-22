@@ -2119,10 +2119,18 @@ async function initFirebase() {
         } else {
             // Cliente: verificar si ya hay sesión activa
             auth.onAuthStateChanged(async user => {
+                // Si estamos en proceso de registro/login, ignorar este disparo
+                if (window._isRegistering) return;
+
                 if (user && !user.isAnonymous) {
-                    // Sesión activa — cargar perfil de Firestore
-                    const profile = await db.collection(`artifacts/${appId}/public/data/client_profiles`).doc(user.uid).get();
-                    if (profile.exists) {
+                    // Sesión activa — cargar perfil con reintentos (evita race condition)
+                    let profile = null;
+                    for (let i = 0; i < 3; i++) {
+                        const doc = await db.collection(`artifacts/${appId}/public/data/client_profiles`).doc(user.uid).get();
+                        if (doc.exists) { profile = doc; break; }
+                        if (i < 2) await new Promise(r => setTimeout(r, 800));
+                    }
+                    if (profile && profile.exists) {
                         localStorage.setItem('rocola_user_v1', JSON.stringify({ ...profile.data(), id: user.uid }));
                         proceedApp();
                     } else {
@@ -2656,12 +2664,14 @@ async function saveUserRegistration() {
             : firebase.auth.Auth.Persistence.SESSION;
         await auth.setPersistence(persistence);
 
+        window._isRegistering = true;
         const cred = await auth.createUserWithEmailAndPassword(e, p);
         const uid = cred.user.uid;
 
         const profile = { name: n, surname: s, email: e, whatsapp: w, id: uid, createdAt: firebase.firestore.FieldValue.serverTimestamp(), credits: 0 };
         await db.collection(`artifacts/${appId}/public/data/client_profiles`).doc(uid).set(profile);
         localStorage.setItem('rocola_user_v1', JSON.stringify({ name: n, surname: s, whatsapp: w, id: uid }));
+        window._isRegistering = false;
 
         document.getElementById('registration-screen').classList.add('hidden');
         startRealtimeSync();
@@ -3468,11 +3478,13 @@ async function loginUser() {
             ? firebase.auth.Auth.Persistence.LOCAL
             : firebase.auth.Auth.Persistence.SESSION;
         await auth.setPersistence(persistence);
+        window._isRegistering = true;
         const cred = await auth.signInWithEmailAndPassword(e, p);
         const profile = await db.collection(`artifacts/${appId}/public/data/client_profiles`).doc(cred.user.uid).get();
         if (profile.exists) {
             localStorage.setItem('rocola_user_v1', JSON.stringify({ ...profile.data(), id: cred.user.uid }));
         }
+        window._isRegistering = false;
         document.getElementById('registration-screen').classList.add('hidden');
         startRealtimeSync();
         setMode('client');
