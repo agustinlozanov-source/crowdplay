@@ -2025,6 +2025,7 @@ let firebaseConfig = manualFirebaseConfig;
 try { if (!firebaseConfig && typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config); } catch(e) {}
 
 let app, auth, db;
+let authStateUnsubscribe = null;
 let isAppReady = false;
 let appId = typeof __app_id !== 'undefined' ? __app_id : 'rocola-crowdplay2-v1';
 let player = null;
@@ -2118,7 +2119,7 @@ async function initFirebase() {
             proceedApp();
         } else {
             // Cliente: verificar si ya hay sesión activa
-            auth.onAuthStateChanged(async user => {
+            authStateUnsubscribe = auth.onAuthStateChanged(async user => {
                 // Si estamos en proceso de registro/login, ignorar este disparo
                 if (window._isRegistering) return;
 
@@ -2662,7 +2663,7 @@ async function saveUserRegistration() {
         const persistence = remember
             ? firebase.auth.Auth.Persistence.LOCAL
             : firebase.auth.Auth.Persistence.SESSION;
-        window._isRegistering = true;
+        if (authStateUnsubscribe) authStateUnsubscribe();
         await auth.setPersistence(persistence);
 
         const cred = await auth.createUserWithEmailAndPassword(e, p);
@@ -3477,7 +3478,7 @@ async function loginUser() {
         const persistence = remember
             ? firebase.auth.Auth.Persistence.LOCAL
             : firebase.auth.Auth.Persistence.SESSION;
-        window._isRegistering = true;
+        if (authStateUnsubscribe) authStateUnsubscribe();
         await auth.setPersistence(persistence);
         const cred = await auth.signInWithEmailAndPassword(e, p);
         const profile = await db.collection(`artifacts/${appId}/public/data/client_profiles`).doc(cred.user.uid).get();
