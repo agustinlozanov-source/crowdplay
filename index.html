@@ -2628,8 +2628,15 @@ function setSearchType(t) {
 ═══════════════════════════════════════ */
 function checkClientRegistration() {
     const u = JSON.parse(localStorage.getItem('rocola_user_v1') || 'null');
-    if (u && u.id) setMode('client');
-    else {
+    if (u && u.id) {
+        const table = localStorage.getItem('rocola_table_v1');
+        if (!table) {
+            setMode('client');
+            setTimeout(() => document.getElementById('table-modal').classList.remove('hidden'), 300);
+        } else {
+            setMode('client');
+        }
+    } else {
         document.getElementById('registration-screen').classList.remove('hidden');
         setTimeout(initPhoneInput, 200);
     }
