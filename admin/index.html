@@ -2961,7 +2961,7 @@ async function handleCallWaiter() {
     }
 }
 
-function handleRequestBill() {
+async function handleRequestBill() {
     const table = localStorage.getItem('rocola_table_v1');
     if (!table) document.getElementById('table-modal').classList.remove('hidden');
     else document.getElementById('bill-modal').classList.remove('hidden');
