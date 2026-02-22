@@ -2662,9 +2662,9 @@ async function saveUserRegistration() {
         const persistence = remember
             ? firebase.auth.Auth.Persistence.LOCAL
             : firebase.auth.Auth.Persistence.SESSION;
+        window._isRegistering = true;
         await auth.setPersistence(persistence);
 
-        window._isRegistering = true;
         const cred = await auth.createUserWithEmailAndPassword(e, p);
         const uid = cred.user.uid;
 
@@ -3477,8 +3477,8 @@ async function loginUser() {
         const persistence = remember
             ? firebase.auth.Auth.Persistence.LOCAL
             : firebase.auth.Auth.Persistence.SESSION;
-        await auth.setPersistence(persistence);
         window._isRegistering = true;
+        await auth.setPersistence(persistence);
         const cred = await auth.signInWithEmailAndPassword(e, p);
         const profile = await db.collection(`artifacts/${appId}/public/data/client_profiles`).doc(cred.user.uid).get();
         if (profile.exists) {
