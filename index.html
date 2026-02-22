@@ -2703,7 +2703,7 @@ function saveTableNumber() {
 /* ═══════════════════════════════════════
    MODULE: WAITER CALLS (Client side)
 ═══════════════════════════════════════ */
-async function handleCallWaiter() {
+async async function handleCallWaiter() {
     const table = localStorage.getItem('rocola_table_v1');
     if (!table) { document.getElementById('table-modal').classList.remove('hidden'); return; }
     const card = document.querySelector('.service-card:nth-child(1)');
@@ -2715,13 +2715,13 @@ async function handleCallWaiter() {
     }
 }
 
-async function handleRequestBill() {
+async async function handleRequestBill() {
     const table = localStorage.getItem('rocola_table_v1');
     if (!table) document.getElementById('table-modal').classList.remove('hidden');
     else document.getElementById('bill-modal').classList.remove('hidden');
 }
 
-async function sendWaiterCall(table, type, extra = {}) {
+async async function sendWaiterCall(table, type, extra = {}) {
     if (!isAppReady || !db) throw new Error('App no lista.');
     const u = JSON.parse(localStorage.getItem('rocola_user_v1'));
     if (!u?.id) throw new Error('Usuario no registrado.');
