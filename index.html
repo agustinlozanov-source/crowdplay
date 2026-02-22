@@ -2335,6 +2335,19 @@ function switchClientTab(tabName) {
    MODULE: REALTIME SYNC
 ═══════════════════════════════════════ */
 function startRealtimeSync() {
+    // Forzar primera carga de waiter_calls
+    db.collection(`artifacts/${appId}/public/data/waiter_calls`).get().then(snap => {
+        const calls = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        updateWaiterView(calls);
+        updateClientWaiterStatus(calls);
+        const activeCalls = calls.filter(c => c.status !== 'completed');
+        const badge = document.getElementById('sb-waiter-count');
+        if (badge) {
+            badge.style.display = activeCalls.length > 0 ? 'block' : 'none';
+            badge.innerText = activeCalls.length;
+        }
+    });
+
     db.collection(`artifacts/${appId}/public/data/rocola_queue`).onSnapshot(snap => {
         let items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         items.sort((a, b) => ((b.votes || 0) - (a.votes || 0)) || ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0)));
