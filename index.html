@@ -1389,7 +1389,7 @@
             <input id="reg-name"     class="reg-input" type="text"     placeholder="Nombre"   autocomplete="given-name">
             <input id="reg-surname"  class="reg-input" type="text"     placeholder="Apellido" autocomplete="family-name">
             <input id="reg-email"    class="reg-input" type="email"    placeholder="Email"    autocomplete="email">
-            <input id="reg-password" class="reg-input" type="password" placeholder="Contraseña (mín. 6 caracteres)" autocomplete="new-password">
+            <input id="reg-password" class="reg-input" type="password" placeholder="PIN (mín. 6 dígitos)" autocomplete="new-password">
             <div id="whatsapp-wrapper">
                 <input id="reg-whatsapp" class="reg-input" type="tel" placeholder="WhatsApp" autocomplete="tel" style="width:100%;">
             </div>
@@ -1408,7 +1408,7 @@
         <!-- FORMULARIO LOGIN -->
         <div id="form-login" style="display:none;flex-direction:column;gap:12px;">
             <input id="login-email"    class="reg-input" type="email"    placeholder="Email"      autocomplete="email">
-            <input id="login-password" class="reg-input" type="password" placeholder="Contraseña" autocomplete="current-password">
+            <input id="login-password" class="reg-input" type="password" placeholder="PIN" autocomplete="current-password">
             <label style="display:flex;align-items:center;gap:10px;font-size:0.8rem;font-weight:600;color:var(--text-secondary);cursor:pointer;">
                 <input id="login-remember" type="checkbox" checked style="width:16px;height:16px;accent-color:var(--accent-red);">
                 Recuérdame en este dispositivo
@@ -2847,7 +2847,7 @@ async function saveUserRegistration() {
         document.getElementById('reg-whatsapp').style.borderColor = 'var(--accent-red)';
         return;
     }
-    if (p.length < 6) { errEl.innerText = 'La contraseña debe tener al menos 6 caracteres.'; errEl.style.display = 'block'; return; }
+    if (p.length < 6) { errEl.innerText = 'El PIN debe tener al menos 6 caracteres.'; errEl.style.display = 'block'; return; }
 
     const btn = document.querySelector('#form-register .btn-primary');
     btn.disabled = true; btn.innerText = 'Creando cuenta...';
@@ -2873,7 +2873,7 @@ async function saveUserRegistration() {
     } catch(err) {
         const msg = err.code === 'auth/email-already-in-use' ? 'Este email ya tiene una cuenta. Usa "Ingresar".'
                   : err.code === 'auth/invalid-email'        ? 'Email inválido.'
-                  : err.code === 'auth/weak-password'        ? 'Contraseña muy débil.'
+                  : err.code === 'auth/weak-password'        ? 'El PIN debe tener al menos 6 caracteres.'
                   : err.message;
         errEl.innerText = msg; errEl.style.display = 'block';
         btn.disabled = false; btn.innerText = 'Crear cuenta';
@@ -3320,7 +3320,7 @@ async function adminLogin() {
         if (profile.role === 'superadmin') showAdminPanel(profile);
         else setMode(profile.role === 'dj' ? 'admin' : profile.role);
     } catch(err) {
-        const msg = err.code === 'auth/wrong-password' ? 'Contraseña incorrecta.' :
+        const msg = err.code === 'auth/wrong-password' ? 'PIN incorrecto.' :
                     err.code === 'auth/user-not-found'  ? 'Usuario no encontrado.' :
                     err.code === 'auth/invalid-email'   ? 'Email inválido.' : err.message;
         const errEl = document.getElementById('admin-login-error');
@@ -3344,7 +3344,7 @@ async function createStaffAccount() {
     const name     = document.getElementById('new-staff-name').value.trim();
     const role     = document.getElementById('new-staff-role').value;
     if (!email || !password || !name) { toast('Completa todos los campos.', 'warning'); return; }
-    if (password.length < 6) { toast('La contraseña debe tener al menos 6 caracteres.', 'warning'); return; }
+    if (password.length < 6) { toast('El PIN debe tener al menos 6 caracteres.', 'warning'); return; }
     try {
         const secondaryApp = firebase.initializeApp(firebaseConfig, 'secondary_' + Date.now());
         const secondaryAuth = secondaryApp.auth();
@@ -3693,7 +3693,7 @@ async function loginUser() {
         setMode('client');
     } catch(err) {
         const msg = err.code === 'auth/user-not-found'  ? 'No existe una cuenta con ese email.'
-                  : err.code === 'auth/wrong-password'  ? 'Contraseña incorrecta.'
+                  : err.code === 'auth/wrong-password'  ? 'PIN incorrecto.'
                   : err.code === 'auth/invalid-email'   ? 'Email inválido.'
                   : err.code === 'auth/too-many-requests' ? 'Demasiados intentos. Espera un momento.'
                   : err.message;
