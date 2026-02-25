@@ -39,6 +39,25 @@
             --sidebar-w-collapsed: 64px;
         }
 
+        /* Light Mode */
+        :root.light-mode {
+            --bg-base:    #f5f5f7;
+            --bg-surface: #ffffff;
+            --bg-card:    #f9f9fb;
+            --bg-elevated:#f0f0f3;
+            --border:     rgba(0,0,0,0.08);
+            --border-mid: rgba(0,0,0,0.12);
+            --text-primary:   #1a1a1a;
+            --text-secondary: #666666;
+            --text-muted:     #999999;
+            --accent-red:   #e8362a;
+            --accent-red-glow: rgba(232,54,42,0.2);
+            --accent-green: #1fd670;
+            --accent-amber: #f0b429;
+            --accent-indigo:#5b6ef5;
+            --accent-purple:#8b5cf6;
+        }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
@@ -567,15 +586,15 @@
 
         .sidebar-section-label {
             font-family: 'Barlow', sans-serif;
-            font-size: 0.62rem;
-            font-weight: 700;
+            font-size: 0.68rem;
+            font-weight: 800;
             letter-spacing: 0.14em;
             text-transform: uppercase;
-            color: var(--text-muted);
+            color: var(--text-secondary);
             padding: 12px 10px 6px;
             white-space: nowrap; overflow: hidden;
             transition: opacity 0.2s;
-            opacity: 0.6;
+            opacity: 0.9;
         }
         .sidebar.collapsed .sidebar-section-label { opacity: 0; }
 
@@ -657,7 +676,7 @@
 
         /* Staff Topbar */
         .staff-topbar {
-            height: 60px;
+            height: 64px;
             display: flex; align-items: center; justify-content: space-between;
             padding: 0 24px;
             background: var(--bg-surface);
@@ -729,18 +748,18 @@
 
         /* ── STAFF CONTENT CARDS ── */
         .content-card {
-            background: var(--bg-card);
+            background: var(--bg-surface);
             border: 1px solid var(--border);
             border-radius: 20px;
             padding: 24px;
         }
         .content-card-title {
             font-family: 'Barlow', sans-serif;
-            font-size: 0.7rem;
-            font-weight: 700;
+            font-size: 0.75rem;
+            font-weight: 800;
             letter-spacing: 0.14em;
             text-transform: uppercase;
-            color: var(--text-muted);
+            color: var(--text-secondary);
             margin-bottom: 20px;
             padding-bottom: 12px;
             border-bottom: 1px solid var(--border);
@@ -829,15 +848,15 @@
             background: var(--border);
         }
         .dj-section {
-            background: var(--bg-elevated);
+            background: var(--bg-surface);
             padding: 20px 24px;
         }
         .dj-section-label {
-            font-size: 0.6rem;
-            font-weight: 700;
+            font-size: 0.72rem;
+            font-weight: 800;
             letter-spacing: 0.15em;
             text-transform: uppercase;
-            color: var(--text-muted);
+            color: var(--text-secondary);
             margin-bottom: 12px;
         }
         /* Now playing */
@@ -1813,6 +1832,10 @@
 
             <!-- SYSTEM -->
             <div class="sidebar-section-label">Sistema</div>
+            <div class="sidebar-item" onclick="toggleTheme()">
+                <svg class="sidebar-item-icon" id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <span class="sidebar-item-label" id="theme-label">Modo oscuro</span>
+            </div>
             <div class="sidebar-item" onclick="copyRoleLink(currentMode)">
                 <svg class="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                 <span class="sidebar-item-label">Copiar enlace</span>
@@ -1951,6 +1974,22 @@
                     </div>
                 </div>
 
+                <!-- BUSCAR Y AGREGAR A COLA -->
+                <div class="dj-panel" style="margin-top:12px;">
+                    <div class="dj-section">
+                        <div class="dj-section-label">Agregar canción a la cola</div>
+                        <div style="display:flex;gap:8px;margin-bottom:12px;">
+                            <input id="dj-search-input" type="text" placeholder="Buscar canción en YouTube..." style="flex:1;background:var(--bg-card);border:1px solid var(--border-mid);border-radius:10px;padding:10px 12px;color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:0.8rem;outline:none;" oninput="djDebounceSearch()">
+                            <button onclick="clearDJSearch()" style="width:36px;height:36px;background:var(--bg-card);border:1px solid var(--border-mid);border-radius:10px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                        </div>
+                        <div id="dj-search-results" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;">
+                            <div style="text-align:center;color:var(--text-muted);font-size:0.72rem;font-weight:600;padding:12px 0;text-transform:uppercase;letter-spacing:0.08em;">Escribe para buscar</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- DEDICATORIA -->
                 <div class="dj-panel" style="margin-top:12px;">
                     <div class="dj-section">
@@ -2004,26 +2043,133 @@
                     <div class="dj-section">
                         <div class="dj-section-label">Banners TV — 1920 × 200 px</div>
 
-                        <!-- Upload area -->
-                        <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:14px;">
-                            <div style="flex:1;">
-                                <input id="banner-name-input" type="text" placeholder="Nombre del banner..." style="width:100%;background:var(--bg-card);border:1px solid var(--border-mid);border-radius:10px;padding:9px 12px;color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:0.8rem;outline:none;margin-bottom:8px;">
-                                <label for="banner-file-input" style="display:flex;align-items:center;justify-content:center;gap:8px;height:40px;background:var(--bg-card);border:1px dashed var(--border-mid);border-radius:10px;cursor:pointer;font-size:0.72rem;font-weight:700;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent-indigo)'" onmouseout="this.style.borderColor='var(--border-mid)'">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                    Seleccionar imagen
-                                </label>
-                                <input type="file" id="banner-file-input" accept="image/*" onchange="handleBannerUpload(event)" style="display:none;">
-                            </div>
-                            <button onclick="saveBanner()" style="height:40px;padding:0 16px;background:var(--accent-indigo);border:none;border-radius:10px;color:white;font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;flex-shrink:0;">Guardar</button>
+                        <!-- Tabs para Subir vs Crear -->
+                        <div style="display:flex;gap:8px;margin-bottom:14px;border-bottom:1px solid var(--border);">
+                            <button onclick="switchBannerTab('upload')" id="banner-tab-upload" style="flex:1;padding:10px 12px;background:transparent;border:none;border-bottom:2px solid var(--accent-indigo);color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:0.8rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em;">Subir imagen</button>
+                            <button onclick="switchBannerTab('create')" id="banner-tab-create" style="flex:1;padding:10px 12px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-family:'Barlow',sans-serif;font-size:0.8rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em;transition:all 0.2s;">Crear personalizado</button>
                         </div>
 
-                        <!-- Preview of selected file -->
-                        <div id="banner-new-preview" style="display:none;margin-bottom:14px;border-radius:10px;overflow:hidden;border:1px solid var(--border);">
-                            <img id="banner-preview-img" style="width:100%;height:60px;object-fit:cover;display:block;">
+                        <!-- TAB: UPLOAD IMAGEN -->
+                        <div id="banner-tab-upload-content">
+                            <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:14px;">
+                                <div style="flex:1;">
+                                    <input id="banner-name-input" type="text" placeholder="Nombre del banner..." style="width:100%;background:var(--bg-card);border:1px solid var(--border-mid);border-radius:10px;padding:9px 12px;color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:0.8rem;outline:none;margin-bottom:8px;">
+                                    <label for="banner-file-input" style="display:flex;align-items:center;justify-content:center;gap:8px;height:40px;background:var(--bg-card);border:1px dashed var(--border-mid);border-radius:10px;cursor:pointer;font-size:0.72rem;font-weight:700;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--accent-indigo)'" onmouseout="this.style.borderColor='var(--border-mid)'">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        Seleccionar imagen
+                                    </label>
+                                    <input type="file" id="banner-file-input" accept="image/*" onchange="handleBannerUpload(event)" style="display:none;">
+                                </div>
+                                <button onclick="saveBanner()" style="height:40px;padding:0 16px;background:var(--accent-indigo);border:none;border-radius:10px;color:white;font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;flex-shrink:0;">Guardar</button>
+                            </div>
+                            <div id="banner-new-preview" style="display:none;margin-bottom:14px;border-radius:10px;overflow:hidden;border:1px solid var(--border);">
+                                <img id="banner-preview-img" style="width:100%;height:60px;object-fit:cover;display:block;">
+                            </div>
+                        </div>
+
+                        <!-- TAB: CREAR PERSONALIZADO -->
+                        <div id="banner-tab-create-content" style="display:none;">
+                            <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;padding:12px;background:var(--bg-elevated);border-radius:10px;">
+                                <!-- Nombre -->
+                                <input id="custom-banner-name" type="text" placeholder="Nombre del banner personalizado..." style="width:100%;background:var(--bg-card);border:1px solid var(--border-mid);border-radius:10px;padding:9px 12px;color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:0.8rem;outline:none;">
+                                
+                                <!-- Texto del banner -->
+                                <div>
+                                    <label style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);display:block;margin-bottom:6px;">Texto</label>
+                                    <textarea id="custom-banner-text" placeholder="Escribe el texto del banner..." style="width:100%;background:var(--bg-card);border:1px solid var(--border-mid);border-radius:10px;padding:9px 12px;color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:0.8rem;outline:none;min-height:60px;resize:vertical;"></textarea>
+                                </div>
+
+                                <!-- Tipografía y tamaño -->
+                                <div style="display:flex;gap:10px;">
+                                    <div style="flex:1;">
+                                        <label style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);display:block;margin-bottom:6px;">Fuente</label>
+                                        <select id="custom-banner-font" style="width:100%;background:var(--bg-card);border:1px solid var(--border-mid);border-radius:10px;padding:8px 12px;color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:0.8rem;outline:none;">
+                                            <option value="Arial, sans-serif">Arial</option>
+                                            <option value="'Barlow', sans-serif" selected>Barlow</option>
+                                            <option value="Georgia, serif">Georgia</option>
+                                            <option value="'Courier New', monospace">Courier</option>
+                                        </select>
+                                    </div>
+                                    <div style="flex:1;">
+                                        <label style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);display:block;margin-bottom:6px;">Tamaño</label>
+                                        <input type="range" id="custom-banner-size" min="20" max="80" value="48" style="width:100%;cursor:pointer;">
+                                        <div style="font-size:0.65rem;color:var(--text-muted);text-align:center;margin-top:4px;"><span id="custom-banner-size-display">48</span>px</div>
+                                    </div>
+                                </div>
+
+                                <!-- Estilo de texto -->
+                                <div>
+                                    <label style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);display:block;margin-bottom:6px;">Estilo</label>
+                                    <div style="display:flex;gap:8px;">
+                                        <button onclick="toggleCustomBannerStyle('bold')" id="custom-banner-bold" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border-mid);background:var(--bg-card);color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:0.75rem;font-weight:700;cursor:pointer;text-transform:uppercase;">Negrita</button>
+                                        <button onclick="toggleCustomBannerStyle('italic')" id="custom-banner-italic" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border-mid);background:var(--bg-card);color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:0.75rem;font-style:italic;cursor:pointer;text-transform:uppercase;">Cursiva</button>
+                                    </div>
+                                </div>
+
+                                <!-- Alineación -->
+                                <div>
+                                    <label style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);display:block;margin-bottom:6px;">Alineación</label>
+                                    <div style="display:flex;gap:8px;">
+                                        <button onclick="setCustomBannerAlign('left')" id="custom-banner-align-left" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border-mid);background:var(--bg-card);color:var(--text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+                                        </button>
+                                        <button onclick="setCustomBannerAlign('center')" id="custom-banner-align-center" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--accent-indigo);background:rgba(91,110,245,0.12);color:var(--accent-indigo);cursor:pointer;display:flex;align-items:center;justify-content:center;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
+                                        </button>
+                                        <button onclick="setCustomBannerAlign('right')" id="custom-banner-align-right" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border-mid);background:var(--bg-card);color:var(--text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="10" x2="21" y2="10"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="14" x2="21" y2="14"/><line x1="7" y1="18" x2="21" y2="18"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Color de texto -->
+                                <div>
+                                    <label style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);display:block;margin-bottom:6px;">Color de texto</label>
+                                    <input type="color" id="custom-banner-text-color" value="#eef0f8" style="width:100%;height:40px;border:1px solid var(--border-mid);border-radius:10px;cursor:pointer;">
+                                </div>
+
+                                <!-- Fondo -->
+                                <div>
+                                    <label style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);display:block;margin-bottom:6px;">Tipo de fondo</label>
+                                    <div style="display:flex;gap:8px;">
+                                        <button onclick="setCustomBannerBgType('solid')" id="custom-banner-bg-solid" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--accent-indigo);background:rgba(91,110,245,0.12);color:var(--accent-indigo);font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:700;cursor:pointer;text-transform:uppercase;">Sólido</button>
+                                        <button onclick="setCustomBannerBgType('gradient')" id="custom-banner-bg-gradient" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border-mid);background:var(--bg-card);color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:700;cursor:pointer;text-transform:uppercase;">Degradado</button>
+                                    </div>
+                                </div>
+
+                                <!-- Color fondo sólido -->
+                                <div id="custom-banner-solid-color-section">
+                                    <label style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);display:block;margin-bottom:6px;">Color de fondo</label>
+                                    <input type="color" id="custom-banner-bg-color" value="#090b11" style="width:100%;height:40px;border:1px solid var(--border-mid);border-radius:10px;cursor:pointer;">
+                                </div>
+
+                                <!-- Degradado -->
+                                <div id="custom-banner-gradient-section" style="display:none;">
+                                    <label style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);display:block;margin-bottom:6px;">Color 1</label>
+                                    <input type="color" id="custom-banner-gradient-1" value="#e8362a" style="width:100%;height:40px;border:1px solid var(--border-mid);border-radius:10px;cursor:pointer;margin-bottom:8px;">
+                                    <label style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);display:block;margin-bottom:6px;">Color 2</label>
+                                    <input type="color" id="custom-banner-gradient-2" value="#f0b429" style="width:100%;height:40px;border:1px solid var(--border-mid);border-radius:10px;cursor:pointer;margin-bottom:8px;">
+                                    <label style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);display:block;margin-bottom:6px;">Dirección</label>
+                                    <select id="custom-banner-gradient-dir" style="width:100%;background:var(--bg-card);border:1px solid var(--border-mid);border-radius:10px;padding:8px 12px;color:var(--text-primary);font-family:'Barlow',sans-serif;font-size:0.8rem;outline:none;">
+                                        <option value="to right">Horizontal →</option>
+                                        <option value="to bottom">Vertical ↓</option>
+                                        <option value="135deg">Diagonal ↘</option>
+                                    </select>
+                                </div>
+
+                                <!-- Preview del banner -->
+                                <div>
+                                    <label style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);display:block;margin-bottom:6px;">Vista previa</label>
+                                    <canvas id="custom-banner-canvas" width="1920" height="200" style="width:100%;height:60px;border:1px solid var(--border-mid);border-radius:10px;background:#090b11;"></canvas>
+                                </div>
+
+                                <!-- Botón guardar -->
+                                <button onclick="saveCustomBanner()" style="width:100%;padding:10px;background:var(--accent-green);border:none;border-radius:10px;color:white;font-family:'Barlow',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;margin-top:8px;">Guardar banner personalizado</button>
+                            </div>
                         </div>
 
                         <!-- Saved banners list -->
-                        <div id="banner-list" style="display:flex;flex-direction:column;gap:8px;">
+                        <div id="banner-list" style="display:flex;flex-direction:column;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
                             <div style="font-size:0.72rem;color:var(--text-muted);text-align:center;padding:12px 0;">Sin banners guardados</div>
                         </div>
                     </div>
@@ -2480,6 +2626,35 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
+// ── THEME TOGGLE ──
+function toggleTheme() {
+    const html = document.documentElement;
+    const isLight = html.classList.contains('light-mode');
+    
+    if (isLight) {
+        html.classList.remove('light-mode');
+        localStorage.setItem('rocola-theme', 'dark');
+        document.getElementById('theme-label').innerText = 'Modo claro';
+    } else {
+        html.classList.add('light-mode');
+        localStorage.setItem('rocola-theme', 'light');
+        document.getElementById('theme-label').innerText = 'Modo oscuro';
+    }
+}
+
+function initTheme() {
+    const html = document.documentElement;
+    const savedTheme = localStorage.getItem('rocola-theme') || 'dark';
+    
+    if (savedTheme === 'light') {
+        html.classList.add('light-mode');
+        document.getElementById('theme-label').innerText = 'Modo oscuro';
+    } else {
+        html.classList.remove('light-mode');
+        document.getElementById('theme-label').innerText = 'Modo claro';
+    }
+}
+
 async function initFirebase() {
     try {
         const syncText = document.getElementById('sync-text');
@@ -2567,7 +2742,7 @@ function applyLogo() {
         const logoText = sidebarHeader.querySelector('.sidebar-logo-text');
         if (logoText) {
             console.log('Reemplazando sidebar logo');
-            logoText.outerHTML = `<img src="/logo.png" style="max-height:32px;width:auto;object-fit:contain;" alt="Logo" id="sidebar-logo-img">`;
+            logoText.outerHTML = `<img src="/logo.png" style="max-height:56px;width:auto;object-fit:contain;" alt="Logo" id="sidebar-logo-img">`;
         }
     }
     // CAMBIO 4: Reemplazar RocolaPro en menu screen y loading screen
@@ -3393,6 +3568,97 @@ function toggleAdminMute() {
         : `<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>`;
 }
 
+// ── DJ SEARCH ──
+let djSearchTimeout = null;
+
+function djDebounceSearch() {
+    clearTimeout(djSearchTimeout);
+    djSearchTimeout = setTimeout(djPerformSearch, 600);
+}
+
+async function djPerformSearch() {
+    const q = document.getElementById('dj-search-input').value.trim();
+    const resultsEl = document.getElementById('dj-search-results');
+    if (q.length < 2) {
+        resultsEl.innerHTML = `<div style="text-align:center;color:var(--text-muted);font-size:0.72rem;font-weight:600;padding:12px 0;text-transform:uppercase;letter-spacing:0.08em;">Escribe para buscar</div>`;
+        return;
+    }
+    resultsEl.innerHTML = `<div style="text-align:center;padding:12px;"><div class="loading-spinner" style="margin:0 auto;width:20px;height:20px;border:2px solid var(--border-mid);border-top:2px solid var(--accent-indigo);border-radius:50%;animation:spin 0.8s linear infinite;"></div></div>`;
+    try {
+        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(q)}&maxResults=8&key=${YOUTUBE_API_KEY}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data || !Array.isArray(data.items) || data.items.length === 0) {
+            resultsEl.innerHTML = `<div style="text-align:center;color:var(--text-muted);font-size:0.72rem;font-weight:600;padding:12px 0;text-transform:uppercase;letter-spacing:0.08em;">Sin resultados</div>`;
+            return;
+        }
+        resultsEl.innerHTML = data.items.map(i => {
+            const videoId = i.id?.videoId || '';
+            const title = (i.snippet.title || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+            const thumb = i.snippet.thumbnails?.default?.url || '';
+            return `<div onclick="djAddToQueue('${videoId}', '${title}')" style="display:flex;gap:8px;padding:8px;background:var(--bg-card);border:1px solid var(--border-mid);border-radius:8px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='var(--bg-elevated)'" onmouseout="this.style.background='var(--bg-card)'">
+                <img src="${thumb}" style="width:48px;height:27px;border-radius:4px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);">
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:0.72rem;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">${title.replace(/&#39;/g, "'").replace(/&quot;/g, '"')}</div>
+                </div>
+                <div style="flex-shrink:0;display:flex;align-items:center;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </div>
+            </div>`;
+        }).join('');
+    } catch(e) {
+        resultsEl.innerHTML = `<div style="text-align:center;color:var(--accent-red);font-size:0.72rem;font-weight:600;padding:12px 0;text-transform:uppercase;letter-spacing:0.08em;">Error de búsqueda</div>`;
+        console.error('DJ search error:', e);
+    }
+}
+
+function clearDJSearch() {
+    document.getElementById('dj-search-input').value = '';
+    document.getElementById('dj-search-results').innerHTML = `<div style="text-align:center;color:var(--text-muted);font-size:0.72rem;font-weight:600;padding:12px 0;text-transform:uppercase;letter-spacing:0.08em;">Escribe para buscar</div>`;
+}
+
+async function djAddToQueue(videoId, title) {
+    if (!videoId || !title) return;
+    
+    try {
+        // Obtener información del video
+        const infoUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoId}&key=${YOUTUBE_API_KEY}`;
+        const infoRes = await fetch(infoUrl);
+        const infoData = await infoRes.json();
+        
+        let durationSeconds = 0;
+        if (infoData.items && infoData.items[0]) {
+            const duration = infoData.items[0].contentDetails.duration;
+            // Parsear duración ISO 8601 (PT5M23S -> 323 segundos)
+            const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+            const hours = parseInt(match[1] || 0);
+            const minutes = parseInt(match[2] || 0);
+            const seconds = parseInt(match[3] || 0);
+            durationSeconds = hours * 3600 + minutes * 60 + seconds;
+        }
+        
+        // Agregar a la cola
+        const queueId = 'queue_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        await db.collection(`artifacts/${appId}/public/data/rocola_queue`).doc(queueId).set({
+            id: queueId,
+            videoId: videoId,
+            title: title.replace(/&#39;/g, "'").replace(/&quot;/g, '"'),
+            status: 'waiting',
+            votes: 0,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            duration: durationSeconds,
+            requestedBy: 'DJ',
+            showDedication: false
+        });
+        
+        toast(`"${title.replace(/&#39;/g, "'").replace(/&quot;/g, '"')}" agregada a la cola`, 'success');
+        clearDJSearch();
+    } catch(e) {
+        toast('Error al agregar a la cola: ' + e.message, 'error');
+        console.error('Error adding to queue:', e);
+    }
+}
+
 /* ═══════════════════════════════════════
    MODULE: YOUTUBE
 ═══════════════════════════════════════ */
@@ -3914,6 +4180,269 @@ async function deleteBanner(id) {
         loadBanners();
         toast('Banner eliminado', 'info');
     } catch(e) { toast('Error al eliminar: ' + e.message, 'error'); console.error(e); }
+}
+
+// ── CUSTOM BANNER EDITOR ──
+let customBannerState = {
+    text: '',
+    font: "'Barlow', sans-serif",
+    size: 48,
+    bold: false,
+    italic: false,
+    align: 'center',
+    textColor: '#eef0f8',
+    bgType: 'solid',
+    bgColor: '#090b11',
+    gradient1: '#e8362a',
+    gradient2: '#f0b429',
+    gradientDir: 'to right'
+};
+
+function switchBannerTab(tab) {
+    const uploadContent = document.getElementById('banner-tab-upload-content');
+    const createContent = document.getElementById('banner-tab-create-content');
+    const uploadBtn = document.getElementById('banner-tab-upload');
+    const createBtn = document.getElementById('banner-tab-create');
+    
+    if (tab === 'upload') {
+        uploadContent.style.display = 'block';
+        createContent.style.display = 'none';
+        uploadBtn.style.borderBottomColor = 'var(--accent-indigo)';
+        uploadBtn.style.color = 'var(--text-primary)';
+        createBtn.style.borderBottomColor = 'transparent';
+        createBtn.style.color = 'var(--text-muted)';
+    } else {
+        uploadContent.style.display = 'none';
+        createContent.style.display = 'block';
+        uploadBtn.style.borderBottomColor = 'transparent';
+        uploadBtn.style.color = 'var(--text-muted)';
+        createBtn.style.borderBottomColor = 'var(--accent-indigo)';
+        createBtn.style.color = 'var(--text-primary)';
+        // Inicializar preview al cambiar a tab create
+        updateCustomBannerPreview();
+    }
+}
+
+// Update state cuando el texto cambia
+document.addEventListener('DOMContentLoaded', () => {
+    // Inicializar tema
+    initTheme();
+    
+    const textArea = document.getElementById('custom-banner-text');
+    const sizeInput = document.getElementById('custom-banner-size');
+    const fontSelect = document.getElementById('custom-banner-font');
+    const textColorInput = document.getElementById('custom-banner-text-color');
+    const bgColorInput = document.getElementById('custom-banner-bg-color');
+    const grad1Input = document.getElementById('custom-banner-gradient-1');
+    const grad2Input = document.getElementById('custom-banner-gradient-2');
+    const gradDirSelect = document.getElementById('custom-banner-gradient-dir');
+    
+    if (textArea) {
+        textArea.addEventListener('input', (e) => {
+            customBannerState.text = e.target.value;
+            updateCustomBannerPreview();
+        });
+    }
+    
+    if (sizeInput) {
+        sizeInput.addEventListener('input', (e) => {
+            customBannerState.size = parseInt(e.target.value);
+            document.getElementById('custom-banner-size-display').innerText = customBannerState.size;
+            updateCustomBannerPreview();
+        });
+    }
+    
+    if (fontSelect) {
+        fontSelect.addEventListener('change', (e) => {
+            customBannerState.font = e.target.value;
+            updateCustomBannerPreview();
+        });
+    }
+    
+    if (textColorInput) {
+        textColorInput.addEventListener('input', (e) => {
+            customBannerState.textColor = e.target.value;
+            updateCustomBannerPreview();
+        });
+    }
+    
+    if (bgColorInput) {
+        bgColorInput.addEventListener('input', (e) => {
+            customBannerState.bgColor = e.target.value;
+            updateCustomBannerPreview();
+        });
+    }
+    
+    if (grad1Input) {
+        grad1Input.addEventListener('input', (e) => {
+            customBannerState.gradient1 = e.target.value;
+            updateCustomBannerPreview();
+        });
+    }
+    
+    if (grad2Input) {
+        grad2Input.addEventListener('input', (e) => {
+            customBannerState.gradient2 = e.target.value;
+            updateCustomBannerPreview();
+        });
+    }
+    
+    if (gradDirSelect) {
+        gradDirSelect.addEventListener('change', (e) => {
+            customBannerState.gradientDir = e.target.value;
+            updateCustomBannerPreview();
+        });
+    }
+});
+
+function toggleCustomBannerStyle(style) {
+    if (style === 'bold') {
+        customBannerState.bold = !customBannerState.bold;
+        const btn = document.getElementById('custom-banner-bold');
+        if (btn) {
+            btn.style.background = customBannerState.bold ? 'rgba(91,110,245,0.12)' : 'var(--bg-card)';
+            btn.style.borderColor = customBannerState.bold ? 'var(--accent-indigo)' : 'var(--border-mid)';
+            btn.style.color = customBannerState.bold ? 'var(--accent-indigo)' : 'var(--text-primary)';
+        }
+    } else if (style === 'italic') {
+        customBannerState.italic = !customBannerState.italic;
+        const btn = document.getElementById('custom-banner-italic');
+        if (btn) {
+            btn.style.background = customBannerState.italic ? 'rgba(91,110,245,0.12)' : 'var(--bg-card)';
+            btn.style.borderColor = customBannerState.italic ? 'var(--accent-indigo)' : 'var(--border-mid)';
+            btn.style.color = customBannerState.italic ? 'var(--accent-indigo)' : 'var(--text-primary)';
+        }
+    }
+    updateCustomBannerPreview();
+}
+
+function setCustomBannerAlign(align) {
+    customBannerState.align = align;
+    ['left', 'center', 'right'].forEach(a => {
+        const btn = document.getElementById(`custom-banner-align-${a}`);
+        if (btn) {
+            if (a === align) {
+                btn.style.background = 'rgba(91,110,245,0.12)';
+                btn.style.borderColor = 'var(--accent-indigo)';
+                btn.style.color = 'var(--accent-indigo)';
+            } else {
+                btn.style.background = 'var(--bg-card)';
+                btn.style.borderColor = 'var(--border-mid)';
+                btn.style.color = 'var(--text-primary)';
+            }
+        }
+    });
+    updateCustomBannerPreview();
+}
+
+function setCustomBannerBgType(type) {
+    customBannerState.bgType = type;
+    const solidBtn = document.getElementById('custom-banner-bg-solid');
+    const gradientBtn = document.getElementById('custom-banner-bg-gradient');
+    const solidSection = document.getElementById('custom-banner-solid-color-section');
+    const gradientSection = document.getElementById('custom-banner-gradient-section');
+    
+    if (type === 'solid') {
+        solidBtn.style.background = 'rgba(91,110,245,0.12)';
+        solidBtn.style.borderColor = 'var(--accent-indigo)';
+        solidBtn.style.color = 'var(--accent-indigo)';
+        gradientBtn.style.background = 'var(--bg-card)';
+        gradientBtn.style.borderColor = 'var(--border-mid)';
+        gradientBtn.style.color = 'var(--text-primary)';
+        solidSection.style.display = 'block';
+        gradientSection.style.display = 'none';
+    } else {
+        solidBtn.style.background = 'var(--bg-card)';
+        solidBtn.style.borderColor = 'var(--border-mid)';
+        solidBtn.style.color = 'var(--text-primary)';
+        gradientBtn.style.background = 'rgba(91,110,245,0.12)';
+        gradientBtn.style.borderColor = 'var(--accent-indigo)';
+        gradientBtn.style.color = 'var(--accent-indigo)';
+        solidSection.style.display = 'none';
+        gradientSection.style.display = 'block';
+    }
+    updateCustomBannerPreview();
+}
+
+function updateCustomBannerPreview() {
+    const canvas = document.getElementById('custom-banner-canvas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Fondo
+    if (customBannerState.bgType === 'solid') {
+        ctx.fillStyle = customBannerState.bgColor;
+        ctx.fillRect(0, 0, width, height);
+    } else {
+        const gradient = ctx.createLinearGradient(
+            customBannerState.gradientDir === 'to right' ? 0 : customBannerState.gradientDir === 'to bottom' ? 0 : 0,
+            customBannerState.gradientDir === 'to right' ? 0 : customBannerState.gradientDir === 'to bottom' ? 0 : 0,
+            customBannerState.gradientDir === 'to right' ? width : customBannerState.gradientDir === 'to bottom' ? 0 : width * 0.707,
+            customBannerState.gradientDir === 'to right' ? 0 : customBannerState.gradientDir === 'to bottom' ? height : height * 0.707
+        );
+        gradient.addColorStop(0, customBannerState.gradient1);
+        gradient.addColorStop(1, customBannerState.gradient2);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+    }
+    
+    // Texto
+    if (customBannerState.text) {
+        const fontWeight = customBannerState.bold ? 'bold' : 'normal';
+        const fontStyle = customBannerState.italic ? 'italic' : 'normal';
+        ctx.font = `${fontStyle} ${fontWeight} ${customBannerState.size}px ${customBannerState.font}`;
+        ctx.fillStyle = customBannerState.textColor;
+        ctx.textBaseline = 'middle';
+        
+        const y = height / 2;
+        let x;
+        if (customBannerState.align === 'left') {
+            ctx.textAlign = 'left';
+            x = 40;
+        } else if (customBannerState.align === 'right') {
+            ctx.textAlign = 'right';
+            x = width - 40;
+        } else {
+            ctx.textAlign = 'center';
+            x = width / 2;
+        }
+        
+        ctx.fillText(customBannerState.text, x, y);
+    }
+}
+
+async function saveCustomBanner() {
+    const name = document.getElementById('custom-banner-name')?.value.trim();
+    if (!name) { toast('Ingresa un nombre para el banner', 'warning'); return; }
+    if (!customBannerState.text) { toast('Ingresa texto para el banner', 'warning'); return; }
+    
+    const canvas = document.getElementById('custom-banner-canvas');
+    const dataUrl = canvas.toDataURL('image/png');
+    const id = 'banner_' + Date.now();
+    
+    try {
+        await db.collection(`artifacts/${appId}/public/data/banners`).doc(id).set({
+            id, name,
+            url: dataUrl,
+            active: false,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Reset form
+        document.getElementById('custom-banner-name').value = '';
+        document.getElementById('custom-banner-text').value = '';
+        customBannerState.text = '';
+        updateCustomBannerPreview();
+        
+        toast('Banner personalizado guardado', 'success');
+        loadBanners();
+    } catch(e) {
+        toast('Error al guardar banner: ' + e.message, 'error');
+        console.error(e);
+    }
 }
 
 // ── SAMPLER MANAGER ──
