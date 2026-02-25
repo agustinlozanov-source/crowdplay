@@ -3620,6 +3620,12 @@ function clearDJSearch() {
 async function djAddToQueue(videoId, title) {
     if (!videoId || !title) return;
     
+    // Verificar que Firebase está inicializado
+    if (!db || !appId) {
+        toast('Firebase no está inicializado. Recarga la página.', 'error');
+        return;
+    }
+    
     try {
         // Obtener información del video
         const infoUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoId}&key=${YOUTUBE_API_KEY}`;
@@ -3643,7 +3649,7 @@ async function djAddToQueue(videoId, title) {
             id: queueId,
             videoId: videoId,
             title: title.replace(/&#39;/g, "'").replace(/&quot;/g, '"'),
-            status: 'waiting',
+            status: 'pending',
             votes: 0,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             duration: durationSeconds,
